@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "datasource",
+  "name": "Grafana Datasource Plugin",
+  "id": "ydb-grafana-datasource-plugin",
+  "metrics": true,
+  "backend": true,
+  "executable": "gpx_grafana_datasource_plugin",
+  "info": {
+    "description": "Ydb datasource plugin for grafana",
+    "author": {
+      "name": "Ydb"
+    },
+    "keywords": ["datasource"],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [],
+    "screenshots": [],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "dependencies": {
+    "grafanaDependency": "^9.2.5",
+    "plugins": []
+  }
+}
