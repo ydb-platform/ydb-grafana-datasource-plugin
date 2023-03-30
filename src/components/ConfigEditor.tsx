@@ -15,6 +15,7 @@ export function ConfigEditor(props: Props) {
     onOptionsChange({ ...options, jsonData });
   };
 
+
   // Secure field (only sent to the backend)
   const onAPIKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
     onOptionsChange({

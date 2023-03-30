@@ -2,7 +2,7 @@ version: '3.0'
 
 services:
   grafana:
-    container_name: 'ydb-grafana-datasource-plugin'
+    container_name: 'grafana-ydb-datasource'
     build:
       context: ./.config
       args:
@@ -10,5 +10,5 @@ services:
     ports:
       - 3000:3000/tcp
     volumes:
-      - ./dist:/var/lib/grafana/plugins/ydb-grafana-datasource-plugin
+      - ./dist:/var/lib/grafana/plugins/grafana-ydb-datasource
       - ./provisioning:/etc/grafana/provisioning
