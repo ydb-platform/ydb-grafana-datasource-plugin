@@ -7,9 +7,10 @@ interface Props {
     placeholder: string;
     onChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
     onClick: (event: MouseEvent<HTMLButtonElement>) => void;
+    value: string;
 }
 
-export const CertificationKey: FC<Props> = ({ hasCert, label, onChange, onClick, placeholder }) => {
+export const CertificationKey: FC<Props> = ({ hasCert, label, onChange, onClick, placeholder , value}) => {
     return (
         <div className="gf-form">
             <InlineFormLabel width={12}>{label}</InlineFormLabel>
@@ -21,7 +22,7 @@ export const CertificationKey: FC<Props> = ({ hasCert, label, onChange, onClick,
                     </Button>
                 </>
             ) : (
-                <TextArea rows={7} onChange={onChange} placeholder={placeholder} required />
+                <TextArea rows={7} onChange={onChange} placeholder={placeholder} value={value} required />
             )}
         </div>
     );
