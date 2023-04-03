@@ -25,13 +25,33 @@ var (
 )
 
 // NewDatasource creates a new datasource instance.
-func NewDatasource(_ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	return &Datasource{}, nil
+func NewDatasource(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	settings := &Datasource{}
+	if err := json.Unmarshal(s.JSONData, &settings); err != nil {
+		return settings, fmt.Errorf("could not unmarshal DataSourceInfo json: %w", err)
+	}
+
+	log.DefaultLogger.Error(settings.ConnPath)
+
+	// secureSettings := Datasource{}
+	// if err := mapstructure.Decode(s.DecryptedSecureJSONData, &secureSettings); err != nil {
+	// 	return settings, fmt.Errorf("could not unmarshal secure settings: %w", err)
+	// }
+	// settings.ConnData = secureSettings.ConnData
+	settings.ConnData, _ = s.DecryptedSecureJSONData["apiKey"]
+
+	log.DefaultLogger.Error(settings.ConnData)
+
+	return settings, nil
+	// return &Datasource{}, nil
 }
 
 // Datasource is an example datasource which can respond to data queries, reports
 // its health and has streaming skills.
-type Datasource struct{}
+type Datasource struct {
+	ConnPath string `json:"path"`
+	ConnData string `json:"apiKey"`
+}
 
 // Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
 // created. As soon as datasource settings change detected by SDK old datasource instance will
