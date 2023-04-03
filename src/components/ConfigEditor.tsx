@@ -1,7 +1,9 @@
 import React, { ChangeEvent } from 'react';
-import { InlineField, InlineLabel, Input, RadioButtonGroup, SecretInput } from '@grafana/ui';
+import { CertificationKey } from '../components/CertificationKey';
+import {InlineField, InlineLabel, Input, RadioButtonGroup} from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { MyDataSourceOptions, MySecureJsonData } from '../types';
+import {MyDataSourceOptions, MySecureJsonData} from '../types';
+
 
 interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> {}
 
@@ -14,9 +16,13 @@ const types = [
   { label: 'Service Account Key', value: Connection.ServiceAccountKey },
   { label: 'Credentials', value: Connection.CREDENTIALS },
 ];
+export const ConfigEditor: React.FC<Props> = (props) => {
+//export function ConfigEditor(props: Props) {
+  const { options, onOptionsChange } = props;
+  const { jsonData, secureJsonFields } = options;
+  const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
+  const hasKey = secureJsonFields && secureJsonFields.apiKey;
 
-export function ConfigEditor(props: Props) {
-  const { onOptionsChange, options } = props;
   const onPathChange = (event: ChangeEvent<HTMLInputElement>) => {
     const jsonData = {
       ...options.jsonData,
@@ -36,27 +42,26 @@ export function ConfigEditor(props: Props) {
             onOptionsChange({ ...options, jsonData });
           };
 
-
-  // Secure field (only sent to the backend)
-  const onAPIKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const onCertificateChangeFactory =  (key: keyof MySecureJsonData, value: string) => { //(key: string, value: string) => {
     onOptionsChange({
       ...options,
       secureJsonData: {
-        apiKey: event.target.value,
+        ...secureJsonData,
+        [key]: value,
       },
     });
   };
 
-  const onResetAPIKey = () => {
+    const onResetClickFactory = (key: keyof MySecureJsonData) => {
     onOptionsChange({
       ...options,
       secureJsonFields: {
-        ...options.secureJsonFields,
-        apiKey: false,
+        ...secureJsonFields,
+        [key]: false,
       },
       secureJsonData: {
-        ...options.secureJsonData,
-        apiKey: '',
+        ...secureJsonData,
+        [key]: '',
       },
     });
   };
@@ -65,8 +70,8 @@ export function ConfigEditor(props: Props) {
     onSettingChange('authKind')(asEvent(type));
   };
 
-  const { jsonData, secureJsonFields } = options;
-  const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
+
+
 
   const kind = jsonData.authKind || Connection.ServiceAccountKey;
 
@@ -78,24 +83,40 @@ export function ConfigEditor(props: Props) {
           <RadioButtonGroup options={types} value={kind} onChange={(v) => setConnectionType(v!)} size={'md'} />
         </div>
 
-        <InlineField label="Path" labelWidth={12}>
-          <Input
-              onChange={onPathChange}
-              value={jsonData.path || ''}
-              placeholder="json field returned to frontend"
-              width={40}
-          />
-        </InlineField>
-        <InlineField label="API Key" labelWidth={12}>
-          <SecretInput
-              isConfigured={(secureJsonFields && secureJsonFields.apiKey) as boolean}
-              value={secureJsonData.apiKey || ''}
-              placeholder="secure json field (backend only)"
-              width={40}
-              onReset={onResetAPIKey}
-              onChange={onAPIKeyChange}
-          />
-        </InlineField>
+        {kind === Connection.ServiceAccountKey && (
+            <>
+
+              <div className="gf-form">
+                <InlineField label="Path" labelWidth={12}>
+                  <Input
+                      onChange={onPathChange}
+                      value={jsonData.path || ''}
+                      placeholder="connection path"
+                      width={40}
+                  />
+                </InlineField>
+              </div>
+
+              <CertificationKey
+                  hasCert={!!hasKey}
+                  onChange={(e) => onCertificateChangeFactory('apiKey', e.currentTarget.value)}
+                  placeholder="Your key"
+                  label={"Key"}
+                  onClick={() => onResetClickFactory('apiKey')}
+              />
+                {/*<div className="gf-form">*/}
+                {/*  <InlineField label="API Key" labelWidth={12}>*/}
+                {/*    <TextArea*/}
+                {/*        placeholder="Your key"*/}
+                {/*        width={40}*/}
+                {/*        rows={5}*/}
+                {/*        onChange= {(e) => onCertificateChangeFactory('apiKey', e.currentTarget.value)}*/}
+                {/*    />*/}
+                {/*  </InlineField>*/}
+                {/*</div>*/}
+
+            </>
+        )}
       </div>
   );
 }

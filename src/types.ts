@@ -24,4 +24,3 @@ export interface MySecureJsonData {
   token?: string;
   apiKey?: string;
 }
-
