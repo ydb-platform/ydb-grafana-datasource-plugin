@@ -1,9 +1,8 @@
 import React, { ChangeEvent } from 'react';
-import { CertificationKey } from '../components/CertificationKey';
 import {InlineField, InlineLabel, Input, RadioButtonGroup} from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { CertificationKey } from '../components/CertificationKey';
 import {MyDataSourceOptions, MySecureJsonData} from '../types';
-
 
 interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> {}
 
@@ -16,12 +15,13 @@ const types = [
   { label: 'Service Account Key', value: Connection.ServiceAccountKey },
   { label: 'Credentials', value: Connection.CREDENTIALS },
 ];
+
 export const ConfigEditor: React.FC<Props> = (props) => {
-//export function ConfigEditor(props: Props) {
   const { options, onOptionsChange } = props;
   const { jsonData, secureJsonFields } = options;
   const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
   const hasKey = secureJsonFields && secureJsonFields.apiKey;
+  const kind = jsonData.authKind || Connection.ServiceAccountKey;
 
   const onPathChange = (event: ChangeEvent<HTMLInputElement>) => {
     const jsonData = {
@@ -32,14 +32,14 @@ export const ConfigEditor: React.FC<Props> = (props) => {
   };
 
   const onSettingChange =
-      (setting: 'uri' | 'authEndpoint' | 'authKind' | 'grpcEndpoint' | 'user') =>
+      (setting: 'authKind' | 'path') =>
           (event: ChangeEvent<HTMLInputElement>) => {
             const { onOptionsChange, options } = props;
             const jsonData = {
               ...options.jsonData,
               [setting]: event.target.value,
             };
-            onOptionsChange({ ...options, jsonData });
+           onOptionsChange({ ...options, jsonData });
           };
 
   const onCertificateChangeFactory =  (key: keyof MySecureJsonData, value: string) => { //(key: string, value: string) => {
@@ -70,11 +70,6 @@ export const ConfigEditor: React.FC<Props> = (props) => {
     onSettingChange('authKind')(asEvent(type));
   };
 
-
-
-
-  const kind = jsonData.authKind || Connection.ServiceAccountKey;
-
   return (
       <div className="gf-form-group">
 
@@ -85,7 +80,6 @@ export const ConfigEditor: React.FC<Props> = (props) => {
 
         {kind === Connection.ServiceAccountKey && (
             <>
-
               <div className="gf-form">
                 <InlineField label="Path" labelWidth={12}>
                   <Input
@@ -96,25 +90,14 @@ export const ConfigEditor: React.FC<Props> = (props) => {
                   />
                 </InlineField>
               </div>
-
               <CertificationKey
                   hasCert={!!hasKey}
+                  value={secureJsonData.apiKey || ''}
                   onChange={(e) => onCertificateChangeFactory('apiKey', e.currentTarget.value)}
                   placeholder="Your key"
                   label={"Key"}
                   onClick={() => onResetClickFactory('apiKey')}
               />
-                {/*<div className="gf-form">*/}
-                {/*  <InlineField label="API Key" labelWidth={12}>*/}
-                {/*    <TextArea*/}
-                {/*        placeholder="Your key"*/}
-                {/*        width={40}*/}
-                {/*        rows={5}*/}
-                {/*        onChange= {(e) => onCertificateChangeFactory('apiKey', e.currentTarget.value)}*/}
-                {/*    />*/}
-                {/*  </InlineField>*/}
-                {/*</div>*/}
-
             </>
         )}
       </div>
