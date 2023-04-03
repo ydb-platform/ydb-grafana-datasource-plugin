@@ -103,6 +103,8 @@ func (d *Datasource) CheckHealth(_ context.Context, req *backend.CheckHealthRequ
 	// (like the *backend.QueryDataRequest)
 	log.DefaultLogger.Debug("CheckHealth called")
 
+	log.DefaultLogger.Error("caught!!! Test!")
+
 	var status = backend.HealthStatusOk
 	var message = "Data source is working"
 
