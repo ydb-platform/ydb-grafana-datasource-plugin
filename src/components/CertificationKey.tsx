@@ -22,7 +22,7 @@ export const CertificationKey: FC<Props> = ({ hasCert, label, onChange, onClick,
                     </Button>
                 </>
             ) : (
-                <TextArea rows={7} onChange={onChange} placeholder={placeholder} value={value} required />
+                <TextArea rows={8} onChange={onChange} placeholder={placeholder} value={value} required />
             )}
         </div>
     );

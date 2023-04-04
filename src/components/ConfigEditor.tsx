@@ -21,7 +21,7 @@ export const ConfigEditor: React.FC<Props> = (props) => {
   const { options, onOptionsChange } = props;
   const { jsonData, secureJsonFields } = options;
   const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
-  const hasKey = secureJsonFields && secureJsonFields.apiKey;
+  const hasKey = secureJsonFields && secureJsonFields.serviceAccAuthAccessKey;
   const kind = jsonData.authKind || Connection.ServiceAccountKey;
   const { FormField } = LegacyForms;
 
@@ -100,11 +100,11 @@ export const ConfigEditor: React.FC<Props> = (props) => {
               </div>
               <CertificationKey
                   hasCert={!!hasKey}
-                  value={secureJsonData.apiKey || ''}
-                  onChange={(e) => onCertificateChangeFactory('apiKey', e.currentTarget.value)}
-                  placeholder="Your key"
-                  label={"Key"}
-                  onClick={() => onResetClickFactory('apiKey')}
+                  value={secureJsonData.serviceAccAuthAccessKey || ''}
+                  onChange={(e) => onCertificateChangeFactory('serviceAccAuthAccessKey', e.currentTarget.value)}
+                  label={Components.ConfigEditor.ServiceAccAuthAccessKey.label}
+                  placeholder={Components.ConfigEditor.ServiceAccAuthAccessKey.placeholder}
+                  onClick={() => onResetClickFactory('serviceAccAuthAccessKey')}
               />
             </>
         )}
