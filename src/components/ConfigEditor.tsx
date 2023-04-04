@@ -1,8 +1,9 @@
 import React, { ChangeEvent } from 'react';
-import {InlineField, InlineLabel, Input, RadioButtonGroup} from '@grafana/ui';
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import {LegacyForms, InlineLabel, RadioButtonGroup} from '@grafana/ui';
+import { DataSourcePluginOptionsEditorProps, onUpdateDatasourceJsonDataOption } from '@grafana/data';
 import { CertificationKey } from './CertificationKey';
 import {MyDataSourceOptions, MySecureJsonData} from '../types';
+import { Components } from './../selectors';
 
 interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> {}
 
@@ -22,14 +23,7 @@ export const ConfigEditor: React.FC<Props> = (props) => {
   const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
   const hasKey = secureJsonFields && secureJsonFields.apiKey;
   const kind = jsonData.authKind || Connection.ServiceAccountKey;
-
-  const onPathChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const jsonData = {
-      ...options.jsonData,
-      path: event.target.value,
-    };
-    onOptionsChange({ ...options, jsonData });
-  };
+  const { FormField } = LegacyForms;
 
   const onSettingChange =
       (setting: 'authKind' | 'path') =>
@@ -42,7 +36,7 @@ export const ConfigEditor: React.FC<Props> = (props) => {
            onOptionsChange({ ...options, jsonData });
           };
 
-  const onCertificateChangeFactory =  (key: keyof MySecureJsonData, value: string) => { //(key: string, value: string) => {
+  const onCertificateChangeFactory =  (key: keyof MySecureJsonData, value: string) => {
     onOptionsChange({
       ...options,
       secureJsonData: {
@@ -76,20 +70,34 @@ export const ConfigEditor: React.FC<Props> = (props) => {
           <InlineLabel width={12}>Auth type</InlineLabel>
           <RadioButtonGroup options={types} value={kind} onChange={(v) => setConnectionType(v!)} size={'md'} />
         </div>
-
         {kind === Connection.ServiceAccountKey && (
             <>
               <div className="gf-form">
-                <InlineField label="Path" labelWidth={12}>
-                  <Input
-                      onChange={onPathChange}
-                      value={jsonData.path || ''}
-                      placeholder="connection path"
-                      width={40}
-                  />
-                </InlineField>
+                <FormField
+                    name="Endpoint"
+                    labelWidth={6}
+                    inputWidth={20}
+                    value={jsonData.endpoint || ''}
+                    onChange={onUpdateDatasourceJsonDataOption(props, 'endpoint')}
+                    label={Components.ConfigEditor.Endpoint.label}
+                    aria-label={Components.ConfigEditor.Endpoint.label}
+                    placeholder={Components.ConfigEditor.Endpoint.placeholder}
+                    tooltip={Components.ConfigEditor.Endpoint.tooltip}
+                />
               </div>
-
+              <div className="gf-form">
+                <FormField
+                    name="Location1"
+                    labelWidth={6}
+                    inputWidth={20}
+                    value={jsonData.dbLocation || ''}
+                    onChange={onUpdateDatasourceJsonDataOption(props, 'dbLocation')}
+                    label={Components.ConfigEditor.DBLocation.label}
+                    aria-label={Components.ConfigEditor.DBLocation.label}
+                    placeholder={Components.ConfigEditor.DBLocation.placeholder}
+                    tooltip={Components.ConfigEditor.DBLocation.tooltip}
+                />
+              </div>
               <CertificationKey
                   hasCert={!!hasKey}
                   value={secureJsonData.apiKey || ''}
@@ -98,7 +106,6 @@ export const ConfigEditor: React.FC<Props> = (props) => {
                   label={"Key"}
                   onClick={() => onResetClickFactory('apiKey')}
               />
-
             </>
         )}
       </>

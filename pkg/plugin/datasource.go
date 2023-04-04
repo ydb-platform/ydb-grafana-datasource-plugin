@@ -31,14 +31,14 @@ func NewDatasource(s backend.DataSourceInstanceSettings) (instancemgmt.Instance,
 		return settings, fmt.Errorf("could not unmarshal DataSourceInfo json: %w", err)
 	}
 
-	log.DefaultLogger.Error(settings.ConnPath)
+	log.DefaultLogger.Error(settings.ConnEndPoint + settings.ConnDBLocation)
 
 	// secureSettings := Datasource{}
 	// if err := mapstructure.Decode(s.DecryptedSecureJSONData, &secureSettings); err != nil {
 	// 	return settings, fmt.Errorf("could not unmarshal secure settings: %w", err)
 	// }
 	// settings.ConnData = secureSettings.ConnData
-	settings.ConnData, _ = s.DecryptedSecureJSONData["apiKey"]
+	settings.ConnData = s.DecryptedSecureJSONData["apiKey"]
 
 	log.DefaultLogger.Error(settings.ConnData)
 
@@ -49,8 +49,9 @@ func NewDatasource(s backend.DataSourceInstanceSettings) (instancemgmt.Instance,
 // Datasource is an example datasource which can respond to data queries, reports
 // its health and has streaming skills.
 type Datasource struct {
-	ConnPath string `json:"path"`
-	ConnData string `json:"apiKey"`
+	ConnEndPoint   string `json:"endpoint"`
+	ConnDBLocation string `json:"dbLocation"`
+	ConnData       string `json:"apiKey"`
 }
 
 // Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
