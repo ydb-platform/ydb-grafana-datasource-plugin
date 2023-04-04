@@ -38,7 +38,7 @@ func NewDatasource(s backend.DataSourceInstanceSettings) (instancemgmt.Instance,
 	// 	return settings, fmt.Errorf("could not unmarshal secure settings: %w", err)
 	// }
 	// settings.ConnData = secureSettings.ConnData
-	settings.ConnData = s.DecryptedSecureJSONData["apiKey"]
+	settings.ConnData = s.DecryptedSecureJSONData["serviceAccAuthAccessKey"]
 
 	log.DefaultLogger.Error(settings.ConnData)
 
