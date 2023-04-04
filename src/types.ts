@@ -14,7 +14,8 @@ export const DEFAULT_QUERY: Partial<MyQuery> = {
  */
 export interface MyDataSourceOptions extends DataSourceJsonData {
   authKind: number;
-  path?: string;
+  endpoint?: string;
+  dbLocation?: string;
 }
 
 /**
