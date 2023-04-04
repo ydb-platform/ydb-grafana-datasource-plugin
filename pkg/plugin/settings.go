@@ -41,7 +41,7 @@ func LoadSettings(config backend.DataSourceInstanceSettings) (settings *Settings
 		settings, err = loadSettingsForServiceAccAuthAccessKey(jsonData, config)
 	}
 
-	return settings, err
+	return
 }
 
 func loadSettingsForServiceAccAuthAccessKey(jsonData map[string]interface{}, config backend.DataSourceInstanceSettings) (settings *Settings, err error) {
@@ -53,7 +53,7 @@ func loadSettingsForServiceAccAuthAccessKey(jsonData map[string]interface{}, con
 	}
 
 	if dbLocation = jsonData["dbLocation"]; dbLocation == nil {
-		err = fmt.Errorf("%w", ErrEndpointEmpty)
+		err = fmt.Errorf("%w", ErrDBLocationEmpty)
 		return
 	}
 
@@ -64,8 +64,7 @@ func loadSettingsForServiceAccAuthAccessKey(jsonData map[string]interface{}, con
 	}
 
 	return NewSettings(AuthTypeServiceAccAccessKey, WithDBEndpoint(endpoint.(string)),
-			WithDBLocation(dbLocation.(string)), WithServiceAccAuthAccessKey(serviceAccAuthAccessKey)),
-		err
+		WithDBLocation(dbLocation.(string)), WithServiceAccAuthAccessKey(serviceAccAuthAccessKey)), err
 }
 
 // NewSettings .-
