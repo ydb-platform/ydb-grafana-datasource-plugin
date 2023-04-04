@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from 'react';
 import {InlineField, InlineLabel, Input, RadioButtonGroup} from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { CertificationKey } from '../components/CertificationKey';
+import { CertificationKey } from './CertificationKey';
 import {MyDataSourceOptions, MySecureJsonData} from '../types';
 
 interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> {}
@@ -71,8 +71,7 @@ export const ConfigEditor: React.FC<Props> = (props) => {
   };
 
   return (
-      <div className="gf-form-group">
-
+      <>
         <div className="gf-form">
           <InlineLabel width={12}>Auth type</InlineLabel>
           <RadioButtonGroup options={types} value={kind} onChange={(v) => setConnectionType(v!)} size={'md'} />
@@ -90,6 +89,7 @@ export const ConfigEditor: React.FC<Props> = (props) => {
                   />
                 </InlineField>
               </div>
+
               <CertificationKey
                   hasCert={!!hasKey}
                   value={secureJsonData.apiKey || ''}
@@ -98,9 +98,10 @@ export const ConfigEditor: React.FC<Props> = (props) => {
                   label={"Key"}
                   onClick={() => onResetClickFactory('apiKey')}
               />
+
             </>
         )}
-      </div>
+      </>
   );
 }
 
