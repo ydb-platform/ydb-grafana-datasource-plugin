@@ -13,10 +13,10 @@ interface Props {
 export const CertificationKey: FC<Props> = ({ hasCert, label, onChange, onClick, placeholder , value}) => {
     return (
         <div className="gf-form">
-            <InlineFormLabel width={12}>{label}</InlineFormLabel>
+            <InlineFormLabel width={6}>{label}</InlineFormLabel>
             {hasCert ? (
                 <>
-                    <Input type="text" disabled value="configured" width={24} />
+                    <Input type="text" disabled value="configured" width={40}/>
                     <Button variant="secondary" onClick={onClick} style={{ marginLeft: 4 }}>
                         Reset
                     </Button>
