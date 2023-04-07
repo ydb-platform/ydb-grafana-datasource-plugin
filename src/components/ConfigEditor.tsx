@@ -66,10 +66,12 @@ export const ConfigEditor: React.FC<Props> = (props) => {
 
   return (
       <>
+        <h3>Data base location</h3>
+        <br/>
         <div className="gf-form">
           <FormField
               name="Endpoint"
-              labelWidth={6}
+              labelWidth={12}
               inputWidth={20}
               value={jsonData.endpoint || ''}
               onChange={onUpdateDatasourceJsonDataOption(props, 'endpoint')}
@@ -82,7 +84,7 @@ export const ConfigEditor: React.FC<Props> = (props) => {
         <div className="gf-form">
           <FormField
               name="Location1"
-              labelWidth={6}
+              labelWidth={12}
               inputWidth={20}
               value={jsonData.dbLocation || ''}
               onChange={onUpdateDatasourceJsonDataOption(props, 'dbLocation')}
@@ -92,8 +94,11 @@ export const ConfigEditor: React.FC<Props> = (props) => {
               tooltip={Components.ConfigEditor.DBLocation.tooltip}
           />
         </div>
+        <br/>
+        <h3>Credentials</h3>
+        <br/>
         <div className="gf-form">
-          <InlineLabel width={12}>Auth type</InlineLabel>
+          <InlineLabel width={24}>Auth type</InlineLabel>
           <RadioButtonGroup options={types} value={kind} onChange={(v) => setConnectionType(v!)} size={'md'} />
         </div>
         {kind === Connection.ServiceAccountKey && (

@@ -14,7 +14,7 @@ interface Props {
 export const CertificationKey: FC<Props> = ({ hasCert, label, tooltip, onChange, onClick, placeholder, value}) => {
     return (
         <div className="gf-form">
-            <InlineFormLabel width={6} tooltip={tooltip}>{label}</InlineFormLabel>
+            <InlineFormLabel width={12} tooltip={tooltip}>{label}</InlineFormLabel>
             {hasCert ? (
                 <>
                     <Input type="text" disabled value="configured" width={40}/>
