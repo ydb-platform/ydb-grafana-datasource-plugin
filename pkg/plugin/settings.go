@@ -63,12 +63,12 @@ func loadSettingsForServiceAccAuthAccessKey(jsonData map[string]interface{}, con
 		return
 	}
 
-	return NewSettings(AuthTypeServiceAccAccessKey, WithDBEndpoint(endpoint.(string)),
-		WithDBLocation(dbLocation.(string)), WithServiceAccAuthAccessKey(serviceAccAuthAccessKey)), err
+	return makeNewSettingsWhirOpts(AuthTypeServiceAccAccessKey, withDBEndpoint(endpoint.(string)),
+		withDBLocation(dbLocation.(string)), withServiceAccAuthAccessKey(serviceAccAuthAccessKey)), err
 }
 
 // NewSettings .-
-func NewSettings(authKind AuthType, opts ...SettingsOptionFunc) *Settings {
+func makeNewSettingsWhirOpts(authKind AuthType, opts ...SettingsOptionFunc) *Settings {
 	settings := &Settings{
 		AuthKind: authKind,
 	}
@@ -79,21 +79,21 @@ func NewSettings(authKind AuthType, opts ...SettingsOptionFunc) *Settings {
 }
 
 // WithDBEndpoint .-
-func WithDBEndpoint(dbEndpoint string) SettingsOptionFunc {
+func withDBEndpoint(dbEndpoint string) SettingsOptionFunc {
 	return func(s *Settings) {
 		s.DBEndpoint = dbEndpoint
 	}
 }
 
 // WithDBLocation .-
-func WithDBLocation(dbLocation string) SettingsOptionFunc {
+func withDBLocation(dbLocation string) SettingsOptionFunc {
 	return func(s *Settings) {
 		s.DBLocation = dbLocation
 	}
 }
 
 // WithServiceAccAuthAccessKey .-
-func WithServiceAccAuthAccessKey(serviceAccAuthAccessKey string) SettingsOptionFunc {
+func withServiceAccAuthAccessKey(serviceAccAuthAccessKey string) SettingsOptionFunc {
 	return func(s *Settings) {
 		s.ServiceAccAuthAccessKey = serviceAccAuthAccessKey
 	}
