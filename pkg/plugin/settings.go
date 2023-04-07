@@ -19,7 +19,10 @@ type Settings struct {
 	AuthKind                AuthType `json:"authKind"`
 	DBEndpoint              string   `json:"endpoint,omitempty"`
 	DBLocation              string   `json:"dbLocation,omitempty"`
+	User                    string   `json:"user"`
 	ServiceAccAuthAccessKey string
+	AccessToken             string
+	Password                string
 }
 
 type SettingsOptionFunc func(settings *Settings)

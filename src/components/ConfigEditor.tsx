@@ -9,18 +9,18 @@ interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> 
 
 export enum Connection {
   ServiceAccountKey = 0,
-  IAMToken = 1,
-  AuthToken = 2,
-  UserPassword = 3,
-  MetaData = 4
+  AccessToken = 1,
+  UserPassword = 2,
+  MetaData = 3,
+  Anonymous = 4
 }
 
 const types = [
   { label: 'Service Account Key', value: Connection.ServiceAccountKey },
-  { label: 'Token', value: Connection.IAMToken },
-  { label: 'Auth Token', value: Connection.AuthToken },
+  { label: 'Access Token', value: Connection.AccessToken },
   { label: 'User/Pass', value: Connection.UserPassword },
   { label: 'Metadata', value: Connection.MetaData },
+  { label: 'Anonymous', value: Connection.Anonymous },
 ];
 
 export const ConfigEditor: React.FC<Props> = (props) => {
@@ -28,6 +28,7 @@ export const ConfigEditor: React.FC<Props> = (props) => {
   const { jsonData, secureJsonFields } = options;
   const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
   const hasKey = secureJsonFields && secureJsonFields.serviceAccAuthAccessKey;
+  const hasToken = secureJsonFields && secureJsonFields.accessToken;
   const kind = jsonData.authKind || Connection.ServiceAccountKey;
   const { FormField } = LegacyForms;
 
@@ -122,6 +123,19 @@ export const ConfigEditor: React.FC<Props> = (props) => {
               />
             </>
         )}
+          {kind === Connection.AccessToken && (
+              <>
+                <CertificationKey
+                    hasCert={!!hasToken}
+                    value={secureJsonData.accessToken || ''}
+                    onChange={(e) => onCertificateChangeFactory('accessToken', e.currentTarget.value)}
+                    label={Components.ConfigEditor.AccessToken.label}
+                    tooltip={Components.ConfigEditor.AccessToken.tooltip}
+                    placeholder={Components.ConfigEditor.AccessToken.placeholder}
+                    onClick={() => onResetClickFactory('accessToken')}
+                />
+              </>
+          )}
         </div>
       </>
   );
