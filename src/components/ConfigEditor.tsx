@@ -67,37 +67,37 @@ export const ConfigEditor: React.FC<Props> = (props) => {
   return (
       <>
         <div className="gf-form">
+          <FormField
+              name="Endpoint"
+              labelWidth={6}
+              inputWidth={20}
+              value={jsonData.endpoint || ''}
+              onChange={onUpdateDatasourceJsonDataOption(props, 'endpoint')}
+              label={Components.ConfigEditor.Endpoint.label}
+              aria-label={Components.ConfigEditor.Endpoint.label}
+              placeholder={Components.ConfigEditor.Endpoint.placeholder}
+              tooltip={Components.ConfigEditor.Endpoint.tooltip}
+          />
+        </div>
+        <div className="gf-form">
+          <FormField
+              name="Location1"
+              labelWidth={6}
+              inputWidth={20}
+              value={jsonData.dbLocation || ''}
+              onChange={onUpdateDatasourceJsonDataOption(props, 'dbLocation')}
+              label={Components.ConfigEditor.DBLocation.label}
+              aria-label={Components.ConfigEditor.DBLocation.label}
+              placeholder={Components.ConfigEditor.DBLocation.placeholder}
+              tooltip={Components.ConfigEditor.DBLocation.tooltip}
+          />
+        </div>
+        <div className="gf-form">
           <InlineLabel width={12}>Auth type</InlineLabel>
           <RadioButtonGroup options={types} value={kind} onChange={(v) => setConnectionType(v!)} size={'md'} />
         </div>
         {kind === Connection.ServiceAccountKey && (
             <>
-              <div className="gf-form">
-                <FormField
-                    name="Endpoint"
-                    labelWidth={6}
-                    inputWidth={20}
-                    value={jsonData.endpoint || ''}
-                    onChange={onUpdateDatasourceJsonDataOption(props, 'endpoint')}
-                    label={Components.ConfigEditor.Endpoint.label}
-                    aria-label={Components.ConfigEditor.Endpoint.label}
-                    placeholder={Components.ConfigEditor.Endpoint.placeholder}
-                    tooltip={Components.ConfigEditor.Endpoint.tooltip}
-                />
-              </div>
-              <div className="gf-form">
-                <FormField
-                    name="Location1"
-                    labelWidth={6}
-                    inputWidth={20}
-                    value={jsonData.dbLocation || ''}
-                    onChange={onUpdateDatasourceJsonDataOption(props, 'dbLocation')}
-                    label={Components.ConfigEditor.DBLocation.label}
-                    aria-label={Components.ConfigEditor.DBLocation.label}
-                    placeholder={Components.ConfigEditor.DBLocation.placeholder}
-                    tooltip={Components.ConfigEditor.DBLocation.tooltip}
-                />
-              </div>
               <CertificationKey
                   hasCert={!!hasKey}
                   value={secureJsonData.serviceAccAuthAccessKey || ''}
