@@ -9,12 +9,18 @@ interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> 
 
 export enum Connection {
   ServiceAccountKey = 0,
-  CREDENTIALS = 1,
+  IAMToken = 1,
+  AuthToken = 2,
+  UserPassword = 3,
+  MetaData = 4
 }
 
 const types = [
   { label: 'Service Account Key', value: Connection.ServiceAccountKey },
-  { label: 'Credentials', value: Connection.CREDENTIALS },
+  { label: 'Token', value: Connection.IAMToken },
+  { label: 'Auth Token', value: Connection.AuthToken },
+  { label: 'User/Pass', value: Connection.UserPassword },
+  { label: 'Metadata', value: Connection.MetaData },
 ];
 
 export const ConfigEditor: React.FC<Props> = (props) => {
@@ -66,6 +72,7 @@ export const ConfigEditor: React.FC<Props> = (props) => {
 
   return (
       <>
+        <div className="gf-form-group">
         <h3>Data base location</h3>
         <br/>
         <div className="gf-form">
@@ -83,7 +90,7 @@ export const ConfigEditor: React.FC<Props> = (props) => {
         </div>
         <div className="gf-form">
           <FormField
-              name="Location1"
+              name="Location"
               labelWidth={12}
               inputWidth={20}
               value={jsonData.dbLocation || ''}
@@ -94,7 +101,8 @@ export const ConfigEditor: React.FC<Props> = (props) => {
               tooltip={Components.ConfigEditor.DBLocation.tooltip}
           />
         </div>
-        <br/>
+        </div>
+        <div className="gf-form-group">
         <h3>Credentials</h3>
         <br/>
         <div className="gf-form">
@@ -114,6 +122,7 @@ export const ConfigEditor: React.FC<Props> = (props) => {
               />
             </>
         )}
+        </div>
       </>
   );
 }
