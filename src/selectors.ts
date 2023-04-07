@@ -7,7 +7,7 @@ export const Components = {
             tooltip: 'YDB endpoint address',
         },
         DBLocation: {
-            label: 'Location',
+            label: 'DB',
             placeholder: '/eu-central1/b1g/etnudu2n',
             tooltip: 'YDB location address',
         },

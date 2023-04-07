@@ -103,6 +103,7 @@ export const ConfigEditor: React.FC<Props> = (props) => {
                   value={secureJsonData.serviceAccAuthAccessKey || ''}
                   onChange={(e) => onCertificateChangeFactory('serviceAccAuthAccessKey', e.currentTarget.value)}
                   label={Components.ConfigEditor.ServiceAccAuthAccessKey.label}
+                  tooltip={Components.ConfigEditor.ServiceAccAuthAccessKey.tooltip}
                   placeholder={Components.ConfigEditor.ServiceAccAuthAccessKey.placeholder}
                   onClick={() => onResetClickFactory('serviceAccAuthAccessKey')}
               />
