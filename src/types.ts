@@ -16,6 +16,7 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
   authKind: number;
   endpoint?: string;
   dbLocation?: string;
+  user?: string;
 }
 
 /**
@@ -23,4 +24,6 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
  */
 export interface MySecureJsonData {
   serviceAccAuthAccessKey?: string;
+  accessToken?: string;
+  password?: string;
 }
