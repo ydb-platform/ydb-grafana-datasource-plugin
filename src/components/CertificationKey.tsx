@@ -2,18 +2,19 @@ import React, { ChangeEvent, MouseEvent, FC } from 'react';
 import { Input, Button, TextArea, InlineFormLabel } from '@grafana/ui';
 
 interface Props {
-    label: string;
     hasCert: boolean;
+    label: string;
+    tooltip: string;
     placeholder: string;
     onChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
     onClick: (event: MouseEvent<HTMLButtonElement>) => void;
     value: string;
 }
 
-export const CertificationKey: FC<Props> = ({ hasCert, label, onChange, onClick, placeholder , value}) => {
+export const CertificationKey: FC<Props> = ({ hasCert, label, tooltip, onChange, onClick, placeholder, value}) => {
     return (
         <div className="gf-form">
-            <InlineFormLabel width={6}>{label}</InlineFormLabel>
+            <InlineFormLabel width={6} tooltip={tooltip}>{label}</InlineFormLabel>
             {hasCert ? (
                 <>
                     <Input type="text" disabled value="configured" width={40}/>

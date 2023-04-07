@@ -26,6 +26,7 @@ var (
 
 // NewDatasource creates a new datasource instance.
 func NewDatasource(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	// LoadSettings(s)
 	datasource := &Datasource{}
 
 	if err := json.Unmarshal(s.JSONData, &datasource.settings); err != nil {
@@ -43,8 +44,8 @@ func NewDatasource(s backend.DataSourceInstanceSettings) (instancemgmt.Instance,
 // its health and has streaming skills.
 type Datasource struct {
 	settings *Settings
-	ConnPath string `json:"path"`
-	ConnData string `json:"apiKey"`
+	// ConnPath string `json:"path"`
+	// ConnData string `json:"apiKey"`
 }
 
 // Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
