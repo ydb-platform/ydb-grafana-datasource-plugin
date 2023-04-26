@@ -25,13 +25,28 @@ var (
 )
 
 // NewDatasource creates a new datasource instance.
-func NewDatasource(_ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	return &Datasource{}, nil
+func NewDatasource(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	// LoadSettings(s)
+	datasource := &Datasource{}
+
+	if err := json.Unmarshal(s.JSONData, &datasource.settings); err != nil {
+		return &datasource.settings, fmt.Errorf("could not unmarshal DataSourceInfo json: %w", err)
+	}
+
+	key := s.DecryptedSecureJSONData["serviceAccAuthAccessKey"]
+	log.DefaultLogger.Info(datasource.settings.DBEndpoint + datasource.settings.DBLocation)
+	log.DefaultLogger.Info(key)
+
+	return datasource, nil
 }
 
 // Datasource is an example datasource which can respond to data queries, reports
 // its health and has streaming skills.
-type Datasource struct{}
+type Datasource struct {
+	settings *Settings
+	// ConnPath string `json:"path"`
+	// ConnData string `json:"apiKey"`
+}
 
 // Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
 // created. As soon as datasource settings change detected by SDK old datasource instance will
@@ -102,6 +117,8 @@ func (d *Datasource) CheckHealth(_ context.Context, req *backend.CheckHealthRequ
 	// when logging at a non-Debug level, make sure you don't include sensitive information in the message
 	// (like the *backend.QueryDataRequest)
 	log.DefaultLogger.Debug("CheckHealth called")
+
+	log.DefaultLogger.Error("caught!!! Test!")
 
 	var status = backend.HealthStatusOk
 	var message = "Data source is working"
