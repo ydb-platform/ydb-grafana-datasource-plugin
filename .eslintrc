@@ -1,3 +1,14 @@
 {
-  "extends": "./.config/.eslintrc"
+  "extends": "./.config/.eslintrc",
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "ImportDeclaration[source.value='react'] :matches(ImportNamespaceSpecifier:not([local.name='React']), ImportDefaultSpecifier, ImportSpecifier)",
+        "message": "Please use import * as React from 'react' instead."
+      }
+    ],
+    "no-console": ["error", { "allow": ["warn", "error"] }]
+  }
 }

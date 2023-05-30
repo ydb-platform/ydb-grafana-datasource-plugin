@@ -3,6 +3,7 @@
   "type": "datasource",
   "name": "YDB",
   "id": "grafana-ydb-datasource",
+  "alerting": true,
   "metrics": true,
   "backend": true,
   "executable": "gpx_ydb",
