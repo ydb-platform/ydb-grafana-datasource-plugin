@@ -4,13 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"time"
+
+	"github.com/ydb/grafana-ydb-datasource/pkg/models"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/ydb-platform/ydb-go-sdk/v3"
+	yc "github.com/ydb-platform/ydb-go-yc"
+	// "github.com/ydb-platform/ydb-go-sdk/v3/balancers"
 )
 
 // Make sure Datasource implements required interfaces. This is important to do
@@ -25,27 +29,54 @@ var (
 )
 
 // NewDatasource creates a new datasource instance.
-func NewDatasource(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	// LoadSettings(s)
-	datasource := &Datasource{}
-
-	if err := json.Unmarshal(s.JSONData, &datasource.settings); err != nil {
-		return &datasource.settings, fmt.Errorf("could not unmarshal DataSourceInfo json: %w", err)
+func NewDatasource(dis backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	settings, err := models.LoadSettings(dis)
+	if err != nil {
+		return nil, err
 	}
 
-	key := s.DecryptedSecureJSONData["serviceAccAuthAccessKey"]
-	log.DefaultLogger.Info(datasource.settings.DBEndpoint + datasource.settings.DBLocation)
-	log.DefaultLogger.Info(key)
+	return &Datasource{
+		CallResourceHandler: newResourceHandler(),
+		settings:            settings,
+	}, nil
+}
 
-	return datasource, nil
+func (d *Datasource) CreateDatabaseConnection(ctx context.Context) (*ydb.Driver, error) {
+	if d.settings.IsSecureConnection && d.settings.Secrets.Certificate != "" {
+		return d.createDBConnectionWithCert(ctx)
+	}
+	return d.createDBConnectionWithoutCert(ctx)
+}
+
+func (d *Datasource) createDBConnectionWithCert(ctx context.Context) (*ydb.Driver, error) {
+	creds := getCreds(d.settings)
+	return ydb.Open(ctx, d.settings.Dsn, ydb.WithCertificatesFromPem([]byte(d.settings.Secrets.Certificate)), creds)
+}
+
+func (d *Datasource) createDBConnectionWithoutCert(ctx context.Context) (*ydb.Driver, error) {
+	creds := getCreds(d.settings)
+	return ydb.Open(ctx, d.settings.Dsn, creds)
+}
+
+func getCreds(settings *models.Settings) (ydb.Option) {
+	switch  settings.AuthKind {
+	case "ServiceAccountKey":
+		return yc.WithServiceAccountKeyCredentials(settings.Secrets.ServiceAccAuthAccessKey)
+	case "AccessToken":
+		return ydb.WithAccessTokenCredentials(settings.Secrets.AccessToken)
+	case "UserPassword":
+		return ydb.WithStaticCredentials(settings.User, settings.Secrets.Password)
+	case "MetaData":
+		return yc.WithMetadataCredentials()
+	}
+	return ydb.WithAnonymousCredentials()
 }
 
 // Datasource is an example datasource which can respond to data queries, reports
 // its health and has streaming skills.
 type Datasource struct {
-	settings *Settings
-	// ConnPath string `json:"path"`
-	// ConnData string `json:"apiKey"`
+	backend.CallResourceHandler
+	settings *models.Settings
 }
 
 // Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
@@ -62,7 +93,7 @@ func (d *Datasource) Dispose() {
 func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	// when logging at a non-Debug level, make sure you don't include sensitive information in the message
 	// (like the *backend.QueryDataRequest)
-	log.DefaultLogger.Debug("QueryData called", "numQueries", len(req.Queries))
+	log.DefaultLogger.Info("QueryData called", "numQueries", len(req.Queries))
 
 	// create response struct
 	response := backend.NewQueryDataResponse()
@@ -75,6 +106,7 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 		// based on with RefID as identifier
 		response.Responses[q.RefID] = res
 	}
+	log.DefaultLogger.Info("QueryData response", response)
 
 	return response, nil
 }
@@ -82,6 +114,7 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 type queryModel struct{}
 
 func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
+	log.DefaultLogger.Info("query called", query.JSON)
 	var response backend.DataResponse
 
 	// Unmarshal the JSON into our queryModel.
@@ -113,20 +146,25 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 // The main use case for these health checks is the test button on the
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
-func (d *Datasource) CheckHealth(_ context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+func (d *Datasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	// when logging at a non-Debug level, make sure you don't include sensitive information in the message
 	// (like the *backend.QueryDataRequest)
-	log.DefaultLogger.Debug("CheckHealth called")
+	log.DefaultLogger.Info("CheckHealth called")
 
-	log.DefaultLogger.Error("caught!!! Test!")
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	db, err := d.CreateDatabaseConnection(ctxWithTimeout)
 
 	var status = backend.HealthStatusOk
 	var message = "Data source is working"
 
-	if rand.Int()%2 == 0 {
+	if err != nil {
+		log.DefaultLogger.Error("Checkhealth failed", err)
 		status = backend.HealthStatusError
-		message = "randomized error"
+		message = fmt.Errorf("connection to data source failed. %w", err).Error()
 	}
+
+	defer db.Close(ctx)
 
 	return &backend.CheckHealthResult{
 		Status:  status,
