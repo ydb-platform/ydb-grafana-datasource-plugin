@@ -1,2 +1,2 @@
 export { ConfigEditor } from 'components/ConfigEditor/ConfigEditor';
-export { QueryEditor } from 'components/QueryEditor/QueryEditor';
+export { YDBQueryEditor } from 'components/QueryEditor/QueryEditor';
