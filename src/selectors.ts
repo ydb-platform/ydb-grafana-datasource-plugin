@@ -1,5 +1,21 @@
 import { E2ESelectors } from '@grafana/e2e-selectors';
 export const Components = {
+  QueryEditor: {
+    Types: {
+      label: 'Query Type',
+      tooltip: 'Query Type',
+      options: {
+        SQLEditor: 'SQL Editor',
+        QueryBuilder: 'Query Builder',
+      },
+      switcher: {
+        title: 'Are you sure?',
+        body: 'Query will be reset.',
+        confirmText: 'Continue',
+        dismissText: 'Cancel',
+      },
+    },
+  },
   ConfigEditor: {
     Endpoint: {
       label: 'Endpoint',
@@ -14,7 +30,7 @@ export const Components = {
     Certificate: {
       label: 'TLS/SSL Client Certificate',
       tooltip: 'To authenticate with an TLS/SSL client certificate, provide the certificate here',
-      placeholder: "Begins with -----BEGIN CERTIFICATE-----"
+      placeholder: 'Begins with -----BEGIN CERTIFICATE-----',
     },
     ServiceAccAuthAccessKey: {
       label: 'Service Account Key',

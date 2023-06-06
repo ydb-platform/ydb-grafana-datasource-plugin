@@ -1,13 +1,36 @@
 import { DataQuery, DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 
-export interface YdbQuery extends DataQuery {
-  queryText?: string;
-  constant: number;
+export const QueryTypes = {
+  SQL: 'sql',
+  Builder: 'builder',
+} as const;
+
+export type QueryType = (typeof QueryTypes)[keyof typeof QueryTypes];
+
+export interface YDBQueryBase extends DataQuery {}
+
+export interface YDBSQLQuery extends YDBQueryBase {
+  queryType: typeof QueryTypes.SQL;
+  rawSql: string;
+  //   meta?: {
+  //     timezone?: string;
+  //     // meta fields to be used just for building builder options when migrating  back to QueryType.Builder
+  //     builderOptions?: SqlBuilderOptions;
+  //   };
 }
 
-export const DEFAULT_QUERY: Partial<YdbQuery> = {
-  constant: 6.5,
-};
+export interface YDBBuilderQuery extends YDBQueryBase {
+  queryType: typeof QueryTypes.Builder;
+  rawSql: string;
+  //   builderOptions: SqlBuilderOptions;
+  //   format: Format;
+  //   selectedFormat: Format;
+  //   meta?: {
+  //     timezone?: string;
+  //   };
+}
+
+export type YDBQuery = YDBSQLQuery | YDBBuilderQuery;
 
 /**
  * These are options configured for each DataSource instance
@@ -33,14 +56,14 @@ export interface YdbSecureJsonData {
   serviceAccAuthAccessKey?: string;
   accessToken?: string;
   password?: string;
-  certificate?: string
+  certificate?: string;
 }
 
 export const YdbSecureOptions: Record<string, keyof YdbSecureJsonData> = {
   serviceAccAuthAccessKey: 'serviceAccAuthAccessKey',
   accessToken: 'accessToken',
   password: 'password',
-  certificate: 'certificate'
+  certificate: 'certificate',
 };
 
 export const AuthenticationOptions = {
