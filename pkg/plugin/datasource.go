@@ -4,18 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path"
 	"time"
 
-	"github.com/ydb/grafana-ydb-datasource/pkg/models"
+	"github.com/ydb-platform/ydb-go-sdk/v3"
+	"github.com/ydb-platform/ydb-go-sdk/v3/scheme"
+	"github.com/ydb-platform/ydb-go-sdk/v3/table"
+	"github.com/ydb-platform/ydb-go-sdk/v3/table/result"
+	yc "github.com/ydb-platform/ydb-go-yc"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/ydb-platform/ydb-go-sdk/v3"
-	"github.com/ydb-platform/ydb-go-sdk/v3/table"
-	"github.com/ydb-platform/ydb-go-sdk/v3/table/result"
-	yc "github.com/ydb-platform/ydb-go-yc"
-	// "github.com/ydb-platform/ydb-go-sdk/v3/balancers"
+
+	"github.com/ydb/grafana-ydb-datasource/pkg/models"
 )
 
 // Make sure Datasource implements required interfaces. This is important to do
@@ -42,7 +44,7 @@ func NewDatasource(dis backend.DataSourceInstanceSettings) (instancemgmt.Instanc
 	}, nil
 }
 
-func (d *Datasource) CreateDatabaseConnection(ctx context.Context) (error) {
+func (d *Datasource) CreateDatabaseConnection(ctx context.Context) error {
 	var db *ydb.Driver
 	var err error
 	if d.settings.IsSecureConnection && d.settings.Secrets.Certificate != "" {
@@ -66,8 +68,8 @@ func (d *Datasource) createDBConnectionWithoutCert(ctx context.Context) (*ydb.Dr
 	return ydb.Open(ctx, d.settings.Dsn, creds)
 }
 
-func getCreds(settings *models.Settings) (ydb.Option) {
-	switch  settings.AuthKind {
+func getCreds(settings *models.Settings) ydb.Option {
+	switch settings.AuthKind {
 	case "ServiceAccountKey":
 		return yc.WithServiceAccountKeyCredentials(settings.Secrets.ServiceAccAuthAccessKey)
 	case "AccessToken":
@@ -85,7 +87,7 @@ func getCreds(settings *models.Settings) (ydb.Option) {
 type Datasource struct {
 	backend.CallResourceHandler
 	settings *models.Settings
-	driver *ydb.Driver
+	driver   *ydb.Driver
 }
 
 // Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
@@ -104,9 +106,9 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 	// (like the *backend.QueryDataRequest)
 	log.DefaultLogger.Info("QueryData called", "numQueries", len(req.Queries))
 
-	if (d.driver == nil) {
+	if d.driver == nil {
 		err := d.CreateDatabaseConnection(ctx)
-		if (err != nil) {
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -127,6 +129,28 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 	return response, nil
 }
 
+// listTables returns list of all tables includes folder tables
+func listTables(ctx context.Context, db *ydb.Driver, folder string) (tables []string, _ error) {
+	dir, err := db.Scheme().ListDirectory(ctx, folder)
+	if err != nil {
+		return nil, err
+	}
+	for _, entity := range dir.Children {
+		entityPath := path.Join(folder, entity.Name)
+		switch entity.Type {
+		case scheme.EntryTable, scheme.EntryColumnTable:
+			tables = append(tables, entityPath)
+		case scheme.EntryDirectory:
+			entityTables, err := listTables(ctx, db, entityPath)
+			if err != nil {
+				return nil, err
+			}
+			tables = append(tables, entityTables...)
+		}
+	}
+	return tables, nil
+}
+
 type queryModel struct {
 	RawSql string `json:"rawSql"`
 }
@@ -144,59 +168,59 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 	var response backend.DataResponse
 	var (
 		readTx = table.TxControl(
-		  table.BeginTx(
-			table.WithOnlineReadOnly(),
-		  ),
-		  table.CommitTx(),
+			table.BeginTx(
+				table.WithOnlineReadOnly(),
+			),
+			table.CommitTx(),
 		)
-	  )
-	  err := d.driver.Table().Do(ctx,
+	)
+	err := d.driver.Table().Do(ctx,
 		func(ctx context.Context, s table.Session) (err error) {
-		  var (
-			res   result.Result
-			// id    uint64 // a variable for required results
-			// title *string // a pointer for optional results
-			// date  *time.Time // a pointer for optional results
-		  )
-		  _, res, err = s.Execute(
-			ctx,
-			readTx,
-			parsedQuery.RawSql,
-			table.NewQueryParameters(),
-		  )
-		  if err != nil {
-			return err
-		  }
-		  defer res.Close() // result must be closed
-		  log.DefaultLogger.Info("> select_simple_transaction:\n", res)
-		  for res.NextResultSet(ctx) {
-
-			for res.NextRow() {
-			  // use ScanNamed to pass column names from the scan string,
-			  // addresses (and data types) to be assigned the query results
-			  var one int
-       	 	err = res.Scan(&one)
-
-			//   err = res.ScanNamed(
-			// 	named.Optional("series_id", &id),
-			// 	named.Optional("title", &title),
-			// 	named.Optional("release_date", &date),
-			//   )
-			  if err != nil {
+			var (
+				res result.Result
+				// id    uint64 // a variable for required results
+				// title *string // a pointer for optional results
+				// date  *time.Time // a pointer for optional results
+			)
+			_, res, err = s.Execute(
+				ctx,
+				readTx,
+				parsedQuery.RawSql,
+				table.NewQueryParameters(),
+			)
+			if err != nil {
 				return err
-			  }
-			  log.DefaultLogger.Info(
-				"  > %d %s %s\n",
-				one,
-			  )
 			}
-		  }
-		  return res.Err()
+			defer res.Close() // result must be closed
+			log.DefaultLogger.Info("> select_simple_transaction:\n", res)
+			for res.NextResultSet(ctx) {
+
+				for res.NextRow() {
+					// use ScanNamed to pass column names from the scan string,
+					// addresses (and data types) to be assigned the query results
+					var one int
+					err = res.Scan(&one)
+
+					//   err = res.ScanNamed(
+					// 	named.Optional("series_id", &id),
+					// 	named.Optional("title", &title),
+					// 	named.Optional("release_date", &date),
+					//   )
+					if err != nil {
+						return err
+					}
+					log.DefaultLogger.Info(
+						"  > %d %s %s\n",
+						one,
+					)
+				}
+			}
+			return res.Err()
 		},
-	  )
-	  if err != nil {
+	)
+	if err != nil {
 		// handle a query execution error
-	  }
+	}
 
 	// create data frame response.
 	// For an overview on data frames and how grafana handles them:
