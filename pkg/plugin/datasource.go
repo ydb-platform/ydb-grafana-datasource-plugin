@@ -4,17 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path"
 	"time"
 
-	"github.com/ydb/grafana-ydb-datasource/pkg/models"
+	"github.com/ydb-platform/ydb-go-sdk/v3"
+	"github.com/ydb-platform/ydb-go-sdk/v3/scheme"
+	"github.com/ydb-platform/ydb-go-sdk/v3/table"
+	"github.com/ydb-platform/ydb-go-sdk/v3/table/result"
+	yc "github.com/ydb-platform/ydb-go-yc"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/ydb-platform/ydb-go-sdk/v3"
-	yc "github.com/ydb-platform/ydb-go-yc"
-	// "github.com/ydb-platform/ydb-go-sdk/v3/balancers"
+
+	"github.com/ydb/grafana-ydb-datasource/pkg/models"
 )
 
 // Make sure Datasource implements required interfaces. This is important to do
@@ -41,11 +44,18 @@ func NewDatasource(dis backend.DataSourceInstanceSettings) (instancemgmt.Instanc
 	}, nil
 }
 
-func (d *Datasource) CreateDatabaseConnection(ctx context.Context) (*ydb.Driver, error) {
+func (d *Datasource) CreateDatabaseConnection(ctx context.Context) error {
+	var db *ydb.Driver
+	var err error
 	if d.settings.IsSecureConnection && d.settings.Secrets.Certificate != "" {
-		return d.createDBConnectionWithCert(ctx)
+		db, err = d.createDBConnectionWithCert(ctx)
 	}
-	return d.createDBConnectionWithoutCert(ctx)
+	db, err = d.createDBConnectionWithoutCert(ctx)
+	if err != nil {
+		return err
+	}
+	d.driver = db
+	return nil
 }
 
 func (d *Datasource) createDBConnectionWithCert(ctx context.Context) (*ydb.Driver, error) {
@@ -58,8 +68,8 @@ func (d *Datasource) createDBConnectionWithoutCert(ctx context.Context) (*ydb.Dr
 	return ydb.Open(ctx, d.settings.Dsn, creds)
 }
 
-func getCreds(settings *models.Settings) (ydb.Option) {
-	switch  settings.AuthKind {
+func getCreds(settings *models.Settings) ydb.Option {
+	switch settings.AuthKind {
 	case "ServiceAccountKey":
 		return yc.WithServiceAccountKeyCredentials(settings.Secrets.ServiceAccAuthAccessKey)
 	case "AccessToken":
@@ -77,6 +87,7 @@ func getCreds(settings *models.Settings) (ydb.Option) {
 type Datasource struct {
 	backend.CallResourceHandler
 	settings *models.Settings
+	driver   *ydb.Driver
 }
 
 // Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
@@ -95,6 +106,13 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 	// (like the *backend.QueryDataRequest)
 	log.DefaultLogger.Info("QueryData called", "numQueries", len(req.Queries))
 
+	if d.driver == nil {
+		err := d.CreateDatabaseConnection(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// create response struct
 	response := backend.NewQueryDataResponse()
 
@@ -111,33 +129,113 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 	return response, nil
 }
 
-type queryModel struct{}
-
-func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
-	log.DefaultLogger.Info("query called", query.JSON)
-	var response backend.DataResponse
-
-	// Unmarshal the JSON into our queryModel.
-	var qm queryModel
-
-	err := json.Unmarshal(query.JSON, &qm)
+// listTables returns list of all tables includes folder tables
+func listTables(ctx context.Context, db *ydb.Driver, folder string) (tables []string, _ error) {
+	dir, err := db.Scheme().ListDirectory(ctx, folder)
 	if err != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", err.Error()))
+		return nil, err
+	}
+	for _, entity := range dir.Children {
+		entityPath := path.Join(folder, entity.Name)
+		switch entity.Type {
+		case scheme.EntryTable, scheme.EntryColumnTable:
+			tables = append(tables, entityPath)
+		case scheme.EntryDirectory:
+			entityTables, err := listTables(ctx, db, entityPath)
+			if err != nil {
+				return nil, err
+			}
+			tables = append(tables, entityTables...)
+		}
+	}
+	return tables, nil
+}
+
+type queryModel struct {
+	RawSql string `json:"rawSql"`
+}
+
+func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
+	log.DefaultLogger.Info("query called", query.JSON)
+	var parsedQuery queryModel
+
+	queryUnmarshalError := json.Unmarshal(query.JSON, &parsedQuery)
+	if queryUnmarshalError != nil {
+		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", queryUnmarshalError.Error()))
+	}
+	log.DefaultLogger.Info("query unmarshalled", parsedQuery.RawSql)
+
+	var response backend.DataResponse
+	var (
+		readTx = table.TxControl(
+			table.BeginTx(
+				table.WithOnlineReadOnly(),
+			),
+			table.CommitTx(),
+		)
+	)
+	err := d.driver.Table().Do(ctx,
+		func(ctx context.Context, s table.Session) (err error) {
+			var (
+				res result.Result
+				// id    uint64 // a variable for required results
+				// title *string // a pointer for optional results
+				// date  *time.Time // a pointer for optional results
+			)
+			_, res, err = s.Execute(
+				ctx,
+				readTx,
+				parsedQuery.RawSql,
+				table.NewQueryParameters(),
+			)
+			if err != nil {
+				return err
+			}
+			defer res.Close() // result must be closed
+			log.DefaultLogger.Info("> select_simple_transaction:\n", res)
+			for res.NextResultSet(ctx) {
+
+				for res.NextRow() {
+					// use ScanNamed to pass column names from the scan string,
+					// addresses (and data types) to be assigned the query results
+					var one int
+					err = res.Scan(&one)
+
+					//   err = res.ScanNamed(
+					// 	named.Optional("series_id", &id),
+					// 	named.Optional("title", &title),
+					// 	named.Optional("release_date", &date),
+					//   )
+					if err != nil {
+						return err
+					}
+					log.DefaultLogger.Info(
+						"  > %d %s %s\n",
+						one,
+					)
+				}
+			}
+			return res.Err()
+		},
+	)
+	if err != nil {
+		// handle a query execution error
 	}
 
 	// create data frame response.
 	// For an overview on data frames and how grafana handles them:
 	// https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/
-	frame := data.NewFrame("response")
 
-	// add fields.
-	frame.Fields = append(frame.Fields,
-		data.NewField("time", nil, []time.Time{query.TimeRange.From, query.TimeRange.To}),
-		data.NewField("values", nil, []int64{10, 20}),
-	)
+	// frame := data.NewFrame("response")
 
-	// add the frames to the response.
-	response.Frames = append(response.Frames, frame)
+	// // add fields.
+	// frame.Fields = append(frame.Fields,
+	// 	data.NewField("time", nil, []time.Time{query.TimeRange.From, query.TimeRange.To}),
+	// 	data.NewField("values", nil, []int64{10, 20}),
+	// )
+
+	// // add the frames to the response.
+	// response.Frames = append(response.Frames, frame)
 
 	return response
 }
@@ -153,7 +251,7 @@ func (d *Datasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	db, err := d.CreateDatabaseConnection(ctxWithTimeout)
+	err := d.CreateDatabaseConnection(ctxWithTimeout)
 
 	var status = backend.HealthStatusOk
 	var message = "Data source is working"
@@ -164,7 +262,7 @@ func (d *Datasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 		message = fmt.Errorf("connection to data source failed. %w", err).Error()
 	}
 
-	defer db.Close(ctx)
+	// defer db.Close(ctx)
 
 	return &backend.CheckHealthResult{
 		Status:  status,
