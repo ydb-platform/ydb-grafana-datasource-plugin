@@ -10,7 +10,10 @@ import (
 	"github.com/ydb-platform/ydb-go-sdk/v3"
 	"github.com/ydb-platform/ydb-go-sdk/v3/scheme"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table"
+	"github.com/ydb-platform/ydb-go-sdk/v3/table/options"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/result"
+	"github.com/ydb-platform/ydb-go-sdk/v3/table/result/named"
+	"github.com/ydb-platform/ydb-go-sdk/v3/table/types"
 	yc "github.com/ydb-platform/ydb-go-yc"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -151,6 +154,14 @@ func listTables(ctx context.Context, db *ydb.Driver, folder string) (tables []st
 	return tables, nil
 }
 
+func resultSetMeta(resultSet result.Set) (meta map[string]types.Type) {
+	meta = make(map[string]types.Type, resultSet.ColumnCount())
+	resultSet.Columns(func(column options.Column) {
+		meta[column.Name] = column.Type
+	})
+	return meta
+}
+
 type queryModel struct {
 	RawSql string `json:"rawSql"`
 }
@@ -194,25 +205,23 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 			defer res.Close() // result must be closed
 			log.DefaultLogger.Info("> select_simple_transaction:\n", res)
 			for res.NextResultSet(ctx) {
+				meta := resultSetMeta(res.CurrentResultSet())
+				row := make([]named.Value, 0, len(meta))
+				for name := range meta {
+					var value types.Value
+					row = append(row, named.Optional(name, &value))
+				}
 
 				for res.NextRow() {
-					// use ScanNamed to pass column names from the scan string,
-					// addresses (and data types) to be assigned the query results
-					var one int
-					err = res.Scan(&one)
-
-					//   err = res.ScanNamed(
-					// 	named.Optional("series_id", &id),
-					// 	named.Optional("title", &title),
-					// 	named.Optional("release_date", &date),
-					//   )
+					err = res.ScanNamed(row...)
 					if err != nil {
 						return err
 					}
-					log.DefaultLogger.Info(
-						"  > %d %s %s\n",
-						one,
-					)
+					logArgs := make([]interface{}, 0, len(meta))
+					for name, value := range row {
+						logArgs = append(logArgs, fmt.Sprintf("%s: %v", name, value.Value))
+					}
+					log.DefaultLogger.Info("  > row:", logArgs...)
 				}
 			}
 			return res.Err()
