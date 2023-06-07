@@ -23,7 +23,6 @@ export const QueryTypeSwitcher = (props: QueryTypeSwitcherProps) => {
   ];
 
   const onQueryTypeChange = (queryType: QueryType, confirm = false) => {
-    console.log('QUERY', query);
     if (queryType === 'builder' && !confirm) {
       setConfirmModalState(true);
     } else {
