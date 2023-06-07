@@ -219,7 +219,7 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 					}
 					logArgs := make([]interface{}, 0, len(meta))
 					for name, value := range row {
-						logArgs = append(logArgs, fmt.Sprintf("%s: %v", name, value.Value))
+						logArgs = append(logArgs, fmt.Sprintf("%d: %v", name, value.Value))
 					}
 					log.DefaultLogger.Info("  > row:", logArgs...)
 				}
