@@ -2,73 +2,53 @@ package plugin
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path"
+	"strconv"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+	"github.com/grafana/sqlds/v2"
 	"github.com/ydb-platform/ydb-go-sdk/v3"
 	"github.com/ydb-platform/ydb-go-sdk/v3/scheme"
-	"github.com/ydb-platform/ydb-go-sdk/v3/table"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/options"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/result"
-	"github.com/ydb-platform/ydb-go-sdk/v3/table/result/named"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/types"
 	yc "github.com/ydb-platform/ydb-go-yc"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
+	"github.com/ydb/grafana-ydb-datasource/pkg/converters"
+	"github.com/ydb/grafana-ydb-datasource/pkg/macros"
 	"github.com/ydb/grafana-ydb-datasource/pkg/models"
 )
 
-// Make sure Datasource implements required interfaces. This is important to do
-// since otherwise we will only get a not implemented error response from plugin in
-// runtime. In this example datasource instance implements backend.QueryDataHandler,
-// backend.CheckHealthHandler interfaces. Plugin should not implement all these
-// interfaces- only those which are required for a particular task.
-var (
-	_ backend.QueryDataHandler      = (*Datasource)(nil)
-	_ backend.CheckHealthHandler    = (*Datasource)(nil)
-	_ instancemgmt.InstanceDisposer = (*Datasource)(nil)
-)
-
-// NewDatasource creates a new datasource instance.
-func NewDatasource(dis backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	settings, err := models.LoadSettings(dis)
+func createDatabaseConnection(ctx context.Context, settings *models.Settings) (*ydb.Driver, error) {
+	var db *ydb.Driver
+	var err error
+	if settings.IsSecureConnection && settings.Secrets.Certificate != "" {
+		db, err = createDBConnectionWithCert(ctx, settings)
+	}
+	db, err = createDBConnectionWithoutCert(ctx, settings)
 	if err != nil {
 		return nil, err
 	}
-
-	return &Datasource{
-		CallResourceHandler: newResourceHandler(),
-		settings:            settings,
-	}, nil
+	return db, nil
 }
 
-func (d *Datasource) CreateDatabaseConnection(ctx context.Context) error {
-	var db *ydb.Driver
-	var err error
-	if d.settings.IsSecureConnection && d.settings.Secrets.Certificate != "" {
-		db, err = d.createDBConnectionWithCert(ctx)
-	}
-	db, err = d.createDBConnectionWithoutCert(ctx)
-	if err != nil {
-		return err
-	}
-	d.driver = db
-	return nil
+func createDBConnectionWithCert(ctx context.Context, settings *models.Settings) (*ydb.Driver, error) {
+	creds := getCreds(settings)
+	return ydb.Open(ctx, settings.Dsn, ydb.WithCertificatesFromPem([]byte(settings.Secrets.Certificate)), creds)
 }
 
-func (d *Datasource) createDBConnectionWithCert(ctx context.Context) (*ydb.Driver, error) {
-	creds := getCreds(d.settings)
-	return ydb.Open(ctx, d.settings.Dsn, ydb.WithCertificatesFromPem([]byte(d.settings.Secrets.Certificate)), creds)
-}
-
-func (d *Datasource) createDBConnectionWithoutCert(ctx context.Context) (*ydb.Driver, error) {
-	creds := getCreds(d.settings)
-	return ydb.Open(ctx, d.settings.Dsn, creds)
+func createDBConnectionWithoutCert(ctx context.Context, settings *models.Settings) (*ydb.Driver, error) {
+	creds := getCreds(settings)
+	return ydb.Open(ctx, settings.Dsn, creds)
 }
 
 func getCreds(settings *models.Settings) ydb.Option {
@@ -85,52 +65,8 @@ func getCreds(settings *models.Settings) ydb.Option {
 	return ydb.WithAnonymousCredentials()
 }
 
-// Datasource is an example datasource which can respond to data queries, reports
-// its health and has streaming skills.
-type Datasource struct {
-	backend.CallResourceHandler
-	settings *models.Settings
-	driver   *ydb.Driver
-}
-
-// Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
-// created. As soon as datasource settings change detected by SDK old datasource instance will
-// be disposed and a new one will be created using NewSampleDatasource factory function.
-func (d *Datasource) Dispose() {
-	// Clean up datasource instance resources.
-}
-
-// QueryData handles multiple queries and returns multiple responses.
-// req contains the queries []DataQuery (where each query contains RefID as a unique identifier).
-// The QueryDataResponse contains a map of RefID to the response for each query, and each response
-// contains Frames ([]*Frame).
-func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	// when logging at a non-Debug level, make sure you don't include sensitive information in the message
-	// (like the *backend.QueryDataRequest)
-	log.DefaultLogger.Info("QueryData called", "numQueries", len(req.Queries))
-
-	if d.driver == nil {
-		err := d.CreateDatabaseConnection(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// create response struct
-	response := backend.NewQueryDataResponse()
-
-	// loop over queries and execute them individually.
-	for _, q := range req.Queries {
-		res := d.query(ctx, req.PluginContext, q)
-
-		// save the response in a hashmap
-		// based on with RefID as identifier
-		response.Responses[q.RefID] = res
-	}
-	log.DefaultLogger.Info("QueryData response", response)
-
-	return response, nil
-}
+// Ydb defines how to connect to a Ydb datasource
+type Ydb struct{}
 
 // listTables returns list of all tables includes folder tables
 func listTables(ctx context.Context, db *ydb.Driver, folder string) (tables []string, _ error) {
@@ -166,115 +102,164 @@ type queryModel struct {
 	RawSql string `json:"rawSql"`
 }
 
-func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
-	log.DefaultLogger.Info("query called", query.JSON)
-	var parsedQuery queryModel
+// func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
+// 	log.DefaultLogger.Info("query called", query.JSON)
+// 	var parsedQuery queryModel
 
-	queryUnmarshalError := json.Unmarshal(query.JSON, &parsedQuery)
-	if queryUnmarshalError != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", queryUnmarshalError.Error()))
-	}
-	log.DefaultLogger.Info("query unmarshalled", parsedQuery.RawSql)
+// 	queryUnmarshalError := json.Unmarshal(query.JSON, &parsedQuery)
+// 	if queryUnmarshalError != nil {
+// 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", queryUnmarshalError.Error()))
+// 	}
+// 	log.DefaultLogger.Info("query unmarshalled", parsedQuery.RawSql)
 
-	var response backend.DataResponse
-	var (
-		readTx = table.TxControl(
-			table.BeginTx(
-				table.WithOnlineReadOnly(),
-			),
-			table.CommitTx(),
-		)
-	)
-	err := d.driver.Table().Do(ctx,
-		func(ctx context.Context, s table.Session) (err error) {
-			var (
-				res result.Result
-				// id    uint64 // a variable for required results
-				// title *string // a pointer for optional results
-				// date  *time.Time // a pointer for optional results
-			)
-			_, res, err = s.Execute(
-				ctx,
-				readTx,
-				parsedQuery.RawSql,
-				table.NewQueryParameters(),
-			)
-			if err != nil {
-				return err
-			}
-			defer res.Close() // result must be closed
-			log.DefaultLogger.Info("> select_simple_transaction:\n", res)
-			for res.NextResultSet(ctx) {
-				meta := resultSetMeta(res.CurrentResultSet())
-				row := make([]named.Value, 0, len(meta))
-				for name := range meta {
-					var value types.Value
-					row = append(row, named.Optional(name, &value))
-				}
+// 	var response backend.DataResponse
+// 	var (
+// 		readTx = table.TxControl(
+// 			table.BeginTx(
+// 				table.WithOnlineReadOnly(),
+// 			),
+// 			table.CommitTx(),
+// 		)
+// 	)
+// 	err := d.driver.Table().Do(ctx,
+// 		func(ctx context.Context, s table.Session) (err error) {
+// 			var (
+// 				res result.Result
+// 				// id    uint64 // a variable for required results
+// 				// title *string // a pointer for optional results
+// 				// date  *time.Time // a pointer for optional results
+// 			)
+// 			_, res, err = s.Execute(
+// 				ctx,
+// 				readTx,
+// 				parsedQuery.RawSql,
+// 				table.NewQueryParameters(),
+// 			)
+// 			if err != nil {
+// 				return err
+// 			}
+// 			defer res.Close() // result must be closed
+// 			log.DefaultLogger.Info("> select_simple_transaction:\n", res)
+// 			for res.NextResultSet(ctx) {
+// 				meta := resultSetMeta(res.CurrentResultSet())
+// 				row := make([]named.Value, 0, len(meta))
+// 				for name := range meta {
+// 					var value types.Value
+// 					row = append(row, named.Optional(name, &value))
+// 				}
 
-				for res.NextRow() {
-					err = res.ScanNamed(row...)
-					if err != nil {
-						return err
-					}
-					logArgs := make([]interface{}, 0, len(meta))
-					for name, value := range row {
-						logArgs = append(logArgs, fmt.Sprintf("%d: %v", name, value.Value))
-					}
-					log.DefaultLogger.Info("  > row:", logArgs...)
-				}
-			}
-			return res.Err()
+// 				for res.NextRow() {
+// 					err = res.ScanNamed(row...)
+// 					if err != nil {
+// 						return err
+// 					}
+// 					logArgs := make([]interface{}, 0, len(meta))
+// 					for name, value := range row {
+// 						logArgs = append(logArgs, fmt.Sprintf("%d: %v", name, value.Value))
+// 					}
+// 					log.DefaultLogger.Info("  > row:", logArgs...)
+// 				}
+// 			}
+// 			return res.Err()
+// 		},
+// 	)
+// 	if err != nil {
+// 		// handle a query execution error
+// 	}
+
+// 	// create data frame response.
+// 	// For an overview on data frames and how grafana handles them:
+// 	// https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/
+
+// 	// frame := data.NewFrame("response")
+
+// 	// // add fields.
+// 	// frame.Fields = append(frame.Fields,
+// 	// 	data.NewField("time", nil, []time.Time{query.TimeRange.From, query.TimeRange.To}),
+// 	// 	data.NewField("values", nil, []int64{10, 20}),
+// 	// )
+
+// 	// // add the frames to the response.
+// 	// response.Frames = append(response.Frames, frame)
+
+// 	return response
+// }
+
+
+func (h *Ydb) Settings(config backend.DataSourceInstanceSettings) sqlds.DriverSettings {
+	timeout := 60
+	return sqlds.DriverSettings{
+		Timeout: time.Second * time.Duration(timeout),
+		FillMode: &data.FillMissing{
+			Mode: data.FillModeNull,
 		},
-	)
-	if err != nil {
-		// handle a query execution error
 	}
-
-	// create data frame response.
-	// For an overview on data frames and how grafana handles them:
-	// https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/
-
-	// frame := data.NewFrame("response")
-
-	// // add fields.
-	// frame.Fields = append(frame.Fields,
-	// 	data.NewField("time", nil, []time.Time{query.TimeRange.From, query.TimeRange.To}),
-	// 	data.NewField("values", nil, []int64{10, 20}),
-	// )
-
-	// // add the frames to the response.
-	// response.Frames = append(response.Frames, frame)
-
-	return response
 }
 
-// CheckHealth handles health checks sent from Grafana to the plugin.
-// The main use case for these health checks is the test button on the
-// datasource configuration page which allows users to verify that
-// a datasource is working as expected.
-func (d *Datasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	// when logging at a non-Debug level, make sure you don't include sensitive information in the message
-	// (like the *backend.QueryDataRequest)
-	log.DefaultLogger.Info("CheckHealth called")
-
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-	err := d.CreateDatabaseConnection(ctxWithTimeout)
-
-	var status = backend.HealthStatusOk
-	var message = "Data source is working"
-
+// Connect opens a sql.DB connection using datasource settings
+func (h *Ydb) Connect(config backend.DataSourceInstanceSettings, message json.RawMessage) (*sql.DB, error) {
+	settings, err := models.LoadSettings(config)
 	if err != nil {
-		log.DefaultLogger.Error("Checkhealth failed", err)
-		status = backend.HealthStatusError
-		message = fmt.Errorf("connection to data source failed. %w", err).Error()
+		return nil, err
+	}
+	t, err := strconv.Atoi(settings.Timeout)
+	if err != nil {
+		return nil, fmt.Errorf("invalid timeout: %s", settings.Timeout)
 	}
 
-	// defer db.Close(ctx)
+	timeout := time.Duration(t)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
+	defer cancel()
 
-	return &backend.CheckHealthResult{
-		Status:  status,
-		Message: message,
-	}, nil
+	ydbDriver, err := createDatabaseConnection(ctx, settings)
+
+	if err != nil {
+		log.DefaultLogger.Error("Connection with database failed", err)
+	}
+
+	connector, err := ydb.Connector(ydbDriver)
+	if err != nil {
+	log.DefaultLogger.Error("Connection with database failed", err)
+	}
+	db := sql.OpenDB(connector)
+	ydbErr := make(chan error, 1)
+	go func() {
+		err = db.PingContext(ctx)
+		ydbErr <- err
+	}()
+
+	select {
+	case err := <-ydbErr:
+		if err != nil {
+			// sql ds will ping again and show error
+			if exception, ok := err.(ydb.Error); ok {
+				log.DefaultLogger.Error("[%d] %s", exception.Code(), exception.Name())
+			} else {
+				log.DefaultLogger.Error(err.Error())
+			}
+			return db, nil
+		}
+	case <-time.After(timeout * time.Second):
+		return db, errors.New("connection timed out")
+	}
+
+	return db, nil
+}
+
+// Converters defines list of data type converters
+func (h *Ydb) Converters() []sqlutil.Converter {
+	return converters.YdbConverters
+}
+
+// Macros returns list of macro functions convert the macros of raw query
+func (h *Ydb) Macros() sqlds.Macros {
+	return map[string]sqlds.MacroFunc{
+		"fromTime":      macros.FromTimeFilter,
+		"toTime":        macros.ToTimeFilter,
+		"timeFilter_ms": macros.TimeFilterMs,
+		"timeFilter":    macros.TimeFilter,
+		"dateFilter":    macros.DateFilter,
+		"timeInterval":  macros.TimeInterval,
+		"interval_s":    macros.IntervalSeconds,
+	}
 }
