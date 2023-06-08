@@ -21,6 +21,7 @@ type Settings struct {
 	Secrets          		*SecretPluginSettings `json:"-"`
 	Dsn 					string
 	IsSecureConnection		bool
+	Timeout					string
 }
 
 type SecretPluginSettings struct {
@@ -44,6 +45,7 @@ func LoadSettings(source backend.DataSourceInstanceSettings) (*Settings, error) 
 
 	settings := Settings{
 		AuthKind: defaultAuthKind,
+		Timeout: "10",
 	}
 
 	err := json.Unmarshal(source.JSONData, &settings)
@@ -92,58 +94,3 @@ func validateSettings(settings Settings) (*Settings, error) {
 	settings.IsSecureConnection = strings.HasPrefix(settings.DBEndpoint, "grpcs://")
 	return &settings, nil
 }
-
-// func loadSettingsForServiceAccAuthAccessKey(jsonData map[string]interface{}, config backend.DataSourceInstanceSettings) (settings *Settings, err error) {
-// 	var endpoint, dbLocation interface{}
-
-// 	if endpoint = jsonData["endpoint"]; endpoint == nil {
-// 		err = fmt.Errorf("%w", ErrEndpointEmpty)
-// 		return
-// 	}
-
-// 	if dbLocation = jsonData["dbLocation"]; dbLocation == nil {
-// 		err = fmt.Errorf("%w", ErrDBLocationEmpty)
-// 		return
-// 	}
-
-// 	serviceAccAuthAccessKey, ok := config.DecryptedSecureJSONData["tlsClientCert"]
-// 	if !ok {
-// 		err = fmt.Errorf("%w", ErrServiceAccAuthAccessKeyEmpty)
-// 		return
-// 	}
-
-// 	return makeNewSettingsWhirOpts(defaultAuthKind, withDBEndpoint(endpoint.(string)),
-// 		withDBLocation(dbLocation.(string)), withServiceAccAuthAccessKey(serviceAccAuthAccessKey)), err
-// }
-
-// // NewSettings .-
-// func makeNewSettingsWhirOpts(authKind AuthKind, opts ...SettingsOptionFunc) *Settings {
-// 	settings := &Settings{
-// 		AuthKind: authKind,
-// 	}
-// 	for _, opt := range opts {
-// 		opt(settings)
-// 	}
-// 	return settings
-// }
-
-// // WithDBEndpoint .-
-// func withDBEndpoint(dbEndpoint string) SettingsOptionFunc {
-// 	return func(s *Settings) {
-// 		s.DBEndpoint = dbEndpoint
-// 	}
-// }
-
-// // WithDBLocation .-
-// func withDBLocation(dbLocation string) SettingsOptionFunc {
-// 	return func(s *Settings) {
-// 		s.DBLocation = dbLocation
-// 	}
-// }
-
-// // WithServiceAccAuthAccessKey .-
-// func withServiceAccAuthAccessKey(defaultAuthKind string) SettingsOptionFunc {
-// 	return func(s *Settings) {
-// 		s.ServiceAccAuthAccessKey = defaultAuthKind
-// 	}
-// }
