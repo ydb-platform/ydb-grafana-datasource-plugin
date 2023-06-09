@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/sqlds/v2"
-	"github.com/pkg/errors"
 	"github.com/ydb-platform/ydb-go-sdk/v3"
 	"github.com/ydb-platform/ydb-go-sdk/v3/scheme"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/options"
@@ -228,15 +227,7 @@ func (h *Ydb) Connect(config backend.DataSourceInstanceSettings, message json.Ra
 	defer pingCancel()
 
 	if err := db.PingContext(pingCtx); err != nil {
-		var exception ydb.Error
-		if errors.As(err, &exception) {
-			log.DefaultLogger.Error("%d %s", exception.Code(), exception.Name())
-		} else {
-			log.DefaultLogger.Error(err.Error())
-		}
-		if errors.Is(err, context.Canceled) {
-			return db, errors.Wrap(err, "connection timed out")
-		}
+		log.DefaultLogger.Error(err.Error())
 		return db, err
 		}
 
