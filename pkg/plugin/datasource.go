@@ -28,25 +28,25 @@ import (
 	"github.com/ydb/grafana-ydb-datasource/pkg/models"
 )
 
-func createDatabaseConnection(ctx context.Context, settings *models.Settings) (*ydb.Driver, error) {
+func createDriver(ctx context.Context, settings *models.Settings) (*ydb.Driver, error) {
 	var db *ydb.Driver
 	var err error
 	if settings.IsSecureConnection && settings.Secrets.Certificate != "" {
-		db, err = createDBConnectionWithCert(ctx, settings)
+		db, err = createDriverWithCert(ctx, settings)
 	}
-	db, err = createDBConnectionWithoutCert(ctx, settings)
+	db, err = createDriverWithoutCert(ctx, settings)
 	if err != nil {
 		return nil, err
 	}
 	return db, nil
 }
 
-func createDBConnectionWithCert(ctx context.Context, settings *models.Settings) (*ydb.Driver, error) {
+func createDriverWithCert(ctx context.Context, settings *models.Settings) (*ydb.Driver, error) {
 	creds := getCreds(settings)
 	return ydb.Open(ctx, settings.Dsn, ydb.WithCertificatesFromPem([]byte(settings.Secrets.Certificate)), creds)
 }
 
-func createDBConnectionWithoutCert(ctx context.Context, settings *models.Settings) (*ydb.Driver, error) {
+func createDriverWithoutCert(ctx context.Context, settings *models.Settings) (*ydb.Driver, error) {
 	creds := getCreds(settings)
 	return ydb.Open(ctx, settings.Dsn, creds)
 }
@@ -208,40 +208,33 @@ func (h *Ydb) Connect(config backend.DataSourceInstanceSettings, message json.Ra
 	}
 
 	timeout := time.Duration(t)
-	ctx, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
-	defer cancel()
+	driverCtx, driverCancel := context.WithTimeout(context.Background(), timeout*time.Second)
+	defer driverCancel()
 
-	ydbDriver, err := createDatabaseConnection(ctx, settings)
+	ydbDriver, err := createDriver(driverCtx, settings)
 
 	if err != nil {
 		log.DefaultLogger.Error("Connection with database failed", err)
 	}
 
-	connector, err := ydb.Connector(ydbDriver)
+	connector, err := ydb.Connector(ydbDriver, ydb.WithAutoDeclare(),
+	ydb.WithNumericArgs(), ydb.WithPositionalArgs())
 	if err != nil {
 	log.DefaultLogger.Error("Connection with database failed", err)
 	}
 	db := sql.OpenDB(connector)
-	ydbErr := make(chan error, 1)
-	go func() {
-		err = db.PingContext(ctx)
-		ydbErr <- err
-	}()
 
-	select {
-	case err := <-ydbErr:
-		if err != nil {
-			// sql ds will ping again and show error
-			if exception, ok := err.(ydb.Error); ok {
-				log.DefaultLogger.Error("[%d] %s", exception.Code(), exception.Name())
-			} else {
-				log.DefaultLogger.Error(err.Error())
-			}
-			return db, nil
+	pingCtx, pingCancel := context.WithTimeout(driverCtx, timeout*time.Second)
+	defer pingCancel()
+
+	if err := db.PingContext(pingCtx); err != nil {
+		if exception, ok := err.(ydb.Error); ok {
+			log.DefaultLogger.Error("[%d] %s", exception.Code(), exception.Name())
+		} else {
+			log.DefaultLogger.Error(err.Error())
 		}
-	case <-time.After(timeout * time.Second):
 		return db, errors.New("connection timed out")
-	}
+		}
 
 	return db, nil
 }
