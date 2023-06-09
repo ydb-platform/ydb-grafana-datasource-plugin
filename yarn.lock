@@ -7939,6 +7939,7 @@ __metadata:
     swc-loader: ^0.2.3
     ts-node: ^10.5.0
     tsconfig-paths: ^4.1.0
+    tslib: ^2.5.3
     typescript: 4.9.5
     webpack: ^5.69.1
     webpack-cli: ^4.9.2
@@ -13607,7 +13608,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.1.0, tslib@npm:^2.4.0":
+"tslib@npm:^2.1.0, tslib@npm:^2.4.0, tslib@npm:^2.5.3":
   version: 2.5.3
   resolution: "tslib@npm:2.5.3"
   checksum: 88902b309afaf83259131c1e13da1dceb0ad1682a213143a1346a649143924d78cf3760c448b84d796938fd76127183894f8d85cbb3bf9c4fddbfcc140c0003c
