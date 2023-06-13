@@ -27,17 +27,11 @@ import (
 	"github.com/ydb/grafana-ydb-datasource/pkg/models"
 )
 
-func createDriver(ctx context.Context, settings *models.Settings) (*ydb.Driver, error) {
-	var db *ydb.Driver
-	var err error
+func createDriver(ctx context.Context, settings *models.Settings) (db *ydb.Driver, err error) {
 	if settings.IsSecureConnection && settings.Secrets.Certificate != "" {
-		db, err = createDriverWithCert(ctx, settings)
+		return createDriverWithCert(ctx, settings)
 	}
-	db, err = createDriverWithoutCert(ctx, settings)
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
+	return createDriverWithoutCert(ctx, settings)
 }
 
 func createDriverWithCert(ctx context.Context, settings *models.Settings) (*ydb.Driver, error) {
@@ -196,7 +190,12 @@ func (h *Ydb) Settings(config backend.DataSourceInstanceSettings) sqlds.DriverSe
 }
 
 // Connect opens a sql.DB connection using datasource settings
-func (h *Ydb) Connect(config backend.DataSourceInstanceSettings, message json.RawMessage) (*sql.DB, error) {
+func (h *Ydb) Connect(config backend.DataSourceInstanceSettings, message json.RawMessage) (_ *sql.DB, err error) {
+	defer func() {
+		if err != nil {
+			log.DefaultLogger.Error("Connection with database failed", err.Error())
+		}
+	}()
 	settings, err := models.LoadSettings(config)
 	if err != nil {
 		return nil, err
@@ -207,31 +206,16 @@ func (h *Ydb) Connect(config backend.DataSourceInstanceSettings, message json.Ra
 	}
 
 	timeout := time.Duration(t)
-	driverCtx, driverCancel := context.WithTimeout(context.Background(), timeout*time.Second)
-	defer driverCancel()
+	connectionCtx, connectionCancel := context.WithTimeout(context.Background(), timeout*time.Second)
+	defer connectionCancel()
 
-	ydbDriver, err := createDriver(driverCtx, settings)
-
-	if err != nil {
-		log.DefaultLogger.Error("Connection with database failed", err)
-	}
+	ydbDriver, err := createDriver(connectionCtx, settings)
 
 	connector, err := ydb.Connector(ydbDriver, ydb.WithAutoDeclare(),
 	ydb.WithNumericArgs(), ydb.WithPositionalArgs())
-	if err != nil {
-	log.DefaultLogger.Error("Connection with database failed", err)
-	}
 	db := sql.OpenDB(connector)
 
-	pingCtx, pingCancel := context.WithTimeout(driverCtx, timeout*time.Second)
-	defer pingCancel()
-
-	if err := db.PingContext(pingCtx); err != nil {
-		log.DefaultLogger.Error(err.Error())
-		return db, err
-		}
-
-	return db, nil
+	return db, db.PingContext(connectionCtx)
 }
 
 // Converters defines list of data type converters
