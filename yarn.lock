@@ -4016,7 +4016,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:17.0.60, @types/react@npm:^17":
+"@types/react@npm:^17":
   version: 17.0.60
   resolution: "@types/react@npm:17.0.60"
   dependencies:
@@ -8379,7 +8379,6 @@ __metadata:
     "@types/jest": ^29.2.2
     "@types/lodash": ^4.14.188
     "@types/node": ^18.11.9
-    "@types/react": 17.0.60
     "@typescript-eslint/eslint-plugin": ^5.42.1
     "@typescript-eslint/parser": ^5.42.1
     commitlint: ^17.6.5
