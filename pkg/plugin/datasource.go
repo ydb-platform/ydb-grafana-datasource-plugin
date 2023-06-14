@@ -4,9 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"path"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -81,6 +79,27 @@ func listTables(ctx context.Context, db *ydb.Driver, folder string) (tables []st
 		}
 	}
 	return tables, nil
+}
+
+func RetrieveListTablesForRoot(config backend.DataSourceInstanceSettings) (respData []byte, err error) {
+	defer func() {
+		if err != nil {
+			log.DefaultLogger.Error("Getting table list failed", err.Error())
+		}
+	}()
+	settings, err := models.LoadSettings(config)
+	if err != nil {
+		return nil, err
+	}
+	connectionCtx, connectionCancel := context.WithTimeout(context.Background(), settings.TimeoutDuration)
+	defer connectionCancel()
+
+	ydbDriver, err := createDriver(connectionCtx, settings)
+	data, err := listTables(connectionCtx, ydbDriver, ydbDriver.Name())
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(data)
 }
 
 func resultSetMeta(resultSet result.Set) (meta map[string]types.Type) {
@@ -200,13 +219,7 @@ func (h *Ydb) Connect(config backend.DataSourceInstanceSettings, message json.Ra
 	if err != nil {
 		return nil, err
 	}
-	t, err := strconv.Atoi(settings.Timeout)
-	if err != nil {
-		return nil, fmt.Errorf("invalid timeout: %s", settings.Timeout)
-	}
-
-	timeout := time.Duration(t)
-	connectionCtx, connectionCancel := context.WithTimeout(context.Background(), timeout*time.Second)
+	connectionCtx, connectionCancel := context.WithTimeout(context.Background(), settings.TimeoutDuration)
 	defer connectionCancel()
 
 	ydbDriver, err := createDriver(connectionCtx, settings)
