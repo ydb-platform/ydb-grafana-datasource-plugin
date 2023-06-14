@@ -3,7 +3,9 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
@@ -22,6 +24,7 @@ type Settings struct {
 	Dsn 					string
 	IsSecureConnection		bool
 	Timeout					string
+	TimeoutDuration			time.Duration
 }
 
 type SecretPluginSettings struct {
@@ -42,24 +45,19 @@ func LoadSettings(source backend.DataSourceInstanceSettings) (*Settings, error) 
 			Secrets:  loadSecretPluginSettings(source.DecryptedSecureJSONData),
 		}, nil
 	}
-
 	settings := Settings{
 		AuthKind: defaultAuthKind,
 		Timeout: "10",
 	}
-
 	err := json.Unmarshal(source.JSONData, &settings)
-
 	if err != nil {
 		return nil, fmt.Errorf("could not unmarshal PluginSettings json: %w", err)
 	}
 	settings.Secrets = loadSecretPluginSettings(source.DecryptedSecureJSONData)
-
 	return validateSettings(settings)
 }
 
 func loadSecretPluginSettings(source map[string]string) *SecretPluginSettings {
-	
 	return &SecretPluginSettings{
 		ServiceAccAuthAccessKey: source["serviceAccAuthAccessKey"],
 		AccessToken: source["accessToken"],
@@ -75,7 +73,6 @@ func validateSettings(settings Settings) (*Settings, error) {
 	if settings.DBLocation == "" {
 		return nil, fmt.Errorf("%w", ErrDBLocationEmpty)
 	}
-
 	switch settings.AuthKind {
 	case "ServiceAccountKey":
 		if  settings.Secrets.ServiceAccAuthAccessKey == "" {
@@ -92,5 +89,10 @@ func validateSettings(settings Settings) (*Settings, error) {
 	}
 	settings.Dsn = settings.DBEndpoint + settings.DBLocation
 	settings.IsSecureConnection = strings.HasPrefix(settings.DBEndpoint, "grpcs://")
+	t, err := strconv.Atoi(settings.Timeout)
+	if err != nil {
+		return nil, fmt.Errorf("timeout %s invalid: %w", settings.Timeout, err)
+	}
+	settings.TimeoutDuration = time.Duration(t)*time.Second
 	return &settings, nil
 }
