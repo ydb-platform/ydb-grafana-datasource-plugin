@@ -44,7 +44,7 @@ export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasou
   };
 
   return (
-    <Form onSubmit={onRunQuery}>
+    <Form onSubmit={onRunQuery} maxWidth="none">
       {() => (
         <>
           <div className={'gf-form'}>
