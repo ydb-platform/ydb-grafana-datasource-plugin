@@ -22,3 +22,7 @@ export const QueryFormatNames: Record<QueryFormat, string> = {
   table: 'Table',
   timeseries: 'Time Series',
 } as const;
+
+export const MONACO_LANGUAGE_SQL = 'sql';
+
+export const defaultSqlEditorHeight = '150px';
