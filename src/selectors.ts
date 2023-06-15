@@ -16,6 +16,12 @@ export const Components = {
       },
     },
   },
+  QueryBuilder: {
+    Table: {
+      label: 'Table',
+      tooltip: 'YDB table to query from',
+    },
+  },
   ConfigEditor: {
     Endpoint: {
       label: 'Endpoint',

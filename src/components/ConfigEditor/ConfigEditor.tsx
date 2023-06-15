@@ -6,6 +6,7 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
+
 import {
   AuthenticationOptions,
   YdbDataSourceOptionValues,
@@ -14,7 +15,8 @@ import {
   AuthenticationType,
   YdbSecureOptions,
   EditorProps,
-} from 'types';
+} from './types';
+
 import { Components } from 'selectors';
 
 const defaultLabelWidth = 25;
