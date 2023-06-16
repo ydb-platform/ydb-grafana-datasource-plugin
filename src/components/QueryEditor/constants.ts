@@ -1,4 +1,4 @@
-import { YDBBuilderQuery, YDBSQLQuery } from './types';
+import { QueryFormat, YDBBuilderQuery, YDBSQLQuery } from './types';
 
 export const defaultYDBBuilderQuery: Partial<YDBBuilderQuery> = {
   queryType: 'builder',
@@ -7,11 +7,18 @@ export const defaultYDBBuilderQuery: Partial<YDBBuilderQuery> = {
     fields: [],
     limit: 100,
   },
+  queryFormat: 'table',
 };
 export const defaultYDBSQLQuery: Partial<YDBSQLQuery> = {
   queryType: 'sql',
   rawSql: '',
+  queryFormat: 'table',
 };
 
 export const defaultLabelWidth = 14;
 export const defaultInputWidth = 40;
+
+export const QueryFormatNames: Record<QueryFormat, string> = {
+  table: 'Table',
+  timeseries: 'Time Series',
+} as const;

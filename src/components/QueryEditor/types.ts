@@ -15,6 +15,7 @@ export interface YDBQueryBase extends DataQuery {}
 
 export interface YDBSQLQuery extends YDBQueryBase {
   queryType: typeof QueryTypes.SQL;
+  queryFormat: QueryFormat;
   rawSql: string;
   meta?: {
     timezone?: string;
@@ -27,6 +28,7 @@ export interface YDBBuilderQuery extends YDBQueryBase {
   queryType: typeof QueryTypes.Builder;
   rawSql: string;
   builderOptions: SqlBuilderOptions;
+  queryFormat: QueryFormat;
   meta?: {
     timezone?: string;
   };
@@ -41,3 +43,5 @@ export interface SqlBuilderOptionsList {
 }
 
 export type SqlBuilderOptions = SqlBuilderOptionsList;
+
+export type QueryFormat = 'table' | 'timeseries';
