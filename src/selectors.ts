@@ -21,6 +21,10 @@ export const Components = {
       label: 'Table',
       tooltip: 'YDB table to query from',
     },
+    Format: {
+      label: 'Format',
+      tooltip: 'Visualization type'
+    }
   },
   ConfigEditor: {
     Endpoint: {
