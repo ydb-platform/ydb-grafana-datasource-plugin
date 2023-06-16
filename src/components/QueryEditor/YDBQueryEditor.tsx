@@ -4,8 +4,9 @@ import { QueryEditorProps } from '@grafana/data';
 import { QueryTypeSwitcher } from './components/QueryTypeSwitcher';
 import { QueryBuilder } from './components/QueryBuilder';
 import { SqlEditor } from './components/SqlEditor';
+import { QueryFormatSelect } from './components/QueryFormatSelect';
 
-import { QueryType, YDBBuilderQuery, YDBQuery, YDBSQLQuery } from './types';
+import { QueryFormat, QueryType, YDBBuilderQuery, YDBQuery, YDBSQLQuery } from './types';
 import { YdbDataSourceOptions } from 'components/ConfigEditor/types';
 import { defaultYDBBuilderQuery, defaultYDBSQLQuery } from './constants';
 import { DataSource } from 'datasource';
@@ -28,7 +29,7 @@ function normalizeQuery(query: YDBQuery) {
 
 export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasource }: YDBQueryEditorProps) {
   const query = normalizeQuery(baseQuery);
-  const { queryType } = query;
+  const { queryType, queryFormat } = query;
 
   const handleChangeQueryAttribute = <T,>(value: Partial<T>) => {
     onChange({ ...query, ...value });
@@ -38,6 +39,10 @@ export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasou
     handleChangeQueryAttribute<YDBQuery>({ queryType: type });
   };
 
+  const handleChangeQueryFormat = (format: QueryFormat) => {
+    handleChangeQueryAttribute<YDBQuery>({ queryFormat: format });
+  };
+
   return (
     <Form onSubmit={onRunQuery}>
       {() => (
@@ -45,6 +50,9 @@ export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasou
           <div className={'gf-form'}>
             <QueryTypeSwitcher queryType={queryType} onChange={handleChangeQueryType} />
             <Button type="submit">Run Query</Button>
+          </div>
+          <div className={'gf-form'}>
+            <QueryFormatSelect format={queryFormat} onChange={handleChangeQueryFormat} />
           </div>
           {queryType === 'builder' ? (
             <QueryBuilder

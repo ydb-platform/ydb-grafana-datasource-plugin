@@ -1,6 +1,8 @@
 import { DataSourceInstanceSettings, CoreApp, DataQueryRequest, getTimeZoneInfo, getTimeZone } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
+
 import { YdbDataSourceOptions } from 'components/ConfigEditor/types';
+import { ConvertQueryFormatToVisualizationType } from 'components/QueryEditor/helpers';
 
 import { YDBQuery } from 'components/QueryEditor/types';
 
@@ -38,6 +40,7 @@ export class DataSource extends DataSourceWithBackend<YDBQuery, YdbDataSourceOpt
       .map((t) => {
         return {
           ...t,
+          format: ConvertQueryFormatToVisualizationType(t.queryFormat),
           meta: {
             ...t.meta,
             timezone: this.getTimezone(request),
