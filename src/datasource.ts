@@ -18,6 +18,11 @@ export class DataSource extends DataSourceWithBackend<YDBQuery, YdbDataSourceOpt
     return tables;
   }
 
+  async fetchFields(table: string): Promise<string[]> {
+    const fields = await this.getResource('listFields', { table });
+    return fields;
+  }
+
   getDefaultQuery(_: CoreApp): Partial<YDBQuery> {
     return defaultQuery;
   }
