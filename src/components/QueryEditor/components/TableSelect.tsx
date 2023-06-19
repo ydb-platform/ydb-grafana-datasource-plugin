@@ -22,7 +22,7 @@ export type TableSelectProps = {
   onTableChange: (value: string) => void;
 };
 
-export const TableSelect = ({ onTableChange, table, tables, loading, error }: TableSelectProps) => {
+export function TableSelect({ onTableChange, table, tables, loading, error }: TableSelectProps) {
   const selectableValues = getValuesForSelect(tables, table);
 
   const { label, tooltip } = selectors.components.QueryBuilder.Table;
@@ -46,4 +46,4 @@ export const TableSelect = ({ onTableChange, table, tables, loading, error }: Ta
       />
     </InlineField>
   );
-};
+}

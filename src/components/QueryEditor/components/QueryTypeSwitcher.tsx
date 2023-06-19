@@ -12,7 +12,7 @@ interface QueryTypeSwitcherProps {
   onChange: (type: QueryType) => void;
 }
 
-export const QueryTypeSwitcher = ({ queryType, onChange }: QueryTypeSwitcherProps) => {
+export function QueryTypeSwitcher({ queryType, onChange }: QueryTypeSwitcherProps) {
   const { label, tooltip, options: queryTypeLabels, switcher } = selectors.components.QueryEditor.Types;
   const [confirmModalState, setConfirmModalState] = React.useState<boolean>(false);
 
@@ -50,4 +50,4 @@ export const QueryTypeSwitcher = ({ queryType, onChange }: QueryTypeSwitcherProp
       />
     </React.Fragment>
   );
-};
+}
