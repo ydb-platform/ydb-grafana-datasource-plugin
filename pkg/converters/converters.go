@@ -19,7 +19,6 @@ type Converter struct {
 
 var decimalMatch, _ = regexp.Compile(`^Decimal`)
 
-
 var Converters = map[string]Converter{
 	"Bool": {
 		scanType:  reflect.PtrTo(reflect.TypeOf(true)),
