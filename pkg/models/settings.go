@@ -16,22 +16,22 @@ const defaultAuthKind AuthKind = `Anonymous`
 
 // Settings - data loaded from grafana settings database
 type Settings struct {
-	AuthKind                AuthKind `json:"authKind"`
-	DBEndpoint              string   `json:"endpoint,omitempty"`
-	DBLocation              string   `json:"dbLocation,omitempty"`
-	User                    string   `json:"user,omitempty"`
-	Secrets          		*SecretPluginSettings `json:"-"`
-	Dsn 					string
-	IsSecureConnection		bool
-	Timeout					string
-	TimeoutDuration			time.Duration
+	AuthKind           AuthKind              `json:"authKind"`
+	DBEndpoint         string                `json:"endpoint,omitempty"`
+	DBLocation         string                `json:"dbLocation,omitempty"`
+	User               string                `json:"user,omitempty"`
+	Secrets            *SecretPluginSettings `json:"-"`
+	Dsn                string
+	IsSecureConnection bool
+	Timeout            string
+	TimeoutDuration    time.Duration
 }
 
 type SecretPluginSettings struct {
 	ServiceAccAuthAccessKey string
 	AccessToken             string
 	Password                string
-	Certificate				string
+	Certificate             string
 }
 
 type SettingsOptionFunc func(settings *Settings)
@@ -47,7 +47,7 @@ func LoadSettings(source backend.DataSourceInstanceSettings) (*Settings, error) 
 	}
 	settings := Settings{
 		AuthKind: defaultAuthKind,
-		Timeout: "10",
+		Timeout:  "10",
 	}
 	err := json.Unmarshal(source.JSONData, &settings)
 	if err != nil {
@@ -60,9 +60,9 @@ func LoadSettings(source backend.DataSourceInstanceSettings) (*Settings, error) 
 func loadSecretPluginSettings(source map[string]string) *SecretPluginSettings {
 	return &SecretPluginSettings{
 		ServiceAccAuthAccessKey: source["serviceAccAuthAccessKey"],
-		AccessToken: source["accessToken"],
-		Password: source["password"],
-		Certificate: source["certificate"],
+		AccessToken:             source["accessToken"],
+		Password:                source["password"],
+		Certificate:             source["certificate"],
 	}
 }
 
@@ -75,15 +75,15 @@ func validateSettings(settings Settings) (*Settings, error) {
 	}
 	switch settings.AuthKind {
 	case "ServiceAccountKey":
-		if  settings.Secrets.ServiceAccAuthAccessKey == "" {
+		if settings.Secrets.ServiceAccAuthAccessKey == "" {
 			return nil, fmt.Errorf("%w", ErrServiceAccAuthAccessKeyEmpty)
 		}
 	case "AccessToken":
-		if  settings.Secrets.AccessToken == "" {
+		if settings.Secrets.AccessToken == "" {
 			return nil, fmt.Errorf("%w", ErrAccessTokenEmpty)
 		}
 	case "UserPassword":
-		if  settings.Secrets.Password == "" || settings.User == ""  {
+		if settings.Secrets.Password == "" || settings.User == "" {
 			return nil, fmt.Errorf("%w", ErrUserOrPasswordEmpty)
 		}
 	}
@@ -93,6 +93,6 @@ func validateSettings(settings Settings) (*Settings, error) {
 	if err != nil {
 		return nil, fmt.Errorf("timeout %s invalid: %w", settings.Timeout, err)
 	}
-	settings.TimeoutDuration = time.Duration(t)*time.Second
+	settings.TimeoutDuration = time.Duration(t) * time.Second
 	return &settings, nil
 }
