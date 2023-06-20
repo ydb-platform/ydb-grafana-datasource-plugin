@@ -27,8 +27,12 @@ export const Components = {
     },
     Format: {
       label: 'Format',
-      tooltip: 'Visualization type'
-    }
+      tooltip: 'Visualization type',
+    },
+    Limit: {
+      label: 'Limit',
+      tooltip: 'Number of records/results to show',
+    },
   },
   ConfigEditor: {
     Endpoint: {
