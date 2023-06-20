@@ -5,6 +5,7 @@ import { FieldsSelect } from './FieldsSelect';
 
 import { SqlBuilderOptions, YDBBuilderQuery, OnChangeQueryAttribute } from '../types';
 import { DataSource } from 'datasource';
+import { getRawSqlFromBuilderOptions } from '../helpers';
 import { Limit } from './Limit';
 
 interface QueryBuilderProps {
@@ -67,11 +68,13 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
   const [fields, fieldsLoading, fieldsError] = useFields(datasource, table);
 
   const handleChangeBuilderOption = (value: Partial<SqlBuilderOptions>) => {
-    onChange({ builderOptions: { ...query.builderOptions, ...value } });
+    const newBuilderOptions = { ...query.builderOptions, ...value };
+    const rawSql = getRawSqlFromBuilderOptions(newBuilderOptions);
+    onChange({ rawSql, builderOptions: { ...query.builderOptions, ...value } });
   };
 
   const handleTableChange = (value: string) => {
-    handleChangeBuilderOption({ table: value });
+    handleChangeBuilderOption({ table: value, fields: [] });
   };
 
   const handleFieldsChange = (value: string[]) => {
