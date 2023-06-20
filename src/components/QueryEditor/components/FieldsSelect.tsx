@@ -13,8 +13,9 @@ export type FieldsSelectProps = {
   onFieldsChange: (value: string[]) => void;
 };
 
-export function FieldsSelect({ onFieldsChange, selectedFields, fields, loading, error }: FieldsSelectProps) {
-  const selectableValues = fields.map((f) => ({ label: f, value: f }));
+export function FieldsSelect({ onFieldsChange, selectedFields = [], fields, loading, error }: FieldsSelectProps) {
+  const allFields = Array.from(new Set([...fields, ...selectedFields]));
+  const selectableValues = allFields.map((f) => ({ label: f, value: f }));
 
   const { label, tooltip } = selectors.components.QueryBuilder.Fields;
 
