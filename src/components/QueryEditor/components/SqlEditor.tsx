@@ -29,8 +29,8 @@ export function SqlEditor({ onChange, query }: SqlEditorProps) {
       onSave={onQueryTextChange}
       showMiniMap={false}
       showLineNumbers={true}
-      onBlur={(text) => onChange({ ...query, rawSql: text })}
-      onEditorDidMount={(editor) => handleMount(editor)}
+      onBlur={onQueryTextChange}
+      onEditorDidMount={handleMount}
     />
   );
 }
