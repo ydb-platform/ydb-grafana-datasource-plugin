@@ -1,4 +1,4 @@
 {
   "extends": "./.config/tsconfig.json",
-  "compilerOptions": { "jsx": "react-jsx", "baseUrl": "./src" }
+  "compilerOptions": { "jsx": "react-jsx", "baseUrl": "./src", "lib": ["ES2021"] }
 }

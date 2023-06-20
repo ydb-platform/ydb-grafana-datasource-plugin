@@ -5,6 +5,7 @@ import { FieldsSelect } from './FieldsSelect';
 
 import { SqlBuilderOptions, YDBBuilderQuery, OnChangeQueryAttribute } from '../types';
 import { DataSource } from 'datasource';
+import { Limit } from './Limit';
 
 interface QueryBuilderProps {
   datasource: DataSource;
@@ -60,7 +61,7 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
   const [tables, tablesLoading, tablesError] = useTables(datasource);
 
   const {
-    builderOptions: { table, fields: selectedFields },
+    builderOptions: { table, fields: selectedFields, limit },
   } = query;
 
   const [fields, fieldsLoading, fieldsError] = useFields(datasource, table);
@@ -75,6 +76,10 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
 
   const handleFieldsChange = (value: string[]) => {
     handleChangeBuilderOption({ fields: value });
+  };
+
+  const handleLimitChange = (value: number) => {
+    handleChangeBuilderOption({ limit: value });
   };
 
   return (
@@ -93,6 +98,7 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
         onFieldsChange={handleFieldsChange}
         loading={fieldsLoading}
       />
+      <Limit limit={limit} onChange={handleLimitChange} />
     </React.Fragment>
   );
 }
