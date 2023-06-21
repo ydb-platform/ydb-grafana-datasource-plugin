@@ -37,7 +37,7 @@ export function FieldsSelect({ onFieldsChange, selectedFields, fields, loading, 
         options={selectableValues}
         value={selectedFields}
         menuPlacement={'bottom'}
-        allowCustomValue={true}
+        allowCustomValue
         isLoading={loading}
         isClearable
         isSearchable

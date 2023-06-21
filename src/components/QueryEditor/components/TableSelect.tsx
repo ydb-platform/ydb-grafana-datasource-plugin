@@ -38,7 +38,7 @@ export function TableSelect({ onTableChange, table, tables, loading, error }: Ta
         options={selectableValues}
         value={table}
         menuPlacement={'bottom'}
-        allowCustomValue={true}
+        allowCustomValue
         width={defaultInputWidth}
         isLoading={loading}
         isClearable

@@ -57,13 +57,13 @@ function useFields(datasource: DataSource, table?: string) {
 }
 
 export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps) {
-  const [tablesList, tablesLoading, tablesError] = useTables(datasource);
-  
+  const [tables, tablesLoading, tablesError] = useTables(datasource);
+
   const {
-    builderOptions: { table, fields },
+    builderOptions: { table, fields: selectedFields },
   } = query;
 
-  const [fieldsList, fieldsLoading, fieldsError] = useFields(datasource, table);
+  const [fields, fieldsLoading, fieldsError] = useFields(datasource, table);
 
   const handleChangeBuilderOption = (value: Partial<SqlBuilderOptions>) => {
     onChange({ builderOptions: { ...query.builderOptions, ...value } });
@@ -81,15 +81,15 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
     <React.Fragment>
       <TableSelect
         error={tablesError}
-        tables={tablesList}
+        tables={tables}
         table={table}
         loading={tablesLoading}
         onTableChange={handleTableChange}
       />
       <FieldsSelect
         error={fieldsError}
-        fields={fieldsList}
-        selectedFields={fields}
+        fields={fields}
+        selectedFields={selectedFields}
         onFieldsChange={handleFieldsChange}
         loading={fieldsLoading}
       />
