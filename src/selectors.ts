@@ -21,6 +21,10 @@ export const Components = {
       label: 'Table',
       tooltip: 'YDB table to query from',
     },
+    Fields: {
+      label: 'Fields',
+      tooltip: 'List of fields to show',
+    },
     Format: {
       label: 'Format',
       tooltip: 'Visualization type'

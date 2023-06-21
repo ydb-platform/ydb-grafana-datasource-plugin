@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"os"
 
@@ -24,14 +25,40 @@ func newDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 	ds := sqlds.NewDatasource(&plugin.Ydb{})
 	ds.CustomRoutes = map[string]func(http.ResponseWriter, *http.Request){
 		"/listTables": func(w http.ResponseWriter, r *http.Request) {
-			tablesString, err := plugin.RetrieveListTablesForRoot(settings)
-			if err != nil {
+			if err := func(w http.ResponseWriter) error {
+				tablesString, err := plugin.RetrieveListTablesForRoot(settings)
+				if err != nil {
+					return err
+				}
+				_, err = w.Write(tablesString)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(w); err != nil {
 				w.WriteHeader(500)
-				return
+				jsonErr, _ := json.Marshal(err.Error())
+				w.Write(jsonErr)
+				log.DefaultLogger.Error(err.Error())
 			}
-			_, err = w.Write(tablesString)
-			if err != nil {
+		},
+		"/listFields": func(w http.ResponseWriter, r *http.Request) {
+			if err := func(w http.ResponseWriter) error {
+				query := r.URL.Query()
+				table := query.Get("table")
+				fieldsString, err := plugin.RetrieveTableFields(settings, table)
+				if err != nil {
+					return err
+				}
+				_, err = w.Write(fieldsString)
+				if err != nil {
+					return err
+				}
+				return nil
+   			}(w); err != nil {
 				w.WriteHeader(500)
+				jsonErr, _ := json.Marshal(err.Error())
+				w.Write(jsonErr)
 				log.DefaultLogger.Error(err.Error())
 			}
 		},

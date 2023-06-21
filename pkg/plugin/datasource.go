@@ -7,18 +7,18 @@ import (
 	"path"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/sqlds/v2"
 	"github.com/ydb-platform/ydb-go-sdk/v3"
 	"github.com/ydb-platform/ydb-go-sdk/v3/scheme"
+	"github.com/ydb-platform/ydb-go-sdk/v3/table"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/options"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/result"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/types"
 	yc "github.com/ydb-platform/ydb-go-yc"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
 	"github.com/ydb/grafana-ydb-datasource/pkg/converters"
 	"github.com/ydb/grafana-ydb-datasource/pkg/macros"
@@ -100,6 +100,48 @@ func RetrieveListTablesForRoot(config backend.DataSourceInstanceSettings) (respD
 		return nil, err
 	}
 	return json.Marshal(data)
+}
+
+func listFields(ctx context.Context, db *ydb.Driver, tableName string) (fields []string, _ error) {
+	err := db.Table().Do(ctx,
+		func(ctx context.Context, s table.Session) (err error) {
+			desc, err := s.DescribeTable(ctx, tableName)
+			if err != nil {
+				return
+			}
+			for _, c := range desc.Columns {
+				fields = append(fields, c.Name)
+			}
+			return
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return fields, nil
+}
+
+func RetrieveTableFields(config backend.DataSourceInstanceSettings, tableName string) (respData []byte, err error) {
+	defer func() {
+		if err != nil {
+			log.DefaultLogger.Error("Getting fields failed", err.Error())
+		}
+	}()
+	settings, err := models.LoadSettings(config)
+	if err != nil {
+		return nil, err
+	}
+	connectionCtx, connectionCancel := context.WithTimeout(context.Background(), settings.TimeoutDuration)
+	defer connectionCancel()
+	ydbDriver, err := createDriver(connectionCtx, settings)
+	if err != nil {
+		return nil, err
+	}
+	fields, err := listFields(connectionCtx, ydbDriver, tableName)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(fields)
 }
 
 func resultSetMeta(resultSet result.Set) (meta map[string]types.Type) {
@@ -197,7 +239,6 @@ type queryModel struct {
 // 	return response
 // }
 
-
 func (h *Ydb) Settings(config backend.DataSourceInstanceSettings) sqlds.DriverSettings {
 	timeout := 60
 	return sqlds.DriverSettings{
@@ -225,7 +266,7 @@ func (h *Ydb) Connect(config backend.DataSourceInstanceSettings, message json.Ra
 	ydbDriver, err := createDriver(connectionCtx, settings)
 
 	connector, err := ydb.Connector(ydbDriver, ydb.WithAutoDeclare(),
-	ydb.WithNumericArgs(), ydb.WithPositionalArgs())
+		ydb.WithNumericArgs(), ydb.WithPositionalArgs())
 	db := sql.OpenDB(connector)
 
 	return db, db.PingContext(connectionCtx)
