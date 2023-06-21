@@ -1,6 +1,8 @@
 import { InlineField, Input } from '@grafana/ui';
+
+import { defaultLabelWidth } from 'containers/QueryEditor/constants';
+
 import { selectors } from 'selectors';
-import { defaultLabelWidth } from '../constants';
 
 interface SqlPreviewProps {
   rawSql?: string;

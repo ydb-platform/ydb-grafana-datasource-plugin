@@ -1,10 +1,10 @@
 import { DataSourcePlugin } from '@grafana/data';
 
-import { ConfigEditor } from './components/ConfigEditor/ConfigEditor';
-import { YDBQueryEditor } from './components/QueryEditor/YDBQueryEditor';
+import { ConfigEditor } from './containers/ConfigEditor/ConfigEditor';
+import { YDBQueryEditor } from './containers/QueryEditor/YDBQueryEditor';
 
-import { YdbDataSourceOptions } from './components/ConfigEditor/types';
-import { YDBQuery } from 'components/QueryEditor/types';
+import { YdbDataSourceOptions } from './containers/ConfigEditor/types';
+import { YDBQuery } from 'containers/QueryEditor/types';
 
 import { DataSource } from './datasource';
 
