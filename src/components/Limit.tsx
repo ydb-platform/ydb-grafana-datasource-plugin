@@ -1,6 +1,6 @@
 import { InlineField, Input } from '@grafana/ui';
 import { selectors } from 'selectors';
-import { defaultLabelWidth, defaultNumberInputWidth } from '../constants';
+import { defaultLabelWidth, defaultNumberInputWidth } from 'containers/QueryEditor/constants';
 
 interface LimitProps {
   limit?: number;

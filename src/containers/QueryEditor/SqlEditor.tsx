@@ -1,7 +1,7 @@
 import { CodeEditor } from '@grafana/ui';
 
-import { OnChangeQueryAttribute, YDBSQLQuery } from '../types';
-import { MONACO_LANGUAGE_SQL, defaultSqlEditorHeight } from '../constants';
+import { OnChangeQueryAttribute, YDBSQLQuery } from './types';
+import { MONACO_LANGUAGE_SQL, defaultSqlEditorHeight } from './constants';
 import { YdbMonacoEditor, fetchSuggestions, registerSQL } from 'lib/sqlProvider';
 
 interface SqlEditorProps {

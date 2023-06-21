@@ -2,8 +2,8 @@ import * as React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { RadioButtonGroup, ConfirmModal, InlineField } from '@grafana/ui';
 
-import { QueryType } from '../types';
-import { defaultLabelWidth } from '../constants';
+import { QueryType } from 'containers/QueryEditor/types';
+import { defaultLabelWidth } from 'containers/QueryEditor/constants';
 
 import { selectors } from 'selectors';
 

@@ -1,13 +1,13 @@
 import * as React from 'react';
 
-import { TableSelect } from './TableSelect';
-import { FieldsSelect } from './FieldsSelect';
+import { TableSelect } from 'components/TableSelect';
+import { FieldsSelect } from 'components/FieldsSelect';
+import { Limit } from 'components/Limit';
+import { SqlPreview } from 'components/SqlPreview';
 
-import { SqlBuilderOptions, YDBBuilderQuery, OnChangeQueryAttribute } from '../types';
+import { SqlBuilderOptions, YDBBuilderQuery, OnChangeQueryAttribute } from './types';
 import { DataSource } from 'datasource';
-import { getRawSqlFromBuilderOptions } from '../helpers';
-import { Limit } from './Limit';
-import { SqlPreview } from './SqlPreview';
+import { getRawSqlFromBuilderOptions } from './helpers';
 
 interface QueryBuilderProps {
   datasource: DataSource;
