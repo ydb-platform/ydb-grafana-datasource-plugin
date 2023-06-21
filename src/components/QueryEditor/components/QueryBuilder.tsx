@@ -7,6 +7,7 @@ import { SqlBuilderOptions, YDBBuilderQuery, OnChangeQueryAttribute } from '../t
 import { DataSource } from 'datasource';
 import { getRawSqlFromBuilderOptions } from '../helpers';
 import { Limit } from './Limit';
+import { SqlPreview } from './SqlPreview';
 
 interface QueryBuilderProps {
   datasource: DataSource;
@@ -62,6 +63,7 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
   const [tables, tablesLoading, tablesError] = useTables(datasource);
 
   const {
+    rawSql,
     builderOptions: { table, fields: selectedFields, limit },
   } = query;
 
@@ -102,6 +104,7 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
         loading={fieldsLoading}
       />
       <Limit limit={limit} onChange={handleLimitChange} />
+      <SqlPreview rawSql={rawSql} />
     </React.Fragment>
   );
 }
