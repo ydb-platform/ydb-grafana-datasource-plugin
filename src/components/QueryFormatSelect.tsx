@@ -1,9 +1,10 @@
 import { Select, InlineField } from '@grafana/ui';
-import { QueryFormatNames, defaultInputWidth, defaultLabelWidth } from '../constants';
+
+import { QueryFormatNames, defaultInputWidth, defaultLabelWidth } from 'containers/QueryEditor/constants';
+import { QueryFormat } from 'containers/QueryEditor/types';
+import { SelectableValue } from '@grafana/data';
 
 import { selectors } from 'selectors';
-import { QueryFormat } from '../types';
-import { SelectableValue } from '@grafana/data';
 
 interface QueryFormatSelectProps {
   format: QueryFormat;

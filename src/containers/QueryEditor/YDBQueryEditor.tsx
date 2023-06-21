@@ -1,13 +1,13 @@
 import { Button, Form } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 
-import { QueryTypeSwitcher } from './components/QueryTypeSwitcher';
-import { QueryBuilder } from './components/QueryBuilder';
-import { SqlEditor } from './components/SqlEditor';
-import { QueryFormatSelect } from './components/QueryFormatSelect';
+import { QueryFormatSelect } from 'components/QueryFormatSelect';
+import { QueryTypeSwitcher } from 'components/QueryTypeSwitcher';
+import { QueryBuilder } from './QueryBuilder';
+import { SqlEditor } from './SqlEditor';
 
 import { QueryFormat, QueryType, YDBBuilderQuery, YDBQuery, YDBSQLQuery } from './types';
-import { YdbDataSourceOptions } from 'components/ConfigEditor/types';
+import { YdbDataSourceOptions } from 'containers/ConfigEditor/types';
 import { defaultYDBBuilderQuery, defaultYDBSQLQuery } from './constants';
 import { DataSource } from 'datasource';
 

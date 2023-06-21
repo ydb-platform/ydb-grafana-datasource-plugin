@@ -1,7 +1,7 @@
 import { Select, InlineField } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
-import { defaultInputWidth, defaultLabelWidth } from '../constants';
+import { defaultInputWidth, defaultLabelWidth } from 'containers/QueryEditor/constants';
 
 import { selectors } from 'selectors';
 

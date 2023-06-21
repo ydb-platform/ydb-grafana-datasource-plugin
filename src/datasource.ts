@@ -1,10 +1,10 @@
 import { DataSourceInstanceSettings, CoreApp, DataQueryRequest, getTimeZoneInfo, getTimeZone } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
 
-import { YdbDataSourceOptions } from 'components/ConfigEditor/types';
-import { ConvertQueryFormatToVisualizationType } from 'components/QueryEditor/helpers';
+import { YdbDataSourceOptions } from 'containers/ConfigEditor/types';
+import { ConvertQueryFormatToVisualizationType } from 'containers/QueryEditor/helpers';
 
-import { YDBQuery } from 'components/QueryEditor/types';
+import { YDBQuery } from 'containers/QueryEditor/types';
 
 const defaultQuery: Partial<YDBQuery> = {};
 
