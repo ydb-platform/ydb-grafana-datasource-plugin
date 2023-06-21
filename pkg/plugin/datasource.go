@@ -19,6 +19,7 @@ import (
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/result"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/types"
 	yc "github.com/ydb-platform/ydb-go-yc"
+
 	"github.com/ydb/grafana-ydb-datasource/pkg/converters"
 	"github.com/ydb/grafana-ydb-datasource/pkg/macros"
 	"github.com/ydb/grafana-ydb-datasource/pkg/models"
