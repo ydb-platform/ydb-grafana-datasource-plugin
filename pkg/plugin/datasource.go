@@ -269,7 +269,7 @@ func (h *Ydb) Connect(config backend.DataSourceInstanceSettings, message json.Ra
 	ydbDriver, err := createDriver(connectionCtx, settings)
 
 	connector, err := ydb.Connector(ydbDriver, ydb.WithAutoDeclare(),
-		ydb.WithNumericArgs(), ydb.WithPositionalArgs())
+		ydb.WithNumericArgs(), ydb.WithPositionalArgs(), ydb.WithDefaultQueryMode(ydb.ScanQueryMode))
 	db := sql.OpenDB(connector)
 
 	return db, db.PingContext(connectionCtx)
