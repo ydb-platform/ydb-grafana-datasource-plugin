@@ -29,6 +29,10 @@ export const Components = {
       label: 'Format',
       tooltip: 'Visualization type',
     },
+    SqlPreview: {
+      label: 'SQL Preview',
+      tooltip: 'You can safely switch to SQL Editor to customize the generated query',
+    },
     Limit: {
       label: 'Limit',
       tooltip: 'Number of records/results to show',
