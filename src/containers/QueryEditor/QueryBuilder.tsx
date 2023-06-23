@@ -53,6 +53,8 @@ function useFields(datasource: DataSource, table?: string) {
           setError('Fetching table fields failed');
         })
         .finally(() => setLoading(false));
+    } else {
+      setFieldsList([]);
     }
   }, [datasource, table]);
 
