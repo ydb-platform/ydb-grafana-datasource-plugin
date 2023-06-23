@@ -8,7 +8,7 @@ import { SqlEditor } from './SqlEditor';
 
 import { QueryFormat, QueryType, YDBBuilderQuery, YDBQuery, YDBSQLQuery } from './types';
 import { YdbDataSourceOptions } from 'containers/ConfigEditor/types';
-import { defaultYDBBuilderQuery, defaultYDBSQLQuery } from './constants';
+import { GrafanaFormClassName, defaultYDBBuilderQuery, defaultYDBSQLQuery } from './constants';
 import { DataSource } from 'datasource';
 
 type YDBQueryEditorProps = QueryEditorProps<DataSource, YDBQuery, YdbDataSourceOptions>;
@@ -47,11 +47,11 @@ export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasou
     <Form onSubmit={onRunQuery} maxWidth="none">
       {() => (
         <>
-          <div className={'gf-form'}>
+          <div className={GrafanaFormClassName}>
             <QueryTypeSwitcher queryType={queryType} onChange={handleChangeQueryType} />
             <Button type="submit">Run Query</Button>
           </div>
-          <div className={'gf-form'}>
+          <div className={GrafanaFormClassName}>
             <QueryFormatSelect format={queryFormat} onChange={handleChangeQueryFormat} />
           </div>
           {queryType === 'builder' ? (
