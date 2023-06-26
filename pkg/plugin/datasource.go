@@ -105,7 +105,12 @@ func RetrieveListTablesForRoot(config backend.DataSourceInstanceSettings) (respD
 	return json.Marshal(data)
 }
 
-func listFields(ctx context.Context, db *ydb.Driver, tableName string) (fields []string, _ error) {
+type TableField struct {
+	Name string
+	Type types.Type 
+}
+
+func listFields(ctx context.Context, db *ydb.Driver, tableName string) (fields []TableField, _ error) {
 	err := db.Table().Do(ctx,
 		func(ctx context.Context, s table.Session) (err error) {
 			desc, err := s.DescribeTable(ctx, tableName)
@@ -113,7 +118,10 @@ func listFields(ctx context.Context, db *ydb.Driver, tableName string) (fields [
 				return
 			}
 			for _, c := range desc.Columns {
-				fields = append(fields, c.Name)
+				var field TableField
+				field.Name = c.Name
+				field.Type = c.Type
+				fields = append(fields, field)
 			}
 			return
 		},
@@ -158,89 +166,6 @@ func resultSetMeta(resultSet result.Set) (meta map[string]types.Type) {
 type queryModel struct {
 	RawSql string `json:"rawSql"`
 }
-
-// func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
-// 	log.DefaultLogger.Info("query called", query.JSON)
-// 	var parsedQuery queryModel
-
-// 	queryUnmarshalError := json.Unmarshal(query.JSON, &parsedQuery)
-// 	if queryUnmarshalError != nil {
-// 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", queryUnmarshalError.Error()))
-// 	}
-// 	log.DefaultLogger.Info("query unmarshalled", parsedQuery.RawSql)
-
-// 	var response backend.DataResponse
-// 	var (
-// 		readTx = table.TxControl(
-// 			table.BeginTx(
-// 				table.WithOnlineReadOnly(),
-// 			),
-// 			table.CommitTx(),
-// 		)
-// 	)
-// 	err := d.driver.Table().Do(ctx,
-// 		func(ctx context.Context, s table.Session) (err error) {
-// 			var (
-// 				res result.Result
-// 				// id    uint64 // a variable for required results
-// 				// title *string // a pointer for optional results
-// 				// date  *time.Time // a pointer for optional results
-// 			)
-// 			_, res, err = s.Execute(
-// 				ctx,
-// 				readTx,
-// 				parsedQuery.RawSql,
-// 				table.NewQueryParameters(),
-// 			)
-// 			if err != nil {
-// 				return err
-// 			}
-// 			defer res.Close() // result must be closed
-// 			log.DefaultLogger.Info("> select_simple_transaction:\n", res)
-// 			for res.NextResultSet(ctx) {
-// 				meta := resultSetMeta(res.CurrentResultSet())
-// 				row := make([]named.Value, 0, len(meta))
-// 				for name := range meta {
-// 					var value types.Value
-// 					row = append(row, named.Optional(name, &value))
-// 				}
-
-// 				for res.NextRow() {
-// 					err = res.ScanNamed(row...)
-// 					if err != nil {
-// 						return err
-// 					}
-// 					logArgs := make([]interface{}, 0, len(meta))
-// 					for name, value := range row {
-// 						logArgs = append(logArgs, fmt.Sprintf("%d: %v", name, value.Value))
-// 					}
-// 					log.DefaultLogger.Info("  > row:", logArgs...)
-// 				}
-// 			}
-// 			return res.Err()
-// 		},
-// 	)
-// 	if err != nil {
-// 		// handle a query execution error
-// 	}
-
-// 	// create data frame response.
-// 	// For an overview on data frames and how grafana handles them:
-// 	// https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/
-
-// 	// frame := data.NewFrame("response")
-
-// 	// // add fields.
-// 	// frame.Fields = append(frame.Fields,
-// 	// 	data.NewField("time", nil, []time.Time{query.TimeRange.From, query.TimeRange.To}),
-// 	// 	data.NewField("values", nil, []int64{10, 20}),
-// 	// )
-
-// 	// // add the frames to the response.
-// 	// response.Frames = append(response.Frames, frame)
-
-// 	return response
-// }
 
 func (h *Ydb) Settings(config backend.DataSourceInstanceSettings) sqlds.DriverSettings {
 	timeout := 60
