@@ -6,6 +6,8 @@ export function ConvertQueryFormatToVisualizationType(format: QueryFormat) {
       return 1;
     case 'timeseries':
       return 0;
+    case 'logs':
+      return 2;
     default:
       return 1;
   }
