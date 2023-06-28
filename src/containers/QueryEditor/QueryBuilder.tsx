@@ -5,7 +5,7 @@ import { FieldsSelect } from 'components/FieldsSelect';
 import { Limit } from 'components/Limit';
 import { SqlPreview } from 'components/SqlPreview';
 
-import { SqlBuilderOptions, YDBBuilderQuery, OnChangeQueryAttribute } from './types';
+import { SqlBuilderOptions, YDBBuilderQuery, OnChangeQueryAttribute, TableField } from './types';
 import { DataSource } from 'datasource';
 import { getRawSqlFromBuilderOptions } from './helpers';
 
@@ -37,7 +37,7 @@ function useTables(datasource: DataSource) {
 }
 
 function useFields(datasource: DataSource, table?: string) {
-  const [fieldsList, setFieldsList] = React.useState<string[]>([]);
+  const [fieldsList, setFieldsList] = React.useState<TableField[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string>();
   React.useEffect(() => {

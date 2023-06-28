@@ -2,9 +2,9 @@ import { DataSourceInstanceSettings, CoreApp, DataQueryRequest, getTimeZoneInfo,
 import { DataSourceWithBackend } from '@grafana/runtime';
 
 import { YdbDataSourceOptions } from 'containers/ConfigEditor/types';
-import { ConvertQueryFormatToVisualizationType } from 'containers/QueryEditor/helpers';
+import { ConvertQueryFormatToVisualizationType, normalizeFields } from 'containers/QueryEditor/helpers';
 
-import { YDBQuery } from 'containers/QueryEditor/types';
+import { TableField, YDBQuery } from 'containers/QueryEditor/types';
 
 const defaultQuery: Partial<YDBQuery> = {};
 
@@ -20,9 +20,9 @@ export class DataSource extends DataSourceWithBackend<YDBQuery, YdbDataSourceOpt
     return tables;
   }
 
-  async fetchFields(table: string): Promise<string[]> {
+  async fetchFields(table: string): Promise<TableField[]> {
     const fields = await this.getResource('listFields', { table });
-    return fields;
+    return normalizeFields(fields);
   }
 
   getDefaultQuery(_: CoreApp): Partial<YDBQuery> {
