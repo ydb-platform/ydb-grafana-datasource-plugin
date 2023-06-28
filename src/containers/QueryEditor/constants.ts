@@ -23,10 +23,11 @@ export const wideInputWidth = 100;
 export const QueryFormatNames: Record<QueryFormat, string> = {
   table: 'Table',
   timeseries: 'Time Series',
+  logs: 'Logs',
 } as const;
 
 export const MONACO_LANGUAGE_SQL = 'sql';
 
 export const defaultSqlEditorHeight = '150px';
 
-export const GrafanaFormClassName = 'gf-form'
+export const GrafanaFormClassName = 'gf-form';
