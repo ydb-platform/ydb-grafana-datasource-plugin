@@ -31,3 +31,5 @@ export const MONACO_LANGUAGE_SQL = 'sql';
 export const defaultSqlEditorHeight = '150px';
 
 export const GrafanaFormClassName = 'gf-form';
+
+export const UnknownFieldType = 'unknown';

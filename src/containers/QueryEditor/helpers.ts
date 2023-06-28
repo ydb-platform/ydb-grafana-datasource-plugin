@@ -1,4 +1,4 @@
-import { QueryFormat, SqlBuilderOptions } from './types';
+import { QueryFormat, SqlBuilderOptions, TableField, TableFieldBackend } from './types';
 
 export function ConvertQueryFormatToVisualizationType(format: QueryFormat) {
   switch (format) {
@@ -28,4 +28,8 @@ export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions) {
   const fields = builderOptions.fields?.map((field) => wrapString(field)).join(', ');
   const limitCondition = builderOptions.limit ? ` LIMIT ${builderOptions.limit}` : '';
   return `SELECT ${fields} FROM ${wrapString(builderOptions.table)}${limitCondition}`;
+}
+
+export function normalizeFields(fields: TableFieldBackend[]): TableField[] {
+  return fields.map((f) => ({ name: f.Name, type: f.Type }));
 }

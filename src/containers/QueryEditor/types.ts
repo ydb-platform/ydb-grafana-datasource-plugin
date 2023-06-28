@@ -30,10 +30,22 @@ export interface YDBBuilderQuery extends YDBQueryBase {
 
 export type YDBQuery = YDBSQLQuery | YDBBuilderQuery;
 
+export interface TableFieldBackend {
+  Name: string;
+  Type: string;
+}
+
+export interface TableField {
+  name: string;
+  type?: string;
+}
+
 export interface SqlBuilderOptionsList {
   table?: string;
   fields?: string[];
   limit?: number;
+  timeField?: string;
+  logLevelField?: string;
 }
 
 export type SqlBuilderOptions = SqlBuilderOptionsList;
