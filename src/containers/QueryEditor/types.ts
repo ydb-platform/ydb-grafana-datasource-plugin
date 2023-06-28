@@ -44,4 +44,4 @@ export interface SqlBuilderOptionsList {
 
 export type SqlBuilderOptions = SqlBuilderOptionsList;
 
-export type QueryFormat = 'table' | 'timeseries';
+export type QueryFormat = 'table' | 'timeseries' | 'logs';
