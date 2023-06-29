@@ -11,27 +11,21 @@ export const QueryTypes = {
 
 export type QueryType = (typeof QueryTypes)[keyof typeof QueryTypes];
 
-export interface YDBQueryBase extends DataQuery {}
-
-export interface YDBSQLQuery extends YDBQueryBase {
-  queryType: typeof QueryTypes.SQL;
-  queryFormat: QueryFormat;
-  rawSql: string;
-  meta?: {
-    timezone?: string;
-    // meta fields to be used just for building builder options when migrating  back to QueryType.Builder
-    builderOptions?: SqlBuilderOptions;
-  };
-}
-
-export interface YDBBuilderQuery extends YDBQueryBase {
-  queryType: typeof QueryTypes.Builder;
+export interface YDBQueryBase extends DataQuery {
   rawSql: string;
   builderOptions: SqlBuilderOptions;
   queryFormat: QueryFormat;
   meta?: {
     timezone?: string;
   };
+}
+
+export interface YDBSQLQuery extends YDBQueryBase {
+  queryType: typeof QueryTypes.SQL;
+}
+
+export interface YDBBuilderQuery extends YDBQueryBase {
+  queryType: typeof QueryTypes.Builder;
 }
 
 export type YDBQuery = YDBSQLQuery | YDBBuilderQuery;
