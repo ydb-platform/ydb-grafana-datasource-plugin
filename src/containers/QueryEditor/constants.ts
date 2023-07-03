@@ -15,7 +15,7 @@ export const defaultYDBSQLQuery: Partial<YDBSQLQuery> = {
   queryFormat: 'table',
 };
 
-export const defaultLabelWidth = 14;
+export const defaultLabelWidth = 16;
 export const defaultInputWidth = 40;
 export const defaultNumberInputWidth = 10;
 export const wideInputWidth = 100;
