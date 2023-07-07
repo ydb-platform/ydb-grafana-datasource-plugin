@@ -41,7 +41,7 @@ export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasou
     const params: Partial<YDBQuery> = { queryType: type };
     if (type === 'builder') {
       //need to recalculate rawSql based on BuilderOptions to get correct preview after switch to builder mode
-      params.rawSql = getRawSqlFromBuilderOptions(query.builderOptions);
+      params.rawSql = getRawSqlFromBuilderOptions(query.builderOptions, queryFormat);
     }
     handleChangeQueryAttribute<YDBQuery>(params);
   };

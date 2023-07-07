@@ -25,6 +25,10 @@ export const Components = {
       label: 'Fields',
       tooltip: 'List of fields to show',
     },
+    LogLevelField: {
+      label: 'Log level field',
+      tooltip: 'Select the field to extract log level information from',
+    },
     Format: {
       label: 'Format',
       tooltip: 'Visualization type',

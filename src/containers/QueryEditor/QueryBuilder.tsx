@@ -4,6 +4,7 @@ import { TableSelect } from 'components/TableSelect';
 import { FieldsSelect } from 'components/FieldsSelect';
 import { Limit } from 'components/Limit';
 import { SqlPreview } from 'components/SqlPreview';
+import { LogLevelFieldSelect } from 'components/LogLevelFieldSelect';
 
 import { SqlBuilderOptions, YDBBuilderQuery, OnChangeQueryAttribute, TableField } from './types';
 import { DataSource } from 'datasource';
@@ -61,34 +62,39 @@ function useFields(datasource: DataSource, table?: string) {
   return [fieldsList, loading, error] as const;
 }
 
+const TableDependableFields: Partial<SqlBuilderOptions> = {
+  fields: [],
+  logLevelField: null,
+};
+
 export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps) {
   const [tables, tablesLoading, tablesError] = useTables(datasource);
 
   const {
     rawSql,
-    builderOptions: { table, fields: selectedFields, limit },
+    queryFormat,
+    builderOptions: { table, fields: selectedFields, limit, logLevelField },
   } = query;
 
   const [fields, fieldsLoading, fieldsError] = useFields(datasource, table);
 
   const handleChangeBuilderOption = (value: Partial<SqlBuilderOptions>) => {
     const newBuilderOptions = { ...query.builderOptions, ...value };
-    const rawSql = getRawSqlFromBuilderOptions(newBuilderOptions);
+    const rawSql = getRawSqlFromBuilderOptions(newBuilderOptions, queryFormat);
     onChange({ rawSql, builderOptions: { ...query.builderOptions, ...value } });
   };
-
   const handleTableChange = (value: string) => {
-    handleChangeBuilderOption({ table: value, fields: [] });
+    handleChangeBuilderOption({ table: value, ...TableDependableFields });
   };
-
   const handleFieldsChange = (value: string[]) => {
     handleChangeBuilderOption({ fields: value });
   };
-
   const handleLimitChange = (value: number) => {
     handleChangeBuilderOption({ limit: value });
   };
-
+  const handleLogLevelFieldChange = (value: string) => {
+    handleChangeBuilderOption({ logLevelField: value });
+  };
   return (
     <React.Fragment>
       <TableSelect
@@ -105,6 +111,15 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
         onFieldsChange={handleFieldsChange}
         loading={fieldsLoading}
       />
+      {queryFormat === 'logs' && (
+        <LogLevelFieldSelect
+          onChange={handleLogLevelFieldChange}
+          error={fieldsError}
+          fields={fields}
+          loading={fieldsLoading}
+          logLevelField={logLevelField}
+        />
+      )}
       <Limit limit={limit} onChange={handleLimitChange} />
       <SqlPreview rawSql={rawSql} />
     </React.Fragment>
