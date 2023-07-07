@@ -4,9 +4,14 @@ import { SelectableValue } from '@grafana/data';
 import { defaultInputWidth, defaultLabelWidth } from 'containers/QueryEditor/constants';
 
 import { selectors } from 'selectors';
+import { useDatabase } from 'containers/QueryEditor/DatabaseContext';
 
-function getValuesForSelect(tables: string[], table = '') {
-  const values = tables.map((t) => ({ label: t, value: t }));
+function removeDatabaseFromTableName(table: string, database: string) {
+  return table.startsWith(database) ? table.slice(database.length + 1) : table;
+}
+
+function getValuesForSelect(tables: string[], table = '', database: string) {
+  const values = tables.map((t) => ({ label: removeDatabaseFromTableName(t, database), value: t }));
   // Add selected value to the list if it does not exist.
   if (table && !tables.find((x) => x === table)) {
     values.push({ label: table, value: table });
@@ -23,7 +28,8 @@ export type TableSelectProps = {
 };
 
 export function TableSelect({ onTableChange, table, tables, loading, error }: TableSelectProps) {
-  const selectableValues = getValuesForSelect(tables, table);
+  const database = useDatabase();
+  const selectableValues = getValuesForSelect(tables, table, database);
 
   const { label, tooltip } = selectors.components.QueryBuilder.Table;
 
