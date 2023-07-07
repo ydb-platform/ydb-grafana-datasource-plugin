@@ -9,8 +9,10 @@ import { YDBQuery } from 'containers/QueryEditor/types';
 const defaultQuery: Partial<YDBQuery> = {};
 
 export class DataSource extends DataSourceWithBackend<YDBQuery, YdbDataSourceOptions> {
+  database: string;
   constructor(instanceSettings: DataSourceInstanceSettings<YdbDataSourceOptions>) {
     super(instanceSettings);
+    this.database = instanceSettings.jsonData.dbLocation ?? '';
   }
 
   async fetchTables(): Promise<string[]> {
