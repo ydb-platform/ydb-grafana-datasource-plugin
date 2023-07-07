@@ -45,7 +45,7 @@ export interface SqlBuilderOptionsList {
   fields?: string[];
   limit?: number;
   timeField?: string;
-  logLevelField?: string;
+  logLevelField?: string | null;
 }
 
 export type SqlBuilderOptions = SqlBuilderOptionsList;
