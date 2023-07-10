@@ -40,8 +40,8 @@ export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, q
       return wrapString(field);
     })
     .join(', ');
-  const limitCondition = builderOptions.limit ? ` LIMIT ${builderOptions.limit}` : '';
-  return `SELECT ${fields} FROM ${wrapString(builderOptions.table)}${limitCondition}`;
+  const limitCondition = builderOptions.limit ? ` \nLIMIT ${builderOptions.limit}` : '';
+  return `SELECT ${fields} \nFROM ${wrapString(builderOptions.table)}${limitCondition}`;
 }
 
 export function normalizeFields(fields: TableFieldBackend[]): TableField[] {
