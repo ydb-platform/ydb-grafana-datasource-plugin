@@ -208,12 +208,8 @@ func (h *Ydb) Converters() []sqlutil.Converter {
 // Macros returns list of macro functions convert the macros of raw query
 func (h *Ydb) Macros() sqlds.Macros {
 	return map[string]sqlds.MacroFunc{
-		"fromTime":      macros.FromTimeFilter,
-		"toTime":        macros.ToTimeFilter,
-		"timeFilter_ms": macros.TimeFilterMs,
-		"timeFilter":    macros.TimeFilter,
-		"dateFilter":    macros.DateFilter,
-		"timeInterval":  macros.TimeInterval,
-		"interval_s":    macros.IntervalSeconds,
+		"fromTimestamp":      macros.FromTimestampFilter,
+		"toTimestamp":        macros.ToTimestampFilter,
+		"timeFilter":    macros.TimestampFilter,
 	}
 }
