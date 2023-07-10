@@ -1,14 +1,13 @@
-import * as React from 'react';
 import { Select, InlineField, Button } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
-import { GrafanaFormClassName, UnknownFieldType, defaultLabelWidth } from 'containers/QueryEditor/constants';
+import { GrafanaFormClassName, defaultLabelWidth } from 'containers/QueryEditor/constants';
 
 import { selectors } from 'selectors';
-import { TableField } from 'containers/QueryEditor/types';
+import { getSelectableValues } from 'containers/QueryEditor/helpers';
 
 export type FieldsSelectProps = {
-  fields: TableField[];
+  fields: string[];
   selectedFields?: string[];
   loading?: boolean;
   error?: string;
@@ -16,24 +15,8 @@ export type FieldsSelectProps = {
 };
 
 export function FieldsSelect({ onFieldsChange, selectedFields = [], fields, loading, error }: FieldsSelectProps) {
-  const { serverFieldsSet, serverFieldsSelectable } = React.useMemo(() => {
-    return {
-      serverFieldsSet: new Set(fields.map((f) => f.name)),
-      serverFieldsSelectable: fields.map((f) => ({ label: f.name, value: f.name, type: f.type })),
-    };
-  }, [fields]);
-
-  const allFieldsSelectable = React.useMemo(() => {
-    const allFields = [...serverFieldsSelectable];
-    selectedFields.forEach((f) => {
-      if (serverFieldsSet.has(f)) {
-        return;
-      } else {
-        allFields.push({ label: f, value: f, type: UnknownFieldType });
-      }
-    });
-    return allFields;
-  }, [serverFieldsSet, serverFieldsSelectable, selectedFields]);
+  const allFields = fields.length > 0 ? Array.from(new Set([...fields, ...selectedFields])) : [];
+  const allFieldsSelectable = getSelectableValues(allFields);
 
   const { label, tooltip } = selectors.components.QueryBuilder.Fields;
 
@@ -41,6 +24,10 @@ export function FieldsSelect({ onFieldsChange, selectedFields = [], fields, load
     onFieldsChange(e.map((el) => el.value ?? '').filter(Boolean));
   };
 
+  const handleSelectAllFields = () => {
+    const serverFieldsSelectable = getSelectableValues(fields);
+    handleChange(serverFieldsSelectable);
+  };
   return (
     <div className={GrafanaFormClassName}>
       <InlineField
@@ -64,7 +51,7 @@ export function FieldsSelect({ onFieldsChange, selectedFields = [], fields, load
           isMulti
         />
       </InlineField>
-      <Button fill="outline" onClick={() => handleChange(serverFieldsSelectable)} disabled={fields.length === 0}>
+      <Button fill="outline" onClick={handleSelectAllFields} disabled={fields.length === 0}>
         All fields
       </Button>
     </div>

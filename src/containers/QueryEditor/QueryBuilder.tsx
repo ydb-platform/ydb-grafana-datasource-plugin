@@ -78,6 +78,8 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
 
   const [fields, fieldsLoading, fieldsError] = useFields(datasource, table);
 
+  const allFieldsNames = fields.map(el => el.name)
+
   const handleChangeBuilderOption = (value: Partial<SqlBuilderOptions>) => {
     const newBuilderOptions = { ...query.builderOptions, ...value };
     const rawSql = getRawSqlFromBuilderOptions(newBuilderOptions, queryFormat);
@@ -106,7 +108,7 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
       />
       <FieldsSelect
         error={fieldsError}
-        fields={fields}
+        fields={allFieldsNames}
         selectedFields={selectedFields}
         onFieldsChange={handleFieldsChange}
         loading={fieldsLoading}
@@ -115,7 +117,7 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
         <LogLevelFieldSelect
           onChange={handleLogLevelFieldChange}
           error={fieldsError}
-          fields={fields}
+          fields={allFieldsNames}
           loading={fieldsLoading}
           logLevelField={logLevelField}
         />

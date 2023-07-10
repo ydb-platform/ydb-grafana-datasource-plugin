@@ -47,3 +47,7 @@ export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, q
 export function normalizeFields(fields: TableFieldBackend[]): TableField[] {
   return fields.map((f) => ({ name: f.Name, type: f.Type }));
 }
+
+export function getSelectableValues(fields: string[]) {
+  return fields.map((f) => ({ label: f, value: f }));
+}
