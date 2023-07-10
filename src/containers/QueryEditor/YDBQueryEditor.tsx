@@ -31,7 +31,12 @@ function normalizeQuery(query: YDBQuery) {
 
 export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasource }: YDBQueryEditorProps) {
   const query = normalizeQuery(baseQuery);
-  const { queryType, queryFormat } = query;
+  const {
+    queryType,
+    queryFormat,
+    rawSql,
+    builderOptions: { rawSqlBuilder },
+  } = query;
 
   const handleChangeQueryAttribute = <T,>(value: Partial<T>) => {
     onChange({ ...query, ...value });
@@ -41,7 +46,7 @@ export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasou
     const params: Partial<YDBQuery> = { queryType: type };
     if (type === 'builder') {
       //need to recalculate rawSql based on BuilderOptions to get correct preview after switch to builder mode
-      params.rawSql = getRawSqlFromBuilderOptions(query.builderOptions, queryFormat);
+      params.rawSql = query.builderOptions.rawSqlBuilder ?? getRawSqlFromBuilderOptions(query.builderOptions, queryFormat);;
     }
     handleChangeQueryAttribute<YDBQuery>(params);
   };
@@ -56,7 +61,11 @@ export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasou
         {() => (
           <>
             <div className={GrafanaFormClassName}>
-              <QueryTypeSwitcher queryType={queryType} onChange={handleChangeQueryType} />
+              <QueryTypeSwitcher
+                queryType={queryType}
+                onChange={handleChangeQueryType}
+                shouldConfirm={rawSql !== rawSqlBuilder}
+              />
               <Button type="submit">Run Query</Button>
             </div>
             <div className={GrafanaFormClassName}>

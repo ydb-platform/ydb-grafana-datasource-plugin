@@ -10,9 +10,10 @@ import { selectors } from 'selectors';
 interface QueryTypeSwitcherProps {
   queryType: QueryType;
   onChange: (type: QueryType) => void;
+  shouldConfirm?: boolean;
 }
 
-export function QueryTypeSwitcher({ queryType, onChange }: QueryTypeSwitcherProps) {
+export function QueryTypeSwitcher({ queryType, onChange, shouldConfirm = true }: QueryTypeSwitcherProps) {
   const { label, tooltip, options: queryTypeLabels, switcher } = selectors.components.QueryEditor.Types;
   const [confirmModalState, setConfirmModalState] = React.useState<boolean>(false);
 
@@ -21,8 +22,8 @@ export function QueryTypeSwitcher({ queryType, onChange }: QueryTypeSwitcherProp
     { label: queryTypeLabels.QueryBuilder, value: 'builder' },
   ];
 
-  const onQueryTypeChange = (queryType: QueryType, confirm = false) => {
-    if (queryType === 'builder' && !confirm) {
+  const onQueryTypeChange = (queryType: QueryType, confirmed = !shouldConfirm) => {
+    if (queryType === 'builder' && !confirmed) {
       setConfirmModalState(true);
     } else {
       onChange(queryType);
