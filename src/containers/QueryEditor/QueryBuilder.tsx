@@ -81,7 +81,7 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
   const handleChangeBuilderOption = (value: Partial<SqlBuilderOptions>) => {
     const newBuilderOptions = { ...query.builderOptions, ...value };
     const rawSql = getRawSqlFromBuilderOptions(newBuilderOptions, queryFormat);
-    onChange({ rawSql, builderOptions: { ...query.builderOptions, ...value } });
+    onChange({ rawSql, builderOptions: { ...query.builderOptions, ...value, rawSqlBuilder: rawSql } });
   };
   const handleTableChange = (value: string) => {
     handleChangeBuilderOption({ table: value, ...TableDependableFields });
@@ -92,7 +92,7 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
   const handleLimitChange = (value: number) => {
     handleChangeBuilderOption({ limit: value });
   };
-  const handleLogLevelFieldChange = (value: string) => {
+  const handleLogLevelFieldChange = (value: string | null) => {
     handleChangeBuilderOption({ logLevelField: value });
   };
   return (
