@@ -4,10 +4,10 @@ import { SelectableValue } from '@grafana/data';
 import { defaultInputWidth, defaultLabelWidth } from 'containers/QueryEditor/constants';
 
 import { selectors } from 'selectors';
-import { TableField } from 'containers/QueryEditor/types';
+import { getSelectableValues } from 'containers/QueryEditor/helpers';
 
 export type LogLevelFieldSelectProps = {
-  fields: TableField[];
+  fields: string[];
   logLevelField?: string | null;
   loading?: boolean;
   error?: string;
@@ -15,7 +15,7 @@ export type LogLevelFieldSelectProps = {
 };
 
 export function LogLevelFieldSelect({ onChange, logLevelField, fields, loading, error }: LogLevelFieldSelectProps) {
-  const selectableFields = fields.map((f) => ({ label: f.name, value: f.name }));
+  const selectableFields = getSelectableValues(fields);
 
   const { label, tooltip } = selectors.components.QueryBuilder.LogLevelField;
 
