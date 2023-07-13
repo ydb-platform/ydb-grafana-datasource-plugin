@@ -13,14 +13,14 @@ interface QueryTypeSwitcherProps {
   shouldConfirm?: boolean;
 }
 
-export function QueryTypeSwitcher({ queryType, onChange, shouldConfirm = true }: QueryTypeSwitcherProps) {
-  const { label, tooltip, options: queryTypeLabels, switcher } = selectors.components.QueryEditor.Types;
-  const [confirmModalState, setConfirmModalState] = React.useState<boolean>(false);
+const options: Array<SelectableValue<QueryType>> = [
+  { label: selectors.components.QueryEditor.Types.options.SQLEditor, value: 'sql' },
+  { label: selectors.components.QueryEditor.Types.options.QueryBuilder, value: 'builder' },
+];
 
-  const options: Array<SelectableValue<QueryType>> = [
-    { label: queryTypeLabels.SQLEditor, value: 'sql' },
-    { label: queryTypeLabels.QueryBuilder, value: 'builder' },
-  ];
+export function QueryTypeSwitcher({ queryType, onChange, shouldConfirm = true }: QueryTypeSwitcherProps) {
+  const { label, tooltip, switcher } = selectors.components.QueryEditor.Types;
+  const [confirmModalState, setConfirmModalState] = React.useState<boolean>(false);
 
   const onQueryTypeChange = (queryType: QueryType, confirmed = !shouldConfirm) => {
     if (queryType === 'builder' && !confirmed) {
