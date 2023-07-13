@@ -11,7 +11,7 @@ import { QueryFormat, QueryType, YDBBuilderQuery, YDBQuery, YDBSQLQuery } from '
 import { YdbDataSourceOptions } from 'containers/ConfigEditor/types';
 import { GrafanaFormClassName, defaultYDBBuilderQuery, defaultYDBSQLQuery } from './constants';
 import { DataSource } from 'datasource';
-import { getRawSqlFromBuilderOptions } from './helpers';
+import { getRawSqlFromBuilderOptions } from './prepare-query';
 
 type YDBQueryEditorProps = QueryEditorProps<DataSource, YDBQuery, YdbDataSourceOptions>;
 
@@ -46,7 +46,8 @@ export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasou
     const params: Partial<YDBQuery> = { queryType: type };
     if (type === 'builder') {
       //need to recalculate rawSql based on BuilderOptions to get correct preview after switch to builder mode
-      params.rawSql = query.builderOptions.rawSqlBuilder ?? getRawSqlFromBuilderOptions(query.builderOptions, queryFormat);;
+      params.rawSql =
+        query.builderOptions.rawSqlBuilder ?? getRawSqlFromBuilderOptions(query.builderOptions, queryFormat);
     }
     handleChangeQueryAttribute<YDBQuery>(params);
   };
