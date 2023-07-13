@@ -1,4 +1,4 @@
-import { QueryFormat, SqlBuilderOptions, TableField, TableFieldBackend } from './types';
+import { QueryFormat, TableField, TableFieldBackend } from './types';
 
 export function ConvertQueryFormatToVisualizationType(format: QueryFormat) {
   switch (format) {
@@ -13,35 +13,23 @@ export function ConvertQueryFormatToVisualizationType(format: QueryFormat) {
   }
 }
 
-const defaultWrapper = '`';
-const logLevelAlias = 'level';
+export const defaultWrapper = '`';
 
-const escapeSymbolsRe = /[\`]/g;
+const escapeBackticksRe = /[\`]/g;
+const escapeDoubleQuotesRe = /[\"]/g;
 
-function escapeString(st?: string) {
-  return st && st.replaceAll(escapeSymbolsRe, '\\$&');
+function escapeString(re: RegExp, st: string) {
+  return st && st.replaceAll(re, '\\$&');
 }
 
-function wrapString(st?: string, wrapper = defaultWrapper) {
-  const escapedString = escapeString(st);
+export function escapeAndWrapString(st = '', wrapper = defaultWrapper) {
+  let escapedString = '';
+  if (wrapper === '`') {
+    escapedString = escapeString(escapeBackticksRe, st);
+  } else if (wrapper === '"') {
+    escapedString = escapeString(escapeDoubleQuotesRe, st);
+  }
   return escapedString && `${wrapper}${escapedString}${wrapper}`;
-}
-
-function getAliasExpression(fieldName: string, alias: string, wrapper = defaultWrapper) {
-  return `${wrapString(fieldName)} as ${wrapString(alias)}`;
-}
-
-export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, queryFormat: QueryFormat) {
-  const fields = builderOptions.fields
-    ?.map((field) => {
-      if (queryFormat === 'logs' && field === builderOptions.logLevelField && field !== logLevelAlias) {
-        return getAliasExpression(field, logLevelAlias);
-      }
-      return wrapString(field);
-    })
-    .join(', ');
-  const limitCondition = builderOptions.limit ? ` \nLIMIT ${builderOptions.limit}` : '';
-  return `SELECT ${fields} \nFROM ${wrapString(builderOptions.table)}${limitCondition}`;
 }
 
 export function normalizeFields(fields: TableFieldBackend[]): TableField[] {

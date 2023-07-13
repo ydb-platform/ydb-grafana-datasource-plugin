@@ -6,9 +6,11 @@ import { Limit } from 'components/Limit';
 import { SqlPreview } from 'components/SqlPreview';
 import { LogLevelFieldSelect } from 'components/LogLevelFieldSelect';
 
-import { SqlBuilderOptions, YDBBuilderQuery, OnChangeQueryAttribute, TableField } from './types';
+import { SqlBuilderOptions, YDBBuilderQuery, OnChangeQueryAttribute, TableField, FilterType } from './types';
 import { DataSource } from 'datasource';
-import { getRawSqlFromBuilderOptions } from './helpers';
+import { getRawSqlFromBuilderOptions } from './prepare-query';
+import { Filters } from 'components/Filters/Filters';
+import { UnknownFieldType } from './constants';
 
 interface QueryBuilderProps {
   datasource: DataSource;
@@ -73,12 +75,19 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
   const {
     rawSql,
     queryFormat,
-    builderOptions: { table, fields: selectedFields, limit, logLevelField },
+    builderOptions: { table, fields: selectedFields, limit, logLevelField, filters },
   } = query;
 
   const [fields, fieldsLoading, fieldsError] = useFields(datasource, table);
 
-  const allFieldsNames = fields.map(el => el.name)
+  const { fieldsMap, allFieldsNames } = React.useMemo(() => {
+    const fieldsMap = new Map<string, string>();
+    fields.forEach((f) => fieldsMap.set(f.name, f.type ?? UnknownFieldType));
+    return {
+      allFieldsNames: fields.map((el) => el.name),
+      fieldsMap,
+    };
+  }, [fields]);
 
   const handleChangeBuilderOption = (value: Partial<SqlBuilderOptions>) => {
     const newBuilderOptions = { ...query.builderOptions, ...value };
@@ -96,6 +105,9 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
   };
   const handleLogLevelFieldChange = (value: string | null) => {
     handleChangeBuilderOption({ logLevelField: value });
+  };
+  const handleFiltersChange = (value: FilterType[]) => {
+    handleChangeBuilderOption({ filters: value });
   };
   return (
     <React.Fragment>
@@ -122,6 +134,14 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
           logLevelField={logLevelField}
         />
       )}
+      <Filters
+        filters={filters}
+        onChange={handleFiltersChange}
+        fields={allFieldsNames}
+        error={fieldsError}
+        loading={fieldsLoading}
+        fieldsMap={fieldsMap}
+      />
       <Limit limit={limit} onChange={handleLimitChange} />
       <SqlPreview rawSql={rawSql} />
     </React.Fragment>

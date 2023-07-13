@@ -44,11 +44,80 @@ export interface SqlBuilderOptionsList {
   table?: string;
   fields?: string[];
   limit?: number;
-  timeField?: string;
   logLevelField?: string | null;
   rawSqlBuilder?: string;
+  filters?: FilterType[];
 }
 
 export type SqlBuilderOptions = SqlBuilderOptionsList;
 
 export type QueryFormat = 'table' | 'timeseries' | 'logs';
+
+export const LogicalOperations = ['and', 'or'] as const;
+
+export type LogicalOperation = (typeof LogicalOperations)[number];
+
+export const LogicalOperationNames: Record<LogicalOperation, string> = {
+  and: 'AND',
+  or: 'OR'
+};
+
+export type FilterType = {
+  id: string;
+  logicalOp?: LogicalOperation;
+  column?: string;
+  expr?: ExpressionName | null;
+  params?: string | number;
+  paramsType?: 'number';
+};
+
+export const ExpressionsMap = {
+  like: 'LIKE',
+  notLike: 'NOT LIKE',
+  regexp: 'REGEXP',
+  equals: '=',
+  harshEquals: '==',
+  notEquals: '!=',
+  lessOrGtr: '<>',
+  gtr: '>',
+  gtrOrEquals: '>=',
+  less: '<',
+  lessOrEquals: '<=',
+  null: 'IS NULL',
+  notNull: 'IS NOT NULL',
+  between: 'BETWEEN',
+  notBetween: 'NOT BETWEEN',
+  in: 'IN',
+  notIn: 'NOT IN',
+  insideDashboard: 'INSIDE DASHBOARD RANGE',
+  outsideDashboard: 'OUTSIDE DASHBOARD RANGE',
+  isTrue: 'IS TRUE',
+  isFalse: 'IS FALSE',
+} as const;
+
+export type ExpressionName = keyof typeof ExpressionsMap;
+export type ExpressionValue = (typeof ExpressionsMap)[keyof typeof ExpressionsMap];
+
+export const CommonExpressions: ExpressionName[] = [
+  'equals',
+  'harshEquals',
+  'notEquals',
+  'lessOrGtr',
+  'gtr',
+  'gtrOrEquals',
+  'less',
+  'lessOrEquals',
+  'null',
+  'notNull',
+  'between',
+  'notBetween',
+  'in',
+  'notIn',
+];
+
+export const StringExpressions: ExpressionName[] = ['like', 'notLike', 'regexp', ...CommonExpressions];
+
+export const DateExpressions: ExpressionName[] = ['insideDashboard', 'outsideDashboard', ...CommonExpressions];
+export const BooleanExpressions: ExpressionName[] = ['null', 'notNull', 'isTrue', 'isFalse'];
+
+export type Expression = (typeof ExpressionsMap)[keyof typeof ExpressionsMap];
