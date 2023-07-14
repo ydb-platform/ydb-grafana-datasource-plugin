@@ -33,3 +33,27 @@ export const defaultSqlEditorHeight = '150px';
 export const GrafanaFormClassName = 'gf-form';
 
 export const UnknownFieldType = 'unknown';
+
+export const ExpressionsMap = {
+  like: 'LIKE',
+  notLike: 'NOT LIKE',
+  regexp: 'REGEXP',
+  equals: '=',
+  harshEquals: '==',
+  notEquals: '!=',
+  lessOrGtr: '<>',
+  gtr: '>',
+  gtrOrEquals: '>=',
+  less: '<',
+  lessOrEquals: '<=',
+  null: 'IS NULL',
+  notNull: 'IS NOT NULL',
+  between: 'BETWEEN',
+  notBetween: 'NOT BETWEEN',
+  in: 'IN',
+  notIn: 'NOT IN',
+  insideDashboard: 'INSIDE DASHBOARD RANGE',
+  outsideDashboard: 'OUTSIDE DASHBOARD RANGE',
+  isTrue: 'IS TRUE',
+  isFalse: 'IS FALSE',
+} as const;

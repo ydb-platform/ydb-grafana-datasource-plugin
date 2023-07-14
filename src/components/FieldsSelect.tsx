@@ -36,7 +36,7 @@ export function FieldsSelect({ onFieldsChange, selectedFields = [], fields, load
         label={label}
         error={error}
         invalid={Boolean(error)}
-        grow
+        shrink
       >
         <Select
           // bug in grafana types. isMulti option is not taken into account
@@ -49,6 +49,7 @@ export function FieldsSelect({ onFieldsChange, selectedFields = [], fields, load
           isClearable
           isSearchable
           isMulti
+          closeMenuOnSelect={false}
         />
       </InlineField>
       <Button fill="outline" onClick={handleSelectAllFields} disabled={fields.length === 0}>

@@ -1,3 +1,4 @@
+import { ExpressionsMap } from './constants';
 import {
   expressionToSql,
   getRawSqlFromBuilderOptions,
@@ -5,7 +6,7 @@ import {
   logicalOpToSql,
   prepareParams,
 } from './prepare-query';
-import { ExpressionName, ExpressionsMap, FilterType, LogicalOperations, QueryFormat } from './types';
+import { ExpressionName, FilterType, LogicalOperations, QueryFormat } from './types';
 
 const baseBuilderOptions = {
   table: 'foo',
@@ -71,9 +72,9 @@ describe('should properly add log field', () => {
 });
 
 describe('should properly add WHERE condition', () => {
-  it('add WHERE condition without params', () => {
+  it('do not add WHERE condition without params', () => {
     const builderOptions = { ...baseBuilderOptions, filters: [] };
-    const sql = 'SELECT `bar`, `baz` \nFROM `foo` \nWHERE \n \nLIMIT 10';
+    const sql = 'SELECT `bar`, `baz` \nFROM `foo` \nLIMIT 10';
     expect(getRawSqlFromBuilderOptions(builderOptions, 'table')).toBe(sql);
   });
 

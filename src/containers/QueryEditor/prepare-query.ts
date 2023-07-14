@@ -94,10 +94,12 @@ export function getSingleWhereExpression(filter: FilterType) {
 }
 
 export function getWhereExpression(filters: FilterType[]) {
-  return ` \nWHERE \n${filters
+  const filtersExpression = filters
     .filter((f) => f.column)
     .map(getSingleWhereExpression)
-    .join(' \n')}`;
+    .filter(Boolean)
+    .join(' \n');
+  return filtersExpression ? ` \nWHERE \n${filtersExpression}` : '';
 }
 
 function checkAndAddLogLevelField(logLevelField: string, fields: string[]) {
