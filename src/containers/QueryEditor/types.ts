@@ -1,4 +1,5 @@
 import { DataQuery } from '@grafana/schema';
+import { ExpressionsMap } from './constants';
 
 export interface OnChangeQueryAttribute<T> {
   (arg: Partial<T>): void;
@@ -59,7 +60,7 @@ export type LogicalOperation = (typeof LogicalOperations)[number];
 
 export const LogicalOperationNames: Record<LogicalOperation, string> = {
   and: 'AND',
-  or: 'OR'
+  or: 'OR',
 };
 
 export type FilterType = {
@@ -70,30 +71,6 @@ export type FilterType = {
   params?: string | number;
   paramsType?: 'number';
 };
-
-export const ExpressionsMap = {
-  like: 'LIKE',
-  notLike: 'NOT LIKE',
-  regexp: 'REGEXP',
-  equals: '=',
-  harshEquals: '==',
-  notEquals: '!=',
-  lessOrGtr: '<>',
-  gtr: '>',
-  gtrOrEquals: '>=',
-  less: '<',
-  lessOrEquals: '<=',
-  null: 'IS NULL',
-  notNull: 'IS NOT NULL',
-  between: 'BETWEEN',
-  notBetween: 'NOT BETWEEN',
-  in: 'IN',
-  notIn: 'NOT IN',
-  insideDashboard: 'INSIDE DASHBOARD RANGE',
-  outsideDashboard: 'OUTSIDE DASHBOARD RANGE',
-  isTrue: 'IS TRUE',
-  isFalse: 'IS FALSE',
-} as const;
 
 export type ExpressionName = keyof typeof ExpressionsMap;
 export type ExpressionValue = (typeof ExpressionsMap)[keyof typeof ExpressionsMap];

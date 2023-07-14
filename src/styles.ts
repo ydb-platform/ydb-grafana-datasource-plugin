@@ -9,5 +9,9 @@ export const styles = {
       align-items: center;
       margin-bottom: 4px;
     `,
+    logicalOpAbsolutePosition: css`
+      position: absolute;
+      left: 46px;
+    `,
   },
 };

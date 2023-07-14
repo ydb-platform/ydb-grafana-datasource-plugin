@@ -10,13 +10,16 @@ import { selectors } from 'selectors';
 import { UnknownFieldType, defaultLabelWidth } from 'containers/QueryEditor/constants';
 
 function removeLogicalOperationFromFirstFilter(filters: FilterType[]) {
+  if (!filters.length) {
+    return [];
+  }
   const normalizedFilters = [...filters];
   const newFirstElement = { ...filters[0], logicalOp: undefined };
   normalizedFilters[0] = newFirstElement;
   return normalizedFilters;
 }
 
-function useFiltersActions(filters: FilterType[], onChange: (val: FilterType[]) => void) {
+function useFiltersActions(filters: readonly FilterType[], onChange: (val: FilterType[]) => void) {
   const handleChange = (newFilters: FilterType[]) => {
     onChange(removeLogicalOperationFromFirstFilter(newFilters));
   };
@@ -41,9 +44,9 @@ function useFiltersActions(filters: FilterType[], onChange: (val: FilterType[]) 
 }
 
 interface FiltersProps {
-  filters?: FilterType[];
+  filters?: readonly FilterType[];
   onChange: (val: FilterType[]) => void;
-  fields: string[];
+  fields: readonly string[];
   fieldsMap: Map<string, string>;
   loading?: boolean;
   error?: string;

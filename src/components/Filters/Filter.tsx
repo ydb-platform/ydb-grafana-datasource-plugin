@@ -1,13 +1,12 @@
 import { SelectableValue } from '@grafana/data';
 import { Select, Button, RadioButtonGroup, Input } from '@grafana/ui';
 
-import { defaultInputWidth } from 'containers/QueryEditor/constants';
+import { ExpressionsMap, defaultInputWidth } from 'containers/QueryEditor/constants';
 import { getSelectableValues } from 'containers/QueryEditor/helpers';
 import {
   BooleanExpressions,
   CommonExpressions,
   DateExpressions,
-  ExpressionsMap,
   FilterType,
   LogicalOperation,
   StringExpressions,
@@ -78,7 +77,7 @@ interface FilterProps {
   filter: FilterType;
   onRemove: VoidFunction;
   onEdit: (value: Partial<FilterType>) => void;
-  fields: string[];
+  fields: readonly string[];
   loading?: boolean;
   type: string;
 }
@@ -115,9 +114,15 @@ export function Filter({ onRemove, onEdit, filter, fields, loading, type }: Filt
 
   return (
     <div className={styles.Common.grid5}>
-      <div>
-        {logicalOp && <RadioButtonGroup options={options} value={logicalOp} onChange={handleChangeLogicalOperation} />}
-      </div>
+      {logicalOp && (
+        <RadioButtonGroup
+          size="sm"
+          options={options}
+          value={logicalOp}
+          onChange={handleChangeLogicalOperation}
+          className={styles.Common.logicalOpAbsolutePosition}
+        />
+      )}
       <Select
         onChange={handleSelectColumn}
         options={selectableFields}
@@ -147,7 +152,7 @@ export function Filter({ onRemove, onEdit, filter, fields, loading, type }: Filt
           value={params}
         />
       )}
-      <Button icon="x" onClick={onRemove} title="Remove field" fill="outline" />
+      <Button icon="trash-alt" onClick={onRemove} title="Remove field" fill="outline" />
     </div>
   );
 }

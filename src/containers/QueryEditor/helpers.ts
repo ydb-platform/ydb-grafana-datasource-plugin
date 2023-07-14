@@ -36,6 +36,6 @@ export function normalizeFields(fields: TableFieldBackend[]): TableField[] {
   return fields.map((f) => ({ name: f.Name, type: f.Type }));
 }
 
-export function getSelectableValues(fields: string[]) {
+export function getSelectableValues(fields: readonly string[]) {
   return fields.map((f) => ({ label: f, value: f }));
 }
