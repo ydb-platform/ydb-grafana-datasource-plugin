@@ -11,6 +11,7 @@ import { DataSource } from 'datasource';
 import { getRawSqlFromBuilderOptions } from './prepare-query';
 import { Filters } from 'components/Filters/Filters';
 import { UnknownFieldType } from './constants';
+import { selectors } from 'selectors';
 
 interface QueryBuilderProps {
   datasource: DataSource;
@@ -75,7 +76,7 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
   const {
     rawSql,
     queryFormat,
-    builderOptions: { table, fields: selectedFields, limit, logLevelField, filters },
+    builderOptions: { table, fields: selectedFields, limit, logLevelField, filters, loglineFields },
   } = query;
 
   const [fields, fieldsLoading, fieldsError] = useFields(datasource, table);
@@ -99,6 +100,9 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
   };
   const handleFieldsChange = (value: string[]) => {
     handleChangeBuilderOption({ fields: value });
+  };
+  const handleLoglineFieldsChange = (value: string[]) => {
+    handleChangeBuilderOption({ loglineFields: value });
   };
   const handleLimitChange = (value: number) => {
     handleChangeBuilderOption({ limit: value });
@@ -124,15 +128,26 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
         selectedFields={selectedFields}
         onFieldsChange={handleFieldsChange}
         loading={fieldsLoading}
+        selectors={selectors.components.QueryBuilder.Fields}
       />
       {queryFormat === 'logs' && (
-        <LogLevelFieldSelect
-          onChange={handleLogLevelFieldChange}
-          error={fieldsError}
-          fields={allFieldsNames}
-          loading={fieldsLoading}
-          logLevelField={logLevelField}
-        />
+        <React.Fragment>
+          <LogLevelFieldSelect
+            onChange={handleLogLevelFieldChange}
+            error={fieldsError}
+            fields={allFieldsNames}
+            loading={fieldsLoading}
+            logLevelField={logLevelField}
+          />
+          <FieldsSelect
+            error={fieldsError}
+            fields={allFieldsNames}
+            selectedFields={loglineFields}
+            onFieldsChange={handleLoglineFieldsChange}
+            loading={fieldsLoading}
+            selectors={selectors.components.QueryBuilder.LogLineFields}
+          />
+        </React.Fragment>
       )}
       <Filters
         filters={filters}

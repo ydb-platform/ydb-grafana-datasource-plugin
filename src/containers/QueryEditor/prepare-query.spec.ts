@@ -5,6 +5,7 @@ import {
   getSingleWhereExpression,
   logicalOpToSql,
   prepareParams,
+  prepareLogLineFields,
 } from './prepare-query';
 import { ExpressionName, FilterType, LogicalOperations, QueryFormat } from './types';
 
@@ -46,7 +47,7 @@ describe('should add basic parameters', () => {
     const builderOptions = {
       fields: ['bar', 'baz', 'fido'],
     };
-    const sql = 'SELECT `bar`, `baz`, `fido` \nFROM';
+    const sql = 'SELECT `bar`, \n`baz`, \n`fido` \nFROM';
     expect(getRawSqlFromBuilderOptions(builderOptions, 'logs')).toBe(sql);
   });
 });
@@ -54,19 +55,39 @@ describe('should add basic parameters', () => {
 describe('should properly add log field', () => {
   it('should add log level if query type is "logs"', () => {
     const builderOptions = baseBuilderOptions;
-    const sql = 'SELECT `bar`, `baz` AS `level` \nFROM `foo` \nLIMIT 10';
+    const sql = 'SELECT `bar`, \n`baz` AS `level` \nFROM `foo` \nLIMIT 10';
     expect(getRawSqlFromBuilderOptions(builderOptions, 'logs')).toBe(sql);
   });
   it('should add log level if query type is "logs" and field is not in selected', () => {
     const builderOptions = { ...baseBuilderOptions, fields: ['bar'] };
-    const sql = 'SELECT `bar`, `baz` AS `level` \nFROM `foo` \nLIMIT 10';
+    const sql = 'SELECT `bar`, \n`baz` AS `level` \nFROM `foo` \nLIMIT 10';
     expect(getRawSqlFromBuilderOptions(builderOptions, 'logs')).toBe(sql);
   });
   for (const type of ['table', 'timeseries']) {
     it(`should not add log level if query type is ${type}`, () => {
       const builderOptions = baseBuilderOptions;
-      const sql = 'SELECT `bar`, `baz` \nFROM `foo` \nLIMIT 10';
+      const sql = 'SELECT `bar`, \n`baz` \nFROM `foo` \nLIMIT 10';
       expect(getRawSqlFromBuilderOptions(builderOptions, type as QueryFormat)).toBe(sql);
+    });
+  }
+});
+
+describe('should properly add logline field', () => {
+  it('should add log line if query type is "logs"', () => {
+    const builderOptionsWithLogline = { ...baseBuilderOptions, loglineFields: ['foo', 'bar'] };
+    const sql =
+      'SELECT "foo="||CAST(`foo` AS string)||", "||"bar="||CAST(`bar` AS string) AS `logLine`, \n`bar`, \n`baz` AS `level` \nFROM `foo` \nLIMIT 10';
+    expect(getRawSqlFromBuilderOptions(builderOptionsWithLogline, 'logs')).toBe(sql);
+  });
+  it('should add log line if query type is "logs" and logline field is not in selected', () => {
+    const sql = 'SELECT `bar`, \n`baz` AS `level` \nFROM `foo` \nLIMIT 10';
+    expect(getRawSqlFromBuilderOptions(baseBuilderOptions, 'logs')).toBe(sql);
+  });
+  for (const type of ['table', 'timeseries']) {
+    const builderOptionsWithLogline = { ...baseBuilderOptions, loglineFields: ['foo', 'bar'] };
+    it(`should not add log line if query type is ${type}`, () => {
+      const sql = 'SELECT `bar`, \n`baz` \nFROM `foo` \nLIMIT 10';
+      expect(getRawSqlFromBuilderOptions(builderOptionsWithLogline, type as QueryFormat)).toBe(sql);
     });
   }
 });
@@ -74,7 +95,7 @@ describe('should properly add log field', () => {
 describe('should properly add WHERE condition', () => {
   it('do not add WHERE condition without params', () => {
     const builderOptions = { ...baseBuilderOptions, filters: [] };
-    const sql = 'SELECT `bar`, `baz` \nFROM `foo` \nLIMIT 10';
+    const sql = 'SELECT `bar`, \n`baz` \nFROM `foo` \nLIMIT 10';
     expect(getRawSqlFromBuilderOptions(builderOptions, 'table')).toBe(sql);
   });
 
@@ -100,7 +121,7 @@ describe('should properly add WHERE condition', () => {
       ] as FilterType[],
     };
     const sql =
-      'SELECT `bar`, `baz` \nFROM `foo` \nWHERE \n`bar` > "foo, bar, baz, 1  " \nAND `bar` > "foo, bar, baz, 1  " \nLIMIT 10';
+      'SELECT `bar`, \n`baz` \nFROM `foo` \nWHERE \n`bar` > "foo, bar, baz, 1  " \nAND `bar` > "foo, bar, baz, 1  " \nLIMIT 10';
     expect(getRawSqlFromBuilderOptions(builderOptions, 'table')).toBe(sql);
   });
 });
@@ -244,4 +265,17 @@ describe('should properly generate params of the expression', () => {
       expect(prepareParams({ params, expr: typedExpr, paramsType: 'number' })).toBe(sql);
     });
   }
+});
+
+describe('should properly generate log line', () => {
+  it('with empty params', () => {
+    const fields: string[] = [];
+    const sql = '';
+    expect(prepareLogLineFields(fields)).toBe(sql);
+  });
+  it('with fields', () => {
+    const fields = ['foo', 'bar'];
+    const sql = '"foo="||CAST(`foo` AS string)||", "||"bar="||CAST(`bar` AS string) AS `logLine`';
+    expect(prepareLogLineFields(fields)).toBe(sql);
+  });
 });

@@ -44,6 +44,7 @@ export interface TableField {
 export interface SqlBuilderOptionsList {
   table?: string;
   fields?: string[];
+  loglineFields?: string[];
   limit?: number;
   logLevelField?: string | null;
   rawSqlBuilder?: string;
