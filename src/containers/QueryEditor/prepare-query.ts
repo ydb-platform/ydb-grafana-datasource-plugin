@@ -109,18 +109,27 @@ function checkAndAddLogLevelField(logLevelField: string, fields: string[]) {
   return fields;
 }
 
+export function prepareLogLineFields(fields: string[]) {
+  const wrappedFields = fields.map(
+    (f) => `${escapeAndWrapString(`${f}=`, '"')}||CAST(${escapeAndWrapString(f)} AS string)`
+  );
+  const lintel = `||${escapeAndWrapString(', ', '"')}||`;
+  return wrappedFields.length ? `${wrappedFields.join(lintel)} AS ${escapeAndWrapString('logLine')}` : '';
+}
+
 export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, queryFormat: QueryFormat) {
-  const { logLevelField, fields = [] } = builderOptions;
+  const { logLevelField, loglineFields = [], fields = [] } = builderOptions;
+  const logLineString = queryFormat === 'logs' ? prepareLogLineFields(loglineFields) : '';
   const normalizedFields =
     queryFormat === 'logs' && logLevelField ? checkAndAddLogLevelField(logLevelField, fields) : fields;
-  const fieldsString = normalizedFields
-    ?.map((field) => {
-      if (queryFormat === 'logs' && field === builderOptions.logLevelField && field !== logLevelAlias) {
-        return getAliasExpression(field, logLevelAlias);
-      }
-      return escapeAndWrapString(field);
-    })
-    .join(', ');
+  const wrappedSchemaFields = normalizedFields?.map((field) => {
+    if (queryFormat === 'logs' && field === builderOptions.logLevelField && field !== logLevelAlias) {
+      return getAliasExpression(field, logLevelAlias);
+    }
+    return escapeAndWrapString(field);
+  });
+
+  const fieldsString = [logLineString, ...wrappedSchemaFields].filter(Boolean).join(', \n');
   const limitCondition = builderOptions.limit ? ` \nLIMIT ${builderOptions.limit}` : '';
   const whereCondition = builderOptions.filters ? getWhereExpression(builderOptions.filters) : '';
   return `SELECT${fieldsString ? ` ${fieldsString}` : ''} \nFROM${

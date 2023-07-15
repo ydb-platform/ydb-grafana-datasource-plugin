@@ -3,7 +3,6 @@ import { SelectableValue } from '@grafana/data';
 
 import { GrafanaFormClassName, defaultLabelWidth } from 'containers/QueryEditor/constants';
 
-import { selectors } from 'selectors';
 import { getSelectableValues } from 'containers/QueryEditor/helpers';
 
 export type FieldsSelectProps = {
@@ -12,13 +11,19 @@ export type FieldsSelectProps = {
   loading?: boolean;
   error?: string;
   onFieldsChange: (value: string[]) => void;
+  selectors: { label: string; tooltip: string };
 };
 
-export function FieldsSelect({ onFieldsChange, selectedFields = [], fields, loading, error }: FieldsSelectProps) {
+export function FieldsSelect({
+  onFieldsChange,
+  selectedFields = [],
+  fields,
+  loading,
+  error,
+  selectors: { label, tooltip },
+}: FieldsSelectProps) {
   const allFields = fields.length > 0 ? Array.from(new Set([...fields, ...selectedFields])) : [];
   const allFieldsSelectable = getSelectableValues(allFields);
-
-  const { label, tooltip } = selectors.components.QueryBuilder.Fields;
 
   const handleChange = (e: Array<SelectableValue<string>>) => {
     onFieldsChange(e.map((el) => el.value ?? '').filter(Boolean));
