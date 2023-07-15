@@ -28,7 +28,7 @@ export const QueryFormatNames: Record<QueryFormat, string> = {
 
 export const MONACO_LANGUAGE_SQL = 'sql';
 
-export const defaultSqlEditorHeight = '150px';
+export const defaultSqlEditorHeight = 150;
 
 export const GrafanaFormClassName = 'gf-form';
 

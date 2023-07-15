@@ -1,8 +1,14 @@
+import * as React from 'react';
 import { CodeEditor } from '@grafana/ui';
+
+import { SqlEditorHeightInput } from 'components/SqlEditorHeightInput';
 
 import { OnChangeQueryAttribute, YDBSQLQuery } from './types';
 import { MONACO_LANGUAGE_SQL, defaultSqlEditorHeight } from './constants';
 import { YdbMonacoEditor, fetchSuggestions, registerSQL } from 'lib/sqlProvider';
+import { useStateWithLocalStorage } from './helpers';
+
+const SQL_EDITOR_HEIGHT_LS_KEY = 'SQL_EDITOR_HEIGHT_LS_KEY';
 
 interface SqlEditorProps {
   query: YDBSQLQuery;
@@ -10,6 +16,10 @@ interface SqlEditorProps {
 }
 
 export function SqlEditor({ onChange, query }: SqlEditorProps) {
+  const [editorHeight, setEditorHeight] = useStateWithLocalStorage<number>(
+    SQL_EDITOR_HEIGHT_LS_KEY,
+    defaultSqlEditorHeight
+  );
   const onQueryTextChange = (text: string) => {
     onChange({ rawSql: text });
   };
@@ -21,16 +31,20 @@ export function SqlEditor({ onChange, query }: SqlEditorProps) {
   };
 
   return (
-    <CodeEditor
-      aria-label="SQL"
-      height={defaultSqlEditorHeight}
-      language="sql"
-      value={rawSql}
-      onSave={onQueryTextChange}
-      showMiniMap={false}
-      showLineNumbers={true}
-      onBlur={onQueryTextChange}
-      onEditorDidMount={handleMount}
-    />
+    <React.Fragment>
+      <SqlEditorHeightInput height={editorHeight} onChange={setEditorHeight} />
+      <CodeEditor
+        aria-label="SQL"
+        height={editorHeight}
+        language="sql"
+        value={rawSql}
+        onSave={onQueryTextChange}
+        showMiniMap={false}
+        showLineNumbers={true}
+        onBlur={onQueryTextChange}
+        onEditorDidMount={handleMount}
+        monacoOptions={{ wordWrap: 'on' }}
+      />
+    </React.Fragment>
   );
 }

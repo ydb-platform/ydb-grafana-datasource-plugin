@@ -37,6 +37,10 @@ export const Components = {
       label: 'Format',
       tooltip: 'Visualization type',
     },
+    EditorHeight: {
+      label: 'Editor height',
+      tooltip: 'Default SQL editor height',
+    },
     SqlPreview: {
       label: 'SQL Preview',
       tooltip: 'You can safely switch to SQL Editor to customize the generated query',
