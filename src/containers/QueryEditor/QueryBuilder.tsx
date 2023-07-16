@@ -113,6 +113,12 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
   const handleFiltersChange = (value: FilterType[]) => {
     handleChangeBuilderOption({ filters: value });
   };
+
+  const commonFieldsProps = {
+    error: fieldsError,
+    loading: fieldsLoading,
+    fields: allFieldsNames,
+  };
   return (
     <React.Fragment>
       <TableSelect
@@ -123,40 +129,27 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
         onTableChange={handleTableChange}
       />
       <FieldsSelect
-        error={fieldsError}
-        fields={allFieldsNames}
+        {...commonFieldsProps}
         selectedFields={selectedFields}
         onFieldsChange={handleFieldsChange}
-        loading={fieldsLoading}
         selectors={selectors.components.QueryBuilder.Fields}
       />
       {queryFormat === 'logs' && (
         <React.Fragment>
           <LogLevelFieldSelect
+            {...commonFieldsProps}
             onChange={handleLogLevelFieldChange}
-            error={fieldsError}
-            fields={allFieldsNames}
-            loading={fieldsLoading}
             logLevelField={logLevelField}
           />
           <FieldsSelect
-            error={fieldsError}
-            fields={allFieldsNames}
+            {...commonFieldsProps}
             selectedFields={loglineFields}
             onFieldsChange={handleLoglineFieldsChange}
-            loading={fieldsLoading}
             selectors={selectors.components.QueryBuilder.LogLineFields}
           />
         </React.Fragment>
       )}
-      <Filters
-        filters={filters}
-        onChange={handleFiltersChange}
-        fields={allFieldsNames}
-        error={fieldsError}
-        loading={fieldsLoading}
-        fieldsMap={fieldsMap}
-      />
+      <Filters {...commonFieldsProps} filters={filters} onChange={handleFiltersChange} fieldsMap={fieldsMap} />
       <Limit limit={limit} onChange={handleLimitChange} />
       <SqlPreview rawSql={rawSql} />
     </React.Fragment>

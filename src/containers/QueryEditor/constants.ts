@@ -57,3 +57,8 @@ export const ExpressionsMap = {
   isTrue: 'IS TRUE',
   isFalse: 'IS FALSE',
 } as const;
+
+export const dateSelectableParams = {
+  dashboardStart: 'DASHBOARD START TIME',
+  dashboardEnd: 'DASHBOARD END TIME',
+} as const;
