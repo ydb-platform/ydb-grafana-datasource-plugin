@@ -24,7 +24,7 @@ function useFiltersActions(filters: readonly FilterType[], onChange: (val: Filte
     onChange(removeLogicalOperationFromFirstFilter(newFilters));
   };
   const addFilter = () => {
-    handleChange([...filters, { id: nanoid(), column: '', expr: null, logicalOp: 'and' }]);
+    handleChange([...filters, { id: nanoid(), column: '', expr: null, logicalOp: 'and', paramsType: null }]);
   };
   const removeFilter = (id: string) => () => {
     handleChange(filters.filter((f) => f.id !== id));

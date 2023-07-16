@@ -1,3 +1,4 @@
+import { dateSelectableParams } from './constants';
 import { defaultWrapper, escapeAndWrapString } from './helpers';
 import { ExpressionName, FilterType, LogicalOperation, QueryFormat, SqlBuilderOptions } from './types';
 
@@ -35,15 +36,23 @@ function prepareSplittedParams(params: string, expr: ExpressionName, paramsType:
   return splittedParams.join(', ');
 }
 
+const selectableParamsToSql: Record<keyof typeof dateSelectableParams, string> = {
+  dashboardStart: '$__fromTimestamp',
+  dashboardEnd: '$__toTimestamp',
+};
+
 export function prepareParams({ params, expr, paramsType }: Partial<FilterType>) {
+  if (!params || !paramsType) {
+    return '';
+  }
   if (typeof params === 'number') {
     return params;
-  } else {
-    if (params && expr && expressionWithCommaSeparatedParams.includes(expr)) {
-      return prepareSplittedParams(params, expr, paramsType);
-    }
-    return escapeAndWrapString(params, '"');
+  } else if (params in selectableParamsToSql) {
+    return selectableParamsToSql[params as keyof typeof selectableParamsToSql];
+  } else if (expr && expressionWithCommaSeparatedParams.includes(expr)) {
+    return prepareSplittedParams(params, expr, paramsType);
   }
+  return escapeAndWrapString(params, '"');
 }
 
 export const expressionToSql: Record<ExpressionName, string> = {
@@ -77,13 +86,14 @@ export const logicalOpToSql: Record<LogicalOperation, string> = {
 
 export function getSingleWhereExpression(filter: FilterType) {
   const { logicalOp, column, expr, params } = filter;
+  if (!column) {
+    return '';
+  }
   const result = [];
   if (logicalOp) {
     result.push(logicalOpToSql[logicalOp]);
   }
-  if (column) {
-    result.push(escapeAndWrapString(column));
-  }
+  result.push(escapeAndWrapString(column));
   if (expr) {
     result.push(expressionToSql[expr]);
   }

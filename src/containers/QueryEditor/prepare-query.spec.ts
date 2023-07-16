@@ -128,25 +128,31 @@ describe('should properly add WHERE condition', () => {
 
 describe('should properly generate single WHERE condition', () => {
   it('without params', () => {
-    const filter: FilterType = { id: '1' };
+    const filter: FilterType = { id: '1', paramsType: null };
     const sql = '';
     expect(getSingleWhereExpression(filter)).toBe(sql);
   });
   it('with only column', () => {
-    const filter: FilterType = { id: '1', column: 'bar' };
+    const filter: FilterType = { id: '1', column: 'bar', paramsType: null };
     const sql = '`bar`';
     expect(getSingleWhereExpression(filter)).toBe(sql);
   });
   for (const op of LogicalOperations) {
     it(`with column and logical op ${op}`, () => {
-      const filter: FilterType = { id: '1', column: 'bar', logicalOp: op };
+      const filter: FilterType = { id: '1', column: 'bar', logicalOp: op, paramsType: null };
       const sql = `${logicalOpToSql[op]} \`bar\``;
       expect(getSingleWhereExpression(filter)).toBe(sql);
     });
   }
   for (const expr of Object.keys(ExpressionsMap)) {
     it(`with column, logical op and expression ${expr}`, () => {
-      const filter: FilterType = { id: '1', column: 'bar', logicalOp: 'and', expr: expr as ExpressionName };
+      const filter: FilterType = {
+        id: '1',
+        column: 'bar',
+        logicalOp: 'and',
+        expr: expr as ExpressionName,
+        paramsType: null,
+      };
       const sql = `AND \`bar\` ${expressionToSql[expr as ExpressionName]}`;
       expect(getSingleWhereExpression(filter)).toBe(sql);
     });
@@ -188,7 +194,7 @@ describe('should properly generate params of the expression', () => {
     it(`with number parameter ${expr}`, () => {
       const params = 1;
       const sql = 1;
-      expect(prepareParams({ params, expr: expr as ExpressionName })).toBe(sql);
+      expect(prepareParams({ params, expr: expr as ExpressionName, paramsType: 'number' })).toBe(sql);
     });
   }
   for (const expr of Object.keys(ExpressionsMap)) {
@@ -202,7 +208,7 @@ describe('should properly generate params of the expression', () => {
           sql = '("abc")';
           break;
       }
-      expect(prepareParams({ params, expr: typedExpr })).toBe(sql);
+      expect(prepareParams({ params, expr: typedExpr, paramsType: 'text' })).toBe(sql);
     });
   }
   for (const expr of Object.keys(ExpressionsMap)) {
@@ -220,7 +226,7 @@ describe('should properly generate params of the expression', () => {
           sql = '"foo" AND "bar" AND "baz"';
           break;
       }
-      expect(prepareParams({ params, expr: typedExpr })).toBe(sql);
+      expect(prepareParams({ params, expr: typedExpr, paramsType: 'text' })).toBe(sql);
     });
   }
   for (const expr of Object.keys(ExpressionsMap)) {
@@ -228,7 +234,7 @@ describe('should properly generate params of the expression', () => {
     it(`with single number parameter ${expr}`, () => {
       const params = 1;
       let sql = 1;
-      expect(prepareParams({ params, expr: typedExpr })).toBe(sql);
+      expect(prepareParams({ params, expr: typedExpr, paramsType: 'number' })).toBe(sql);
     });
   }
   for (const expr of Object.keys(ExpressionsMap)) {
@@ -265,6 +271,11 @@ describe('should properly generate params of the expression', () => {
       expect(prepareParams({ params, expr: typedExpr, paramsType: 'number' })).toBe(sql);
     });
   }
+  it(`with selectable date parameter`, () => {
+    const params = 'dashboardStart';
+    let sql = '$__fromTimestamp';
+    expect(prepareParams({ params, expr: 'equals', paramsType: 'date' })).toBe(sql);
+  });
 });
 
 describe('should properly generate log line', () => {

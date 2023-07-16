@@ -69,8 +69,8 @@ export type FilterType = {
   logicalOp?: LogicalOperation;
   column?: string;
   expr?: ExpressionName | null;
-  params?: string | number;
-  paramsType?: 'number';
+  params?: string | number | null;
+  paramsType: 'number' | 'text' | 'date' | null;
 };
 
 export type ExpressionName = keyof typeof ExpressionsMap;
