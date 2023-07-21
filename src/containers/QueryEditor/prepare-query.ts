@@ -4,8 +4,17 @@ import { ExpressionName, FilterType, LogicalOperation, QueryFormat, SqlBuilderOp
 
 const logLevelAlias = 'level';
 
-function getAliasExpression(fieldName: string, alias: string, wrapper = defaultWrapper) {
-  return `${escapeAndWrapString(fieldName)} AS ${escapeAndWrapString(alias)}`;
+function getAliasExpression(
+  fieldName: string,
+  alias: string,
+  wrapper = defaultWrapper,
+  fieldTransformer?: (field: string, wrapper: string) => string
+) {
+  let normalizedField = escapeAndWrapString(fieldName, wrapper);
+  if (typeof fieldTransformer === 'function') {
+    normalizedField = fieldTransformer(fieldName, wrapper);
+  }
+  return `${normalizedField} AS ${escapeAndWrapString(alias, wrapper)}`;
 }
 
 const expressionWithCommaSeparatedParams: ExpressionName[] = ['in', 'notIn', 'between', 'notBetween'];
@@ -127,6 +136,10 @@ export function prepareLogLineFields(fields: string[]) {
   return wrappedFields.length ? `${wrappedFields.join(lintel)} AS ${escapeAndWrapString('logLine')}` : '';
 }
 
+function getFieldToLowerCaseExpression(field: string, wrapper = defaultWrapper) {
+  return `String::AsciiToLower(${escapeAndWrapString(field, wrapper)})`;
+}
+
 export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, queryFormat: QueryFormat) {
   const { logLevelField, loglineFields = [], fields = [] } = builderOptions;
   const logLineString = queryFormat === 'logs' ? prepareLogLineFields(loglineFields) : '';
@@ -134,7 +147,7 @@ export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, q
     queryFormat === 'logs' && logLevelField ? checkAndAddLogLevelField(logLevelField, fields) : fields;
   const wrappedSchemaFields = normalizedFields?.map((field) => {
     if (queryFormat === 'logs' && field === builderOptions.logLevelField && field !== logLevelAlias) {
-      return getAliasExpression(field, logLevelAlias);
+      return getAliasExpression(field, logLevelAlias, defaultWrapper, getFieldToLowerCaseExpression);
     }
     return escapeAndWrapString(field);
   });
