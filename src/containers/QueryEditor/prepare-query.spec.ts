@@ -55,12 +55,17 @@ describe('should add basic parameters', () => {
 describe('should properly add log field', () => {
   it('should add log level if query type is "logs"', () => {
     const builderOptions = baseBuilderOptions;
-    const sql = 'SELECT `bar`, \n`baz` AS `level` \nFROM `foo` \nLIMIT 10';
+    const sql = 'SELECT `bar`, \nString::AsciiToLower(`baz`) AS `level` \nFROM `foo` \nLIMIT 10';
+    expect(getRawSqlFromBuilderOptions(builderOptions, 'logs')).toBe(sql);
+  });
+  it('should add log level if query type is "logs"', () => {
+    const builderOptions = baseBuilderOptions;
+    const sql = 'SELECT `bar`, \nString::AsciiToLower(`baz`) AS `level` \nFROM `foo` \nLIMIT 10';
     expect(getRawSqlFromBuilderOptions(builderOptions, 'logs')).toBe(sql);
   });
   it('should add log level if query type is "logs" and field is not in selected', () => {
     const builderOptions = { ...baseBuilderOptions, fields: ['bar'] };
-    const sql = 'SELECT `bar`, \n`baz` AS `level` \nFROM `foo` \nLIMIT 10';
+    const sql = 'SELECT `bar`, \nString::AsciiToLower(`baz`) AS `level` \nFROM `foo` \nLIMIT 10';
     expect(getRawSqlFromBuilderOptions(builderOptions, 'logs')).toBe(sql);
   });
   for (const type of ['table', 'timeseries']) {
@@ -76,11 +81,11 @@ describe('should properly add logline field', () => {
   it('should add log line if query type is "logs"', () => {
     const builderOptionsWithLogline = { ...baseBuilderOptions, loglineFields: ['foo', 'bar'] };
     const sql =
-      'SELECT "foo="||CAST(`foo` AS string)||", "||"bar="||CAST(`bar` AS string) AS `logLine`, \n`bar`, \n`baz` AS `level` \nFROM `foo` \nLIMIT 10';
+      'SELECT "foo="||CAST(`foo` AS string)||", "||"bar="||CAST(`bar` AS string) AS `logLine`, \n`bar`, \nString::AsciiToLower(`baz`) AS `level` \nFROM `foo` \nLIMIT 10';
     expect(getRawSqlFromBuilderOptions(builderOptionsWithLogline, 'logs')).toBe(sql);
   });
   it('should add log line if query type is "logs" and logline field is not in selected', () => {
-    const sql = 'SELECT `bar`, \n`baz` AS `level` \nFROM `foo` \nLIMIT 10';
+    const sql = 'SELECT `bar`, \nString::AsciiToLower(`baz`) AS `level` \nFROM `foo` \nLIMIT 10';
     expect(getRawSqlFromBuilderOptions(baseBuilderOptions, 'logs')).toBe(sql);
   });
   for (const type of ['table', 'timeseries']) {
