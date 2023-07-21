@@ -1,3 +1,5 @@
+import * as React from 'react';
+
 import { Button, Form } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 
@@ -60,15 +62,13 @@ export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasou
     <DatabaseProvider database={datasource.database}>
       <Form onSubmit={onRunQuery} maxWidth="none">
         {() => (
-          <>
-            <div className={GrafanaFormClassName}>
-              <QueryTypeSwitcher
-                queryType={queryType}
-                onChange={handleChangeQueryType}
-                shouldConfirm={rawSql !== rawSqlBuilder}
-              />
-              <Button type="submit">Run Query</Button>
-            </div>
+          <React.Fragment>
+            <QueryTypeSwitcher
+              queryType={queryType}
+              onChange={handleChangeQueryType}
+              shouldConfirm={rawSql !== rawSqlBuilder}
+            />
+
             <div className={GrafanaFormClassName}>
               <QueryFormatSelect format={queryFormat} onChange={handleChangeQueryFormat} />
             </div>
@@ -81,7 +81,8 @@ export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasou
             ) : (
               <SqlEditor onChange={handleChangeQueryAttribute<YDBSQLQuery>} query={query} />
             )}
-          </>
+            <Button type="submit">Run Query</Button>
+          </React.Fragment>
         )}
       </Form>
     </DatabaseProvider>

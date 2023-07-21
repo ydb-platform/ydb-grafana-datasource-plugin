@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { CodeEditor } from '@grafana/ui';
+import { CodeEditor, InlineField } from '@grafana/ui';
 
 import { SqlEditorHeightInput } from 'components/SqlEditorHeightInput';
 
@@ -33,18 +33,20 @@ export function SqlEditor({ onChange, query }: SqlEditorProps) {
   return (
     <React.Fragment>
       <SqlEditorHeightInput height={editorHeight} onChange={setEditorHeight} />
-      <CodeEditor
-        aria-label="SQL"
-        height={editorHeight}
-        language="sql"
-        value={rawSql}
-        onSave={onQueryTextChange}
-        showMiniMap={false}
-        showLineNumbers={true}
-        onBlur={onQueryTextChange}
-        onEditorDidMount={handleMount}
-        monacoOptions={{ wordWrap: 'on' }}
-      />
+      <InlineField grow>
+        <CodeEditor
+          aria-label="SQL"
+          height={editorHeight}
+          language="sql"
+          value={rawSql}
+          onSave={onQueryTextChange}
+          showMiniMap={false}
+          showLineNumbers={true}
+          onBlur={onQueryTextChange}
+          onEditorDidMount={handleMount}
+          monacoOptions={{ wordWrap: 'on' }}
+        />
+      </InlineField>
     </React.Fragment>
   );
 }
