@@ -6,26 +6,31 @@
   "alerting": true,
   "metrics": true,
   "backend": true,
-  "executable": "gpx_ydb",
   "logs": true,
   "annotations": true,
+  "executable": "gpx_ydb",
   "info": {
-    "description": "Ydb datasource plugin for Grafana",
+    "description": "YDB datasource plugin for Grafana",
     "author": {
-      "name": "Ydb"
+      "name": "YDB Platform"
     },
-    "keywords": ["datasource"],
+    "keywords": ["datasource", "ydb", "yql"],
     "logos": {
       "small": "img/logo.svg",
       "large": "img/logo.svg"
     },
-    "links": [],
+    "links": [
+      {
+        "name": "YDB website",
+        "url": "https://ydb.tech/"
+      }
+    ],
     "screenshots": [],
     "version": "%VERSION%",
     "updated": "%TODAY%"
   },
   "dependencies": {
-    "grafanaDependency": "^9.3.8",
+    "grafanaDependency": ">=9.0.0",
     "plugins": []
   }
 }
