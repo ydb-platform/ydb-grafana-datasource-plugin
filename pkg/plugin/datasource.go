@@ -56,7 +56,7 @@ func getCreds(settings *models.Settings) ydb.Option {
 	return ydb.WithAnonymousCredentials()
 }
 
-// Ydb defines how to connect to a Ydb datasource
+// Ydb defines how to connect to a YDB datasource
 type Ydb struct{}
 
 // listTables returns list of all tables includes folder tables

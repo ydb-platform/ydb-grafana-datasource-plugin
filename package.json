@@ -1,7 +1,7 @@
 {
   "name": "grafana-ydb-datasource",
   "version": "1.0.0",
-  "description": "Ydb datasource plugin for Grafana",
+  "description": "YDB datasource plugin for Grafana",
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
     "dev": "webpack -w -c ./webpack.config.ts --env development",
@@ -16,7 +16,7 @@
     "sign": "npx --yes @grafana/sign-plugin",
     "prepare": "husky install"
   },
-  "author": "Ydb",
+  "author": "YDB",
   "license": "Apache-2.0",
   "devDependencies": {
     "@babel/core": "^7.16.7",
