@@ -1,8 +1,19 @@
-import { DataSourceInstanceSettings, CoreApp, DataQueryRequest, getTimeZoneInfo, getTimeZone } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
+import { nanoid } from 'nanoid';
+import {
+  DataSourceInstanceSettings,
+  CoreApp,
+  DataQueryRequest,
+  getTimeZoneInfo,
+  getTimeZone,
+  DataFrame,
+  DataQueryResponse,
+  vectorator,
+  ScopedVars,
+} from '@grafana/data';
+import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
 import { YdbDataSourceOptions } from 'containers/ConfigEditor/types';
-import { ConvertQueryFormatToVisualizationType, normalizeFields } from 'containers/QueryEditor/helpers';
+import { ConvertQueryFormatToVisualizationType, normalizeFields, wrapString } from 'containers/QueryEditor/helpers';
 
 import { TableField, YDBQuery } from 'containers/QueryEditor/types';
 
@@ -38,6 +49,17 @@ export class DataSource extends DataSourceWithBackend<YDBQuery, YdbDataSourceOpt
     const localTimezoneInfo = getTimeZoneInfo(getTimeZone(), Date.now());
     return localTimezoneInfo?.ianaName;
   }
+  private runQuery(request: Partial<YDBQuery>, options?: any): Promise<DataFrame> {
+    return new Promise((resolve) => {
+      const req = {
+        targets: [{ ...request, refId: nanoid() }],
+        range: options ? options.range : undefined,
+      } as DataQueryRequest<YDBQuery>;
+      this.query(req).subscribe((res: DataQueryResponse) => {
+        resolve(res.data[0] || { fields: [] });
+      });
+    });
+  }
 
   query(request: DataQueryRequest<YDBQuery>) {
     const targets = request.targets
@@ -59,5 +81,47 @@ export class DataSource extends DataSourceWithBackend<YDBQuery, YdbDataSourceOpt
       ...request,
       targets,
     });
+  }
+  async metricFindQuery(query: YDBQuery | string, options: any) {
+    const ydbQuery: Partial<YDBQuery> = typeof query === 'string' ? { rawSql: query, queryType: 'sql' } : query;
+
+    if (!ydbQuery.rawSql) {
+      return [];
+    }
+    const frame = await this.runQuery(ydbQuery, options);
+    if (frame.fields?.length === 0) {
+      return [];
+    }
+    if (frame?.fields?.length === 1) {
+      return vectorator(frame?.fields[0]?.values).map((value) => ({ text: String(value), value: String(value) }));
+    }
+    // convention - assume the first field is an id field
+    const ids = frame?.fields[0]?.values;
+    return vectorator(frame?.fields[1]?.values).map((value, i) => ({ text: String(value), value: ids.get(i) }));
+  }
+
+  private replace(value = '', scopedVars?: ScopedVars) {
+    return getTemplateSrv().replace(value, scopedVars, this.format);
+  }
+
+  //this method is used  when no options for variable provided
+  private format(value: unknown) {
+    const normalizedValue = ([] as unknown[]).concat(value);
+    return normalizedValue
+      .map((el) => {
+        if (typeof el === 'string') {
+          return wrapString(el, '"');
+        }
+        return el;
+      })
+      .join(',');
+  }
+
+  applyTemplateVariables(query: YDBQuery, scoped: ScopedVars): YDBQuery {
+    let rawQuery = query.rawSql || '';
+    return {
+      ...query,
+      rawSql: this.replace(rawQuery, scoped),
+    };
   }
 }

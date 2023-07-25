@@ -17,11 +17,15 @@ export function ConvertQueryFormatToVisualizationType(format: QueryFormat) {
 
 export const defaultWrapper = '`';
 
-const escapeBackticksRe = /[\`]/g;
-const escapeDoubleQuotesRe = /[\"]/g;
+const escapeBackticksRe = /[\\`]/g;
+const escapeDoubleQuotesRe = /[\\"]/g;
 
 function escapeString(re: RegExp, st: string) {
   return st && st.replaceAll(re, '\\$&');
+}
+
+export function wrapString(val: string, wrapper = defaultWrapper) {
+  return `${wrapper}${val}${wrapper}`;
 }
 
 export function escapeAndWrapString(st = '', wrapper = defaultWrapper) {
@@ -31,7 +35,7 @@ export function escapeAndWrapString(st = '', wrapper = defaultWrapper) {
   } else if (wrapper === '"') {
     escapedString = escapeString(escapeDoubleQuotesRe, st);
   }
-  return escapedString && `${wrapper}${escapedString}${wrapper}`;
+  return escapedString && wrapString(escapedString, wrapper);
 }
 
 export function normalizeFields(fields: TableFieldBackend[]): TableField[] {
