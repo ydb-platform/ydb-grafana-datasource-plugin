@@ -210,6 +210,7 @@ func (h *Ydb) Macros() sqlds.Macros {
 	return map[string]sqlds.MacroFunc{
 		"fromTimestamp":      macros.FromTimestampFilter,
 		"toTimestamp":        macros.ToTimestampFilter,
-		"timeFilter":    macros.TimestampFilter,
+		"timeFilter":    	  macros.TimestampFilter,
+		"varFallback":    	  macros.VariableFallback,
 	}
 }
