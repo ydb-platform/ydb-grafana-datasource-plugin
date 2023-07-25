@@ -8,9 +8,9 @@ describe('should properly escapeAndWrapString', () => {
     expect(escapeAndWrapString('foo', '"')).toBe('"foo"');
   });
   it('string with forbidden symbols with backticks', () => {
-    expect(escapeAndWrapString('fo\\o`"')).toBe('`fo\\o\\`"`');
+    expect(escapeAndWrapString('fo\\o`"')).toBe('`fo\\\\o\\`"`');
   });
   it('string with forbidden symbols with double quotes', () => {
-    expect(escapeAndWrapString('fo\\o`"', '"')).toBe('"fo\\o`\\""');
+    expect(escapeAndWrapString('fo\\o`"', '"')).toBe('"fo\\\\o`\\""');
   });
 });
