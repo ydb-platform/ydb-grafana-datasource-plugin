@@ -1,9 +1,10 @@
 import { Select, InlineField, Button } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
-import { GrafanaFormClassName, defaultLabelWidth } from 'containers/QueryEditor/constants';
+import { defaultLabelWidth } from 'containers/QueryEditor/constants';
 
 import { getSelectableValues } from 'containers/QueryEditor/helpers';
+import { styles } from 'styles';
 
 export type FieldsSelectProps = {
   fields: string[];
@@ -34,7 +35,7 @@ export function FieldsSelect({
     handleChange(serverFieldsSelectable);
   };
   return (
-    <div className={GrafanaFormClassName}>
+    <div className={styles.Common.fieldsSelectWrapper}>
       <InlineField
         labelWidth={defaultLabelWidth}
         tooltip={tooltip}

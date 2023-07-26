@@ -13,5 +13,19 @@ export const styles = {
       position: absolute;
       left: 46px;
     `,
+    fieldsSelectWrapper: css`
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    `,
+    queryTypeWithSettings: css`
+      display: flex;
+      align-items: center;
+    `,
+    queryBuilderSettings: css`
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    `,
   },
 };

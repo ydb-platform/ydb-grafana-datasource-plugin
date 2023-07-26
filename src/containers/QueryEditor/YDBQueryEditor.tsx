@@ -5,15 +5,21 @@ import { QueryEditorProps } from '@grafana/data';
 
 import { QueryFormatSelect } from 'components/QueryFormatSelect';
 import { QueryTypeSwitcher } from 'components/QueryTypeSwitcher';
+import { SqlEditorHeightInput } from 'components/SqlEditorHeightInput';
+import { QueryBuilderSettings } from 'components/QueryBuilderSettings';
 import { QueryBuilder } from './QueryBuilder';
 import { SqlEditor } from './SqlEditor';
+
 import { DatabaseProvider } from './DatabaseContext';
+import { BuilderSettingsProvider, EditorHeightProvider } from './EditorSettingsContext';
 
 import { QueryFormat, QueryType, YDBBuilderQuery, YDBQuery, YDBSQLQuery } from './types';
 import { YdbDataSourceOptions } from 'containers/ConfigEditor/types';
 import { GrafanaFormClassName, defaultYDBBuilderQuery, defaultYDBSQLQuery } from './constants';
 import { DataSource } from 'datasource';
 import { getRawSqlFromBuilderOptions } from './prepare-query';
+
+import { styles } from 'styles';
 
 type YDBQueryEditorProps = QueryEditorProps<DataSource, YDBQuery, YdbDataSourceOptions>;
 
@@ -33,12 +39,9 @@ function normalizeQuery(query: YDBQuery) {
 
 export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasource }: YDBQueryEditorProps) {
   const query = normalizeQuery(baseQuery);
-  const {
-    queryType,
-    queryFormat,
-    rawSql,
-    builderOptions: { rawSqlBuilder },
-  } = query;
+  const { queryType, queryFormat, rawSql, builderOptions } = query;
+
+  const { rawSqlBuilder } = builderOptions;
 
   const handleChangeQueryAttribute = <T,>(value: Partial<T>) => {
     onChange({ ...query, ...value });
@@ -59,32 +62,39 @@ export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasou
   };
 
   return (
-    <DatabaseProvider database={datasource.database}>
-      <Form onSubmit={onRunQuery} maxWidth="none">
-        {() => (
-          <React.Fragment>
-            <QueryTypeSwitcher
-              queryType={queryType}
-              onChange={handleChangeQueryType}
-              shouldConfirm={rawSql !== rawSqlBuilder}
-            />
-
-            <div className={GrafanaFormClassName}>
-              <QueryFormatSelect format={queryFormat} onChange={handleChangeQueryFormat} />
-            </div>
-            {queryType === 'builder' ? (
-              <QueryBuilder
-                datasource={datasource}
-                query={query}
-                onChange={handleChangeQueryAttribute<YDBBuilderQuery>}
-              />
-            ) : (
-              <SqlEditor onChange={handleChangeQueryAttribute<YDBSQLQuery>} query={query} />
+    <EditorHeightProvider>
+      <BuilderSettingsProvider builderOptions={builderOptions}>
+        <DatabaseProvider database={datasource.database}>
+          <Form onSubmit={onRunQuery} maxWidth="none">
+            {() => (
+              <React.Fragment>
+                <div className={styles.Common.queryTypeWithSettings}>
+                  <QueryTypeSwitcher
+                    queryType={queryType}
+                    onChange={handleChangeQueryType}
+                    shouldConfirm={rawSql !== rawSqlBuilder}
+                  />
+                  {queryType === 'sql' && <SqlEditorHeightInput />}
+                  {queryType === 'builder' && <QueryBuilderSettings />}
+                </div>
+                <div className={GrafanaFormClassName}>
+                  <QueryFormatSelect format={queryFormat} onChange={handleChangeQueryFormat} />
+                </div>
+                {queryType === 'builder' ? (
+                  <QueryBuilder
+                    datasource={datasource}
+                    query={query}
+                    onChange={handleChangeQueryAttribute<YDBBuilderQuery>}
+                  />
+                ) : (
+                  <SqlEditor onChange={handleChangeQueryAttribute<YDBSQLQuery>} query={query} />
+                )}
+                <Button type="submit">Run Query</Button>
+              </React.Fragment>
             )}
-            <Button type="submit">Run Query</Button>
-          </React.Fragment>
-        )}
-      </Form>
-    </DatabaseProvider>
+          </Form>
+        </DatabaseProvider>
+      </BuilderSettingsProvider>
+    </EditorHeightProvider>
   );
 }
