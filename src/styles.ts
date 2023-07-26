@@ -15,8 +15,7 @@ export const styles = {
     `,
     fieldsSelectWrapper: css`
       display: flex;
-      align-items: center;
-      gap: 4px;
+      align-items: flex-start;
     `,
     queryTypeWithSettings: css`
       display: flex;
