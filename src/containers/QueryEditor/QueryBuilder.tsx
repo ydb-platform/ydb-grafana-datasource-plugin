@@ -65,9 +65,11 @@ function useFields(datasource: DataSource, table?: string) {
   return [fieldsList, loading, error] as const;
 }
 
-const TableDependableFields: Partial<SqlBuilderOptions> = {
+const TableDependableFields: Record<keyof Omit<SqlBuilderOptions, 'limit' | 'rawSqlBuilder' | 'table'>, any> = {
   fields: [],
   logLevelField: null,
+  filters: undefined,
+  loglineFields: undefined,
 };
 
 export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps) {
