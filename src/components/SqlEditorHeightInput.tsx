@@ -1,15 +1,13 @@
 import { InlineField, Input } from '@grafana/ui';
+import { useDispatchEditorHeight, useEditorHeight } from 'containers/QueryEditor/EditorSettingsContext';
 
 import { defaultLabelWidth, defaultNumberInputWidth } from 'containers/QueryEditor/constants';
 
 import { selectors } from 'selectors';
 
-interface SqlEditorHeightInputProps {
-  height: number;
-  onChange: (height: number) => void;
-}
-
-export function SqlEditorHeightInput({ height, onChange }: SqlEditorHeightInputProps) {
+export function SqlEditorHeightInput() {
+  const height = useEditorHeight();
+  const setEditorHeight = useDispatchEditorHeight();
   const { label, tooltip } = selectors.components.QueryBuilder.EditorHeight;
 
   return (
@@ -17,7 +15,7 @@ export function SqlEditorHeightInput({ height, onChange }: SqlEditorHeightInputP
       <Input
         type="number"
         value={height}
-        onChange={(e) => onChange(e.currentTarget.valueAsNumber)}
+        onChange={(e) => setEditorHeight(e.currentTarget.valueAsNumber)}
         width={defaultNumberInputWidth}
       />
     </InlineField>

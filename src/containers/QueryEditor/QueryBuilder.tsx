@@ -1,15 +1,17 @@
 import * as React from 'react';
+import { DataSource } from 'datasource';
 
 import { TableSelect } from 'components/TableSelect';
 import { FieldsSelect } from 'components/FieldsSelect';
 import { Limit } from 'components/Limit';
 import { SqlPreview } from 'components/SqlPreview';
 import { LogLevelFieldSelect } from 'components/LogLevelFieldSelect';
+import { Filters } from 'components/Filters/Filters';
+
+import { useBuilderSettings } from './EditorSettingsContext';
 
 import { SqlBuilderOptions, YDBBuilderQuery, OnChangeQueryAttribute, TableField, FilterType } from './types';
-import { DataSource } from 'datasource';
 import { getRawSqlFromBuilderOptions } from './prepare-query';
-import { Filters } from 'components/Filters/Filters';
 import { UnknownFieldType } from './constants';
 import { selectors } from 'selectors';
 
@@ -75,6 +77,7 @@ const TableDependableFields: Record<keyof Omit<SqlBuilderOptions, 'limit' | 'raw
 
 export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps) {
   const [tables, tablesLoading, tablesError] = useTables(datasource);
+  const { filtersActive: useFilters, aggregationsActive: useAggregations } = useBuilderSettings();
 
   const {
     rawSql,
@@ -155,13 +158,17 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
           />
         </React.Fragment>
       )}
-      <Filters {...commonFieldsProps} filters={filters} onChange={handleFiltersChange} fieldsMap={fieldsMap} />
-      <FieldsSelect
-        {...commonFieldsProps}
-        selectedFields={groupBy}
-        onFieldsChange={handleGroupByChange}
-        selectors={selectors.components.QueryBuilder.GroupBy}
-      />
+      {useFilters && (
+        <Filters {...commonFieldsProps} filters={filters} onChange={handleFiltersChange} fieldsMap={fieldsMap} />
+      )}
+      {useAggregations && (
+        <FieldsSelect
+          {...commonFieldsProps}
+          selectedFields={groupBy}
+          onFieldsChange={handleGroupByChange}
+          selectors={selectors.components.QueryBuilder.GroupBy}
+        />
+      )}
       <Limit limit={limit} onChange={handleLimitChange} />
       <SqlPreview rawSql={rawSql} />
     </React.Fragment>
