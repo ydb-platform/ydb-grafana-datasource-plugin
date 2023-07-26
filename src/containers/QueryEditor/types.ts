@@ -49,6 +49,7 @@ export interface SqlBuilderOptionsList {
   logLevelField?: string | null;
   rawSqlBuilder?: string;
   filters?: FilterType[];
+  groupBy?: string[];
 }
 
 export type SqlBuilderOptions = SqlBuilderOptionsList;

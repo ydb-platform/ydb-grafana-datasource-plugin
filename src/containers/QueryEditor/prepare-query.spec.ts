@@ -6,6 +6,7 @@ import {
   logicalOpToSql,
   prepareParams,
   prepareLogLineFields,
+  getGroupBy,
 } from './prepare-query';
 import { ExpressionName, FilterType, LogicalOperations, QueryFormat } from './types';
 
@@ -293,5 +294,17 @@ describe('should properly generate log line', () => {
     const fields = ['foo', 'bar'];
     const sql = '"foo="||CAST(`foo` AS string)||", "||"bar="||CAST(`bar` AS string) AS `logLine`';
     expect(prepareLogLineFields(fields)).toBe(sql);
+  });
+});
+describe('should properly generate groupBy', () => {
+  it('with empty params', () => {
+    const fields: string[] = [];
+    const sql = '';
+    expect(prepareLogLineFields(fields)).toBe(sql);
+  });
+  it('with fields', () => {
+    const fields = ['foo', 'bar'];
+    const sql = '\n GROUP BY `foo`, `bar`';
+    expect(getGroupBy(fields)).toBe(sql);
   });
 });

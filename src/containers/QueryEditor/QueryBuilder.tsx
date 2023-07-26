@@ -70,6 +70,7 @@ const TableDependableFields: Record<keyof Omit<SqlBuilderOptions, 'limit' | 'raw
   logLevelField: null,
   filters: undefined,
   loglineFields: undefined,
+  groupBy: undefined,
 };
 
 export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps) {
@@ -78,7 +79,7 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
   const {
     rawSql,
     queryFormat,
-    builderOptions: { table, fields: selectedFields, limit, logLevelField, filters, loglineFields },
+    builderOptions: { table, fields: selectedFields, limit, logLevelField, filters, loglineFields, groupBy },
   } = query;
 
   const [fields, fieldsLoading, fieldsError] = useFields(datasource, table);
@@ -105,6 +106,9 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
   };
   const handleLoglineFieldsChange = (value: string[]) => {
     handleChangeBuilderOption({ loglineFields: value });
+  };
+  const handleGroupByChange = (value: string[]) => {
+    handleChangeBuilderOption({ groupBy: value });
   };
   const handleLimitChange = (value: number) => {
     handleChangeBuilderOption({ limit: value });
@@ -152,6 +156,12 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
         </React.Fragment>
       )}
       <Filters {...commonFieldsProps} filters={filters} onChange={handleFiltersChange} fieldsMap={fieldsMap} />
+      <FieldsSelect
+        {...commonFieldsProps}
+        selectedFields={groupBy}
+        onFieldsChange={handleGroupByChange}
+        selectors={selectors.components.QueryBuilder.GroupBy}
+      />
       <Limit limit={limit} onChange={handleLimitChange} />
       <SqlPreview rawSql={rawSql} />
     </React.Fragment>

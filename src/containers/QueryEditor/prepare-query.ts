@@ -113,6 +113,9 @@ export function getSingleWhereExpression(filter: FilterType) {
 }
 
 export function getWhereExpression(filters: FilterType[]) {
+  if (filters.length === 0) {
+    return '';
+  }
   const filtersExpression = filters
     .filter((f) => f.column)
     .map(getSingleWhereExpression)
@@ -140,22 +143,30 @@ function getFieldToLowerCaseExpression(field: string, wrapper = defaultWrapper) 
   return `String::AsciiToLower(${escapeAndWrapString(field, wrapper)})`;
 }
 
+export function getGroupBy(groupByFields: string[]) {
+  if (groupByFields.length === 0) {
+    return '';
+  }
+  return `\n GROUP BY ${groupByFields.map((el) => escapeAndWrapString(el)).join(', ')}`;
+}
+
 export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, queryFormat: QueryFormat) {
-  const { logLevelField, loglineFields = [], fields = [] } = builderOptions;
+  const { logLevelField, loglineFields = [], fields = [], limit, filters = [], table, groupBy = [] } = builderOptions;
   const logLineString = queryFormat === 'logs' ? prepareLogLineFields(loglineFields) : '';
   const normalizedFields =
     queryFormat === 'logs' && logLevelField ? checkAndAddLogLevelField(logLevelField, fields) : fields;
   const wrappedSchemaFields = normalizedFields?.map((field) => {
-    if (queryFormat === 'logs' && field === builderOptions.logLevelField && field !== logLevelAlias) {
+    if (queryFormat === 'logs' && field === logLevelField && field !== logLevelAlias) {
       return getAliasExpression(field, logLevelAlias, defaultWrapper, getFieldToLowerCaseExpression);
     }
     return escapeAndWrapString(field);
   });
 
   const fieldsString = [logLineString, ...wrappedSchemaFields].filter(Boolean).join(', \n');
-  const limitCondition = builderOptions.limit ? ` \nLIMIT ${builderOptions.limit}` : '';
-  const whereCondition = builderOptions.filters ? getWhereExpression(builderOptions.filters) : '';
+  const groupByCondition = getGroupBy(groupBy);
+  const limitCondition = limit ? ` \nLIMIT ${limit}` : '';
+  const whereCondition = getWhereExpression(filters);
   return `SELECT${fieldsString ? ` ${fieldsString}` : ''} \nFROM${
-    builderOptions.table ? ` ${escapeAndWrapString(builderOptions.table)}` : ''
-  }${whereCondition}${limitCondition}`;
+    table ? ` ${escapeAndWrapString(table)}` : ''
+  }${whereCondition}${groupByCondition}${limitCondition}`;
 }

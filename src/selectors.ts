@@ -37,6 +37,10 @@ export const Components = {
       label: 'Filters',
       tooltip: 'List of filters',
     },
+    GroupBy: {
+      label: 'Group by',
+      tooltip: 'Group the results by specific field',
+    },
     Format: {
       label: 'Format',
       tooltip: 'Visualization type',
