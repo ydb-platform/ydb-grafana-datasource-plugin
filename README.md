@@ -1,134 +1,140 @@
-# Grafana data source plugin template
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/ydb-platform/ydb-grafana-datasource-plugin/blob/main/LICENSE)
+[![Release](https://img.shields.io/badge/dynamic/json?logo=grafana&color=F47A20&label=release&prefix=v&query=%24.items%5B%3F%28%40.slug%20%3D%3D%20%22grafana-ydb-datasource%22%29%5D.version&url=https%3A%2F%2Fgrafana.com%2Fapi%2Fplugins)](https://grafana.com/grafana/plugins/grafana-ydb-datasource)
+[![Downloads](https://img.shields.io/badge/dynamic/json?logo=grafana&color=F47A20&label=downloads&query=%24.items%5B%3F%28%40.slug%20%3D%3D%20%22grafana-ydb-datasource%22%29%5D.downloads&url=https%3A%2F%2Fgrafana.com%2Fapi%2Fplugins)](https://grafana.com/grafana/plugins/grafana-ydb-datasource)
+<!-- ![Code lines](https://sloc.xyz/github/ydb-platform/ydb-grafana-datasource-plugin/?category=code) -->
+[![Telegram](https://img.shields.io/badge/chat-on%20Telegram-2ba2d9.svg)](https://t.me/ydb_en)
+[![WebSite](https://img.shields.io/badge/website-ydb.tech-blue.svg)](https://ydb.tech)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/ydb-platform/ydb-grafana-datasource-plugin/blob/master/CONTRIBUTING.md)
 
-This template is a starting point for building a Data Source Plugin for Grafana.
+# YDB data source for Grafana
 
-## What are Grafana data source plugins?
+## Version compatibility
 
-Grafana supports a wide range of data sources, including Prometheus, MySQL, and even Datadog. There’s a good chance you can already visualize metrics from the systems you have set up. In some cases, though, you already have an in-house metrics solution that you’d like to add to your Grafana dashboards. Grafana Data Source Plugins enables integrating such solutions with Grafana.
+Plugin requires `v9.x` of Grafana.
 
-## Getting started
+The YDB data source plugin allows you to query and visualize YDB data from within Grafana.
 
-### Backend
+## Installation
 
-1. Update [Grafana plugin SDK for Go](https://grafana.com/docs/grafana/latest/developers/plugins/backend/grafana-plugin-sdk-for-go/) dependency to the latest minor version:
+For detailed instructions on how to install the plugin on Grafana Cloud or locally, please checkout the [Plugin installation docs](https://grafana.com/docs/grafana/latest/plugins/installation/).
 
-   ```bash
-   go get -u github.com/grafana/grafana-plugin-sdk-go
-   go mod tidy
-   ```
+## Configuration
 
-2. Build backend plugin binaries for Linux, Windows and Darwin:
+### YDB user for the data source
 
-   ```bash
-   mage -v
-   ```
+Set up an YDB user account with readonly permission [(more about permissions)](https://ydb.tech/ru/docs/cluster/access) and access to databases and tables you want to query. Please note that Grafana does not validate that queries are safe. Queries can contain any SQL statement including modification instructions.
 
-3. List all available Mage targets for additional commands:
+### Data transfer protocol support
 
-   ```bash
-   mage -l
-   ```
-### Frontend
+The plugin supports `GRPCS` and `GRPC` transport protocols. Please note that you need to provide TLS/SSL certificate when using `grpcs`.
 
-1. Install dependencies
+### Manual configuration
 
-   ```bash
-   yarn install
-   ```
+Once the plugin is installed on your Grafana instance, follow [these instructions](https://grafana.com/docs/grafana/latest/datasources/add-a-data-source/) to add a new YDB data source, and enter configuration options.
 
-2. Build plugin in development mode and run in watch mode
+### With a configuration file
 
-   ```bash
-   yarn dev
-   ```
+It is possible to configure data sources using configuration files with Grafana’s provisioning system. To read about how it works, including all the settings that you can set for this data source, refer to [Provisioning Grafana data sources](https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources).
 
-3. Build plugin in production mode
+Plugin supports different authentication types [authentication types](https://ydb.tech/ru/docs/reference/ydb-sdk/auth).
 
-   ```bash
-   yarn build
-   ```
+Here is an example for this data source using user/password:
 
-4. Run the tests (using Jest)
+```yaml
+apiVersion: 1
+datasources:
+  - name: YDB
+    type: grafana-ydb-datasource
+    jsonData:
+      authKind: "UserPassword",
+      endpoint: 'grpcs://endpoint',
+      dbLocation: 'location',
+      user: 'username',
+    secureJsonData:
+      password: 'userpassword',
+      certificate: 'certificate',
+```
 
-   ```bash
-   # Runs the tests and watches for changes, requires git init first
-   yarn test
-   
-   # Exists after running all the tests
-   yarn test:ci
-   ```
+Here are fields that are supported in connection configuration:
 
-5. Spin up a Grafana instance and run the plugin inside it (using Docker)
+```typescript
+    jsonData:
+      authKind: "Anonymous" | "ServiceAccountKey" | "AccessToken" | "UserPassword" | "MetaData";
+      endpoint: string;
+      dbLocation: string;
+      user?: string;
+    secureJsonData:
+      serviceAccAuthAccessKey?: string;
+      accessToken?: string;
+      password?: string;
+      certificate?: string;
+```
 
-   ```bash
-   yarn server
-   ```
+## Building queries
 
-6. Run the E2E tests (using Cypress)
+[YQL dialect](https://ydb.tech/ru/docs/yql/reference/) is used to query YDB.
+Queries can contain macros which simplify syntax and allow for dynamic parts.
+The query editor allows you to get data in different representation: time series, table or logs.
 
-   ```bash
-   # Spin up a Grafana instance first that we tests against 
-   yarn server
-   
-   # Start the tests
-   yarn e2e
-   ```
+### Time series
 
-7. Run the linter
+Time series visualization options are selectable after adding to your query one field with `Date`, `Datetime` or `Timestamp` type and at least one field with `number` type. You can select time series visualizations using the visualization options. Grafana interprets timestamp rows without explicit time zone as UTC. Any other column is treated as a value column.
 
-   ```bash
-   yarn lint
-   
-   # or
+#### Multi-line time series
 
-   yarn lint:fix
-   ```
+To create multi-line time series, the query must return at least 3 fields in the following order:
 
+- field 1: time field
+- field 2: value to group by
+- field 3+: the metric values
 
-# Distributing your plugin
+For example:
 
-When distributing a Grafana plugin either within the community or privately the plugin must be signed so the Grafana application can verify its authenticity. This can be done with the `@grafana/sign-plugin` package.
+```sql
+SELECT `timestamp`, `requestTime`, AVG(`responseStatus`) AS `avgRespStatus`
+FROM `/database/endpoint/my-logs`
+GROUP BY `requestTime`, `timestamp`
+ORDER BY `timestamp`
+```
 
-_Note: It's not necessary to sign a plugin during development. The docker development environment that is scaffolded with `@grafana/create-plugin` caters for running the plugin without a signature._
+### Tables
 
-## Initial steps
+Table visualizations will always be available for any valid YDB query.
 
-Before signing a plugin please read the Grafana [plugin publishing and signing criteria](https://grafana.com/docs/grafana/latest/developers/plugins/publishing-and-signing-criteria/) documentation carefully.
+### Visualizing logs with the Logs Panel
 
-`@grafana/create-plugin` has added the necessary commands and workflows to make signing and distributing a plugin via the grafana plugins catalog as straightforward as possible.
+To use the Logs panel your query must return a time and string values. You can select logs visualizations using the visualization options.
 
-Before signing a plugin for the first time please consult the Grafana [plugin signature levels](https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/#plugin-signature-levels) documentation to understand the differences between the types of signature level.
+By default only the first text field will be represented as log line, but this can be customized using query builder.
 
-1. Create a [Grafana Cloud account](https://grafana.com/signup).
-2. Make sure that the first part of the plugin ID matches the slug of your Grafana Cloud account.
-   - _You can find the plugin ID in the plugin.json file inside your plugin directory. For example, if your account slug is `acmecorp`, you need to prefix the plugin ID with `acmecorp-`._
-3. Create a Grafana Cloud API key with the `PluginPublisher` role.
-4. Keep a record of this API key as it will be required for signing a plugin
+### Macros
 
-## Signing a plugin
+To simplify syntax and to allow for dynamic parts, like date range filters, the query can contain macros.
 
-### Using Github actions release workflow
+Here is an example of a query with a macro that will use Grafana's time filter:
 
-If the plugin is using the github actions supplied with `@grafana/create-plugin` signing a plugin is included out of the box. The [release workflow](./.github/workflows/release.yml) can prepare everything to make submitting your plugin to Grafana as easy as possible. Before being able to sign the plugin however a secret needs adding to the Github repository.
+```sql
+SELECT `timeCol`
+FROM `/database/endpoint/my-logs`
+WHERE $__timeFilter(`timeCol`)
+```
 
-1. Please navigate to "settings > secrets > actions" within your repo to create secrets.
-2. Click "New repository secret"
-3. Name the secret "GRAFANA_API_KEY"
-4. Paste your Grafana Cloud API key in the Secret field
-5. Click "Add secret"
+| Macro                                        | Description                                                                                                                      | Output example                                                                                  |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| _$\_\_timeFilter(columnName)_                | Replaced by a conditional that filters the data (using the provided column) based on the time range of the panel in microseconds | `foo >= CAST(1636717526371000 AS TIMESTAMP) AND foo <=  CAST(1668253526371000 AS TIMESTAMP)' )` |
+| _$\_\_fromTimestamp_                         | Replaced by the starting time of the range of the panel casted to Timestamp                                                      | `CAST(1636717526371000 AS TIMESTAMP)`                                                           |
+| _$\_\_toTimestamp_                           | Replaced by the ending time of the range of the panel casted to Timestamp                                                        | `CAST(1636717526371000 AS TIMESTAMP)`                                                           |
+| _$\_\_varFallback(condition, \$templateVar)_ | Replaced by the first parameter when the template variable in the second parameter is not provided.                              | `condition` or `templateVarValue`                                                               |
 
-#### Push a version tag
+### Templates and variables
 
-To trigger the workflow we need to push a version tag to github. This can be achieved with the following steps:
-
-1. Run `npm version <major|minor|patch>`
-2. Run `git push origin main --follow-tags`
-
+To add a new YDB query variable, refer to [Add a query variable](https://grafana.com/docs/grafana/latest/variables/variable-types/add-query-variable/).
+After creating a variable, you can use it in your YDB queries by using [Variable syntax](https://grafana.com/docs/grafana/latest/variables/syntax/).
+For more information about variables, refer to [Templates and variables](https://grafana.com/docs/grafana/latest/variables/).
 
 ## Learn more
 
-Below you can find source code for existing app plugins and other related documentation.
-
-- [Basic data source plugin example](https://github.com/grafana/grafana-plugin-examples/tree/master/examples/datasource-basic#readme)
-- [Plugin.json documentation](https://grafana.com/docs/grafana/latest/developers/plugins/metadata/)
-- [How to sign a plugin?](https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/)
+- Add [Annotations](https://grafana.com/docs/grafana/latest/dashboards/annotations/).
+- Configure and use [Templates and variables](https://grafana.com/docs/grafana/latest/variables/).
+- Add [Transformations](https://grafana.com/docs/grafana/latest/panels/transformations/).
+- Set up alerting; refer to [Alerts overview](https://grafana.com/docs/grafana/latest/alerting/).
