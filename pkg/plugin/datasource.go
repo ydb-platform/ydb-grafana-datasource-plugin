@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -72,13 +71,11 @@ func listTables(ctx context.Context, db *ydb.Driver, folder string) (tables []st
 		case scheme.EntryTable, scheme.EntryColumnTable:
 			tables = append(tables, entityPath)
 		case scheme.EntryDirectory:
-			if !strings.HasPrefix(entity.Name, ".") {
-				entityTables, err := listTables(ctx, db, entityPath)
-				if err != nil {
-					return nil, err
-				}
-				tables = append(tables, entityTables...)
+			entityTables, err := listTables(ctx, db, entityPath)
+			if err != nil {
+				return nil, err
 			}
+			tables = append(tables, entityTables...)
 		}
 	}
 	return tables, nil
