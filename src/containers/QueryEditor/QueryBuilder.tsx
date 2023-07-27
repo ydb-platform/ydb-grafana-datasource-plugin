@@ -7,12 +7,20 @@ import { Limit } from 'components/Limit';
 import { SqlPreview } from 'components/SqlPreview';
 import { LogLevelFieldSelect } from 'components/LogLevelFieldSelect';
 import { Filters } from 'components/Filters/Filters';
+import { Aggregations } from 'components/Aggregations/Aggregations';
 
 import { useBuilderSettings } from './EditorSettingsContext';
 
-import { SqlBuilderOptions, YDBBuilderQuery, OnChangeQueryAttribute, TableField, FilterType } from './types';
+import {
+  SqlBuilderOptions,
+  YDBBuilderQuery,
+  OnChangeQueryAttribute,
+  TableField,
+  FilterType,
+  AggregationType,
+} from './types';
 import { getRawSqlFromBuilderOptions } from './prepare-query';
-import { UnknownFieldType } from './constants';
+import { AsteriskFieldType, UnknownFieldType } from './constants';
 import { selectors } from 'selectors';
 
 interface QueryBuilderProps {
@@ -73,16 +81,26 @@ const TableDependableFields: Record<keyof Omit<SqlBuilderOptions, 'limit' | 'raw
   filters: undefined,
   loglineFields: undefined,
   groupBy: undefined,
+  aggregations: undefined,
 };
 
 export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps) {
   const [tables, tablesLoading, tablesError] = useTables(datasource);
-  const { filtersActive: useFilters, aggregationsActive: useAggregations } = useBuilderSettings();
+  const { filtersActive, aggregationsActive } = useBuilderSettings();
 
   const {
     rawSql,
     queryFormat,
-    builderOptions: { table, fields: selectedFields, limit, logLevelField, filters, loglineFields, groupBy },
+    builderOptions: {
+      table,
+      fields: selectedFields,
+      limit,
+      logLevelField,
+      filters,
+      loglineFields,
+      groupBy,
+      aggregations,
+    },
   } = query;
 
   const [fields, fieldsLoading, fieldsError] = useFields(datasource, table);
@@ -90,6 +108,7 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
   const { fieldsMap, allFieldsNames } = React.useMemo(() => {
     const fieldsMap = new Map<string, string>();
     fields.forEach((f) => fieldsMap.set(f.name, f.type ?? UnknownFieldType));
+    fieldsMap.set('*', AsteriskFieldType);
     return {
       allFieldsNames: fields.map((el) => el.name),
       fieldsMap,
@@ -122,6 +141,9 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
   const handleFiltersChange = (value: FilterType[]) => {
     handleChangeBuilderOption({ filters: value });
   };
+  const handleAggregationsChange = (value: AggregationType[]) => {
+    handleChangeBuilderOption({ aggregations: value });
+  };
 
   const commonFieldsProps = {
     error: fieldsError,
@@ -143,6 +165,14 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
         onFieldsChange={handleFieldsChange}
         selectors={selectors.components.QueryBuilder.Fields}
       />
+      {aggregationsActive && (
+        <Aggregations
+          {...commonFieldsProps}
+          aggregations={aggregations}
+          fieldsMap={fieldsMap}
+          onChange={handleAggregationsChange}
+        />
+      )}
       {queryFormat === 'logs' && (
         <React.Fragment>
           <LogLevelFieldSelect
@@ -158,10 +188,10 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
           />
         </React.Fragment>
       )}
-      {useFilters && (
+      {filtersActive && (
         <Filters {...commonFieldsProps} filters={filters} onChange={handleFiltersChange} fieldsMap={fieldsMap} />
       )}
-      {useAggregations && (
+      {aggregationsActive && (
         <FieldsSelect
           {...commonFieldsProps}
           selectedFields={groupBy}

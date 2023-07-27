@@ -86,6 +86,12 @@ function getPlaceholder(expr?: ExpressionName | null) {
   return '';
 }
 
+const ColumnDependableFields: Record<keyof Omit<FilterType, 'column' | 'id' | 'logicalOp'>, any> = {
+  expr: null,
+  params: null,
+  paramsType: null,
+};
+
 interface FilterProps {
   filter: FilterType;
   onRemove: VoidFunction;
@@ -106,7 +112,7 @@ export function Filter({ onRemove, onEdit, filter, fields, loading, type }: Filt
     value: expr,
   }));
   const handleSelectColumn = (value: SelectableValue<string>) => {
-    onEdit({ column: value.value, expr: null, params: null, paramsType: null });
+    onEdit({ column: value.value, ...ColumnDependableFields });
   };
   const handleSelectExpression = (value: SelectableValue<ExpressionName | null>) => {
     const newParamsType = getParamsType(type, value?.value);

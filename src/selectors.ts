@@ -37,6 +37,10 @@ export const Components = {
       label: 'Filters',
       tooltip: 'List of filters',
     },
+    Aggregations: {
+      label: 'Aggregations',
+      tooltip: 'Aggregation functions to use'
+    },
     GroupBy: {
       label: 'Group by',
       tooltip: 'Group the results by specific field',

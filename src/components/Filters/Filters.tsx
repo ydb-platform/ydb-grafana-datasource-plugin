@@ -1,13 +1,13 @@
 import * as React from 'react';
 
 import { InlineField, Button } from '@grafana/ui';
-import { nanoid } from 'nanoid';
 
 import { Filter } from './Filter';
 
 import { FilterType } from 'containers/QueryEditor/types';
 import { selectors } from 'selectors';
 import { UnknownFieldType, defaultLabelWidth } from 'containers/QueryEditor/constants';
+import { useEntityArrayActions } from 'containers/QueryEditor/helpers';
 
 function removeLogicalOperationFromFirstFilter(filters: FilterType[]) {
   if (!filters.length) {
@@ -19,29 +19,12 @@ function removeLogicalOperationFromFirstFilter(filters: FilterType[]) {
   return normalizedFilters;
 }
 
-function useFiltersActions(filters: readonly FilterType[], onChange: (val: FilterType[]) => void) {
-  const handleChange = (newFilters: FilterType[]) => {
-    onChange(removeLogicalOperationFromFirstFilter(newFilters));
-  };
-  const addFilter = () => {
-    handleChange([...filters, { id: nanoid(), column: '', expr: null, logicalOp: 'and', paramsType: null }]);
-  };
-  const removeFilter = (id: string) => () => {
-    handleChange(filters.filter((f) => f.id !== id));
-  };
-  const editFilter = (id: string) => (value: Partial<FilterType>) => {
-    const filterIndex = filters.findIndex((el) => el.id === id);
-    if (filterIndex === -1) {
-      return;
-    }
-    const newValue = { ...filters[filterIndex], ...value };
-    const result = [...filters];
-    result[filterIndex] = newValue;
-    handleChange(result);
-  };
-
-  return { addFilter, removeFilter, editFilter };
-}
+const NEW_FILTER: Omit<FilterType, 'id'> = {
+  column: '',
+  expr: null,
+  logicalOp: 'and',
+  paramsType: null,
+};
 
 interface FiltersProps {
   filters?: readonly FilterType[];
@@ -53,7 +36,15 @@ interface FiltersProps {
 }
 
 export function Filters({ filters = [], onChange, fields, loading, error, fieldsMap }: FiltersProps) {
-  const { addFilter, removeFilter, editFilter } = useFiltersActions(filters, onChange);
+  const handleChange = (newFilters: FilterType[]) => {
+    onChange(removeLogicalOperationFromFirstFilter(newFilters));
+  };
+
+  const {
+    addEntity: addFilter,
+    removeEntity: removeFilter,
+    editEntity: editFilter,
+  } = useEntityArrayActions(filters, handleChange, NEW_FILTER);
   const { label, tooltip } = selectors.components.QueryBuilder.Filter;
   return (
     <InlineField labelWidth={defaultLabelWidth} tooltip={tooltip} label={label} error={error} invalid={Boolean(error)}>
@@ -69,7 +60,9 @@ export function Filters({ filters = [], onChange, fields, loading, error, fields
             onEdit={editFilter(filter.id)}
           />
         ))}
-        <Button onClick={addFilter}>Add filter</Button>
+        <Button icon="plus" onClick={addFilter}>
+          Add filter
+        </Button>
       </React.Fragment>
     </InlineField>
   );
