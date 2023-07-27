@@ -12,9 +12,9 @@ const FiltersActiveDispatchContext = React.createContext<React.Dispatch<React.Se
   undefined
 );
 const AggregationsActiveContext = React.createContext<boolean | undefined>(undefined);
-const AggregationsActiveDispatchContext = React.createContext<React.Dispatch<React.SetStateAction<boolean>> | undefined>(
-  undefined
-);
+const AggregationsActiveDispatchContext = React.createContext<
+  React.Dispatch<React.SetStateAction<boolean>> | undefined
+>(undefined);
 
 interface EditorHeightProviderProps {
   children: React.ReactNode;
@@ -60,7 +60,9 @@ interface BuilderSettingsProviderProps {
 
 export function BuilderSettingsProvider({ children, builderOptions }: BuilderSettingsProviderProps) {
   const [filtersActive, setFiltersActive] = React.useState(() => Boolean(builderOptions.filters));
-  const [aggregationsActive, setAggregationsActive] = React.useState(() => Boolean(builderOptions.groupBy));
+  const [aggregationsActive, setAggregationsActive] = React.useState(() =>
+    Boolean(builderOptions.groupBy || builderOptions.aggregations)
+  );
   return (
     <FiltersActiveDispatchContext.Provider value={setFiltersActive}>
       <AggregationsActiveDispatchContext.Provider value={setAggregationsActive}>
@@ -91,5 +93,5 @@ export function useDispatchBuilderSettings() {
     throw new Error('useDispatchBuilderSettings should be used within BuilderSettingsProvider');
   }
 
-  return { setFiltersActive, setAggregationsActive};
+  return { setFiltersActive, setAggregationsActive };
 }

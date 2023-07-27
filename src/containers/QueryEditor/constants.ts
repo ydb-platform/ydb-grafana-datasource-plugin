@@ -33,6 +33,7 @@ export const defaultSqlEditorHeight = 150;
 export const GrafanaFormClassName = 'gf-form';
 
 export const UnknownFieldType = 'unknown';
+export const AsteriskFieldType = 'asterisk';
 
 export const ExpressionsMap = {
   like: 'LIKE',
@@ -61,4 +62,13 @@ export const ExpressionsMap = {
 export const dateSelectableParams = {
   dashboardStart: 'DASHBOARD START TIME',
   dashboardEnd: 'DASHBOARD END TIME',
+} as const;
+
+export const AggregationFunctionsMap = {
+  count: 'COUNT',
+  min: 'MIN',
+  max: 'MAX',
+  sum: 'SUM',
+  avg: 'AVG',
+  some: 'SOME',
 } as const;

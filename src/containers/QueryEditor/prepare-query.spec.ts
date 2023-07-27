@@ -7,8 +7,9 @@ import {
   prepareParams,
   prepareLogLineFields,
   getGroupBy,
+  getSingleAggregation,
 } from './prepare-query';
-import { ExpressionName, FilterType, LogicalOperations, QueryFormat } from './types';
+import { AggregationType, ExpressionName, FilterType, LogicalOperations, QueryFormat } from './types';
 
 const baseBuilderOptions = {
   table: 'foo',
@@ -306,5 +307,71 @@ describe('should properly generate groupBy', () => {
     const fields = ['foo', 'bar'];
     const sql = '\n GROUP BY `foo`, `bar`';
     expect(getGroupBy(fields)).toBe(sql);
+  });
+});
+
+describe('should properly generate single aggregation', () => {
+  it('without columns', () => {
+    const aggregation: AggregationType = {
+      aggregationFunction: 'count',
+      alias: 'bar',
+      params: {},
+      id: '1',
+      column: '',
+    };
+    const sql = '';
+    expect(getSingleAggregation(aggregation)).toBe(sql);
+  });
+  it('without aggregation function', () => {
+    const aggregation: AggregationType = {
+      aggregationFunction: null,
+      alias: 'bar',
+      params: {},
+      id: '1',
+      column: 'bar',
+    };
+    const sql = '';
+    expect(getSingleAggregation(aggregation)).toBe(sql);
+  });
+  it('with * as column', () => {
+    const aggregation: AggregationType = {
+      aggregationFunction: 'count',
+      params: {},
+      id: '1',
+      column: '*',
+    };
+    const sql = 'COUNT(*)';
+    expect(getSingleAggregation(aggregation)).toBe(sql);
+  });
+  it('with normal column', () => {
+    const aggregation: AggregationType = {
+      aggregationFunction: 'count',
+      params: {},
+      id: '1',
+      column: 'bar',
+    };
+    const sql = 'COUNT(`bar`)';
+    expect(getSingleAggregation(aggregation)).toBe(sql);
+  });
+  it('with distinct', () => {
+    const aggregation: AggregationType = {
+      aggregationFunction: 'count',
+      params: { distinct: true },
+      id: '1',
+      column: 'bar',
+    };
+    const sql = 'COUNT(DISTINCT `bar`)';
+    expect(getSingleAggregation(aggregation)).toBe(sql);
+  });
+  it('with alias', () => {
+    const aggregation: AggregationType = {
+      aggregationFunction: 'count',
+      params: {},
+      alias: 'foo',
+      id: '1',
+      column: 'bar',
+    };
+    const sql = 'COUNT(`bar`) AS `foo`';
+    expect(getSingleAggregation(aggregation)).toBe(sql);
   });
 });

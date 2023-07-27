@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { nanoid } from 'nanoid';
 
 import { QueryFormat, TableField, TableFieldBackend } from './types';
 
@@ -87,4 +88,29 @@ export function useStateWithLocalStorage<T>(key: string, initialValue: T) {
   }, [state, setValue]);
 
   return [state, setState] as const;
+}
+
+export function useEntityArrayActions<T extends { id: string }>(
+  entities: readonly T[],
+  onChange: (val: T[]) => void,
+  newEntity: Omit<T, 'id'>
+) {
+  const addEntity = () => {
+    onChange([...entities, { ...newEntity, id: nanoid() } as T]);
+  };
+  const removeEntity = (id: string) => () => {
+    onChange(entities.filter((f) => f.id !== id));
+  };
+  const editEntity = (id: string) => (value: Partial<T>) => {
+    const filterIndex = entities.findIndex((el) => el.id === id);
+    if (filterIndex === -1) {
+      return;
+    }
+    const newValue = { ...entities[filterIndex], ...value };
+    const result = [...entities];
+    result[filterIndex] = newValue;
+    onChange(result);
+  };
+
+  return { addEntity, removeEntity, editEntity };
 }

@@ -1,5 +1,5 @@
 import { DataQuery } from '@grafana/schema';
-import { ExpressionsMap } from './constants';
+import { AggregationFunctionsMap, ExpressionsMap } from './constants';
 
 export interface OnChangeQueryAttribute<T> {
   (arg: Partial<T>): void;
@@ -50,6 +50,7 @@ export interface SqlBuilderOptionsList {
   rawSqlBuilder?: string;
   filters?: FilterType[];
   groupBy?: string[];
+  aggregations?: AggregationType[];
 }
 
 export type SqlBuilderOptions = SqlBuilderOptionsList;
@@ -100,3 +101,18 @@ export const DateExpressions: ExpressionName[] = ['insideDashboard', 'outsideDas
 export const BooleanExpressions: ExpressionName[] = ['null', 'notNull', 'isTrue', 'isFalse'];
 
 export type Expression = (typeof ExpressionsMap)[keyof typeof ExpressionsMap];
+
+export type AggregationFunction = keyof typeof AggregationFunctionsMap;
+export type AggregationFunctionValue = (typeof AggregationFunctionsMap)[keyof typeof AggregationFunctionsMap];
+
+export type AggregationParams = {
+  distinct?: boolean;
+};
+
+export type AggregationType = {
+  id: string;
+  aggregationFunction: AggregationFunction | null;
+  column: string;
+  alias?: string;
+  params: AggregationParams;
+};

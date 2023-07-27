@@ -15,7 +15,7 @@ import { BuilderSettingsProvider, EditorHeightProvider } from './EditorSettingsC
 
 import { QueryFormat, QueryType, YDBBuilderQuery, YDBQuery, YDBSQLQuery } from './types';
 import { YdbDataSourceOptions } from 'containers/ConfigEditor/types';
-import { GrafanaFormClassName, defaultYDBBuilderQuery, defaultYDBSQLQuery } from './constants';
+import { defaultYDBBuilderQuery, defaultYDBSQLQuery } from './constants';
 import { DataSource } from 'datasource';
 import { getRawSqlFromBuilderOptions } from './prepare-query';
 
@@ -77,9 +77,7 @@ export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasou
                   {queryType === 'sql' && <SqlEditorHeightInput />}
                   {queryType === 'builder' && <QueryBuilderSettings />}
                 </div>
-                <div className={GrafanaFormClassName}>
-                  <QueryFormatSelect format={queryFormat} onChange={handleChangeQueryFormat} />
-                </div>
+                <QueryFormatSelect format={queryFormat} onChange={handleChangeQueryFormat} />
                 {queryType === 'builder' ? (
                   <QueryBuilder
                     datasource={datasource}

@@ -1,6 +1,6 @@
-import { dateSelectableParams } from './constants';
+import { AggregationFunctionsMap, dateSelectableParams } from './constants';
 import { defaultWrapper, escapeAndWrapString } from './helpers';
-import { ExpressionName, FilterType, LogicalOperation, QueryFormat, SqlBuilderOptions } from './types';
+import { AggregationType, ExpressionName, FilterType, LogicalOperation, QueryFormat, SqlBuilderOptions } from './types';
 
 const logLevelAlias = 'level';
 
@@ -150,8 +150,32 @@ export function getGroupBy(groupByFields: string[]) {
   return `\n GROUP BY ${groupByFields.map((el) => escapeAndWrapString(el)).join(', ')}`;
 }
 
+export function getSingleAggregation(aggregation: AggregationType) {
+  const { aggregationFunction, column, params, alias } = aggregation;
+  if (!aggregationFunction || !column) {
+    return '';
+  }
+  const distinct = params.distinct ? 'DISTINCT ' : '';
+  const aliasExpression = alias ? ` AS ${escapeAndWrapString(alias)}` : '';
+  const columnExpression = column === '*' ? column : escapeAndWrapString(column);
+  return `${AggregationFunctionsMap[aggregationFunction]}(${distinct}${columnExpression})${aliasExpression}`;
+}
+
+export function getAggregations(aggregations: AggregationType[]) {
+  return aggregations.map(getSingleAggregation).filter(Boolean);
+}
+
 export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, queryFormat: QueryFormat) {
-  const { logLevelField, loglineFields = [], fields = [], limit, filters = [], table, groupBy = [] } = builderOptions;
+  const {
+    logLevelField,
+    loglineFields = [],
+    fields = [],
+    limit,
+    filters = [],
+    table,
+    groupBy = [],
+    aggregations = [],
+  } = builderOptions;
   const logLineString = queryFormat === 'logs' ? prepareLogLineFields(loglineFields) : '';
   const normalizedFields =
     queryFormat === 'logs' && logLevelField ? checkAndAddLogLevelField(logLevelField, fields) : fields;
@@ -161,8 +185,9 @@ export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, q
     }
     return escapeAndWrapString(field);
   });
+  const aggregatedFields = getAggregations(aggregations);
 
-  const fieldsString = [logLineString, ...wrappedSchemaFields].filter(Boolean).join(', \n');
+  const fieldsString = [logLineString, ...wrappedSchemaFields, ...aggregatedFields].filter(Boolean).join(', \n');
   const groupByCondition = getGroupBy(groupBy);
   const limitCondition = limit ? ` \nLIMIT ${limit}` : '';
   const whereCondition = getWhereExpression(filters);
