@@ -17,7 +17,7 @@ export const styles = {
       display: flex;
       align-items: flex-start;
     `,
-    queryTypeWithSettings: css`
+    inlineFieldWithAdditionCentered: css`
       display: flex;
       align-items: center;
     `,

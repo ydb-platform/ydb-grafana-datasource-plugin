@@ -68,7 +68,7 @@ export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasou
           <Form onSubmit={onRunQuery} maxWidth="none">
             {() => (
               <React.Fragment>
-                <div className={styles.Common.queryTypeWithSettings}>
+                <div className={styles.Common.inlineFieldWithAdditionCentered}>
                   <QueryTypeSwitcher
                     queryType={queryType}
                     onChange={handleChangeQueryType}
