@@ -1,3 +1,5 @@
+import { PrimitiveDataType } from './types';
+
 export const PRIMITIVE_TYPES = {
   BOOL: 'Bool',
   STRING: 'String',
@@ -26,6 +28,8 @@ export const PRIMITIVE_TYPES = {
   DYNUMBER: 'Dynumber',
   JSON_DOCUMENT: 'JsonDocument',
 } as const;
+
+export const primitiveTypes = Object.values(PRIMITIVE_TYPES);
 
 export const notSimpleDataTypes = ['Void', 'Yson', 'Json', 'Null', 'Optional<Yson>', 'Optional<Json>'] as const;
 export const numericDataTypes = [
@@ -77,6 +81,9 @@ export const stringDataTypes = [
   'Optional<Json>',
 ] as const;
 
+export function isDataTypePrimitive(dataType: string): dataType is PrimitiveDataType {
+  return (primitiveTypes as unknown as string[]).indexOf(dataType) >= 0;
+}
 export function isDataTypeSimple(dataType: string) {
   return (notSimpleDataTypes as unknown as string[]).indexOf(dataType) < 0;
 }

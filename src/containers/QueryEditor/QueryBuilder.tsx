@@ -8,6 +8,7 @@ import { SqlPreview } from 'components/SqlPreview';
 import { LogLevelFieldSelect } from 'components/LogLevelFieldSelect';
 import { Filters } from 'components/Filters/Filters';
 import { Aggregations } from 'components/Aggregations/Aggregations';
+import { LogTimeFieldSelect } from 'components/LogTimeFieldSelect';
 
 import { useBuilderSettings } from './EditorSettingsContext';
 
@@ -18,10 +19,12 @@ import {
   TableField,
   FilterType,
   AggregationType,
+  LogTimeField,
 } from './types';
 import { getRawSqlFromBuilderOptions } from './prepare-query';
 import { AsteriskFieldType, UnknownFieldType } from './constants';
 import { selectors } from 'selectors';
+import { isDataTypeDateTime } from './data-types';
 
 interface QueryBuilderProps {
   datasource: DataSource;
@@ -82,6 +85,7 @@ const TableDependableFields: Record<keyof Omit<SqlBuilderOptions, 'limit' | 'raw
   loglineFields: undefined,
   groupBy: undefined,
   aggregations: undefined,
+  logTimeField: undefined,
 };
 
 export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps) {
@@ -100,6 +104,7 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
       loglineFields,
       groupBy,
       aggregations,
+      logTimeField,
     },
   } = query;
 
@@ -138,12 +143,23 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
   const handleLogLevelFieldChange = (value: string | null) => {
     handleChangeBuilderOption({ logLevelField: value });
   };
+  const handleLogTimeFieldChange = (value: LogTimeField) => {
+    handleChangeBuilderOption({ logTimeField: value });
+  };
   const handleFiltersChange = (value: FilterType[]) => {
     handleChangeBuilderOption({ filters: value });
   };
   const handleAggregationsChange = (value: AggregationType[]) => {
     handleChangeBuilderOption({ aggregations: value });
   };
+
+  if (queryFormat === 'logs' && !logTimeField?.name) {
+    const firstDateTimeField = fields.find((f) => f.type && isDataTypeDateTime(f.type));
+    const name = firstDateTimeField?.name;
+    if (name) {
+      handleLogTimeFieldChange({ name });
+    }
+  }
 
   const commonFieldsProps = {
     error: fieldsError,
@@ -175,6 +191,12 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
       )}
       {queryFormat === 'logs' && (
         <React.Fragment>
+          <LogTimeFieldSelect
+            {...commonFieldsProps}
+            onChange={handleLogTimeFieldChange}
+            logTimeField={logTimeField}
+            fieldsMap={fieldsMap}
+          />
           <LogLevelFieldSelect
             {...commonFieldsProps}
             onChange={handleLogLevelFieldChange}
