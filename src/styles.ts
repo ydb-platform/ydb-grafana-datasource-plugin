@@ -17,9 +17,9 @@ export const styles = {
       display: flex;
       align-items: flex-start;
     `,
-    inlineFieldWithAdditionCentered: css`
+    inlineFieldWithAddition: css`
       display: flex;
-      align-items: center;
+      align-items: flex-start;
     `,
     queryBuilderSettings: css`
       display: flex;

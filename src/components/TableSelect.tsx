@@ -46,7 +46,7 @@ export function TableSelect({ onTableChange, table, tables, loading, error }: Ta
   };
 
   return (
-    <div className={styles.Common.inlineFieldWithAdditionCentered}>
+    <div className={styles.Common.inlineFieldWithAddition}>
       <InlineField
         labelWidth={defaultLabelWidth}
         tooltip={tooltip}
