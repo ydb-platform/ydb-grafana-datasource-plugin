@@ -21,6 +21,8 @@ const defaultQuery: Partial<YDBQuery> = {};
 
 export class DataSource extends DataSourceWithBackend<YDBQuery, YdbDataSourceOptions> {
   database: string;
+  // This enables default annotation support for 7.2+
+  annotations = {};
   constructor(instanceSettings: DataSourceInstanceSettings<YdbDataSourceOptions>) {
     super(instanceSettings);
     this.database = instanceSettings.jsonData.dbLocation ?? '';
