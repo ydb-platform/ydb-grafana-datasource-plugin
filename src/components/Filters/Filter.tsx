@@ -104,7 +104,6 @@ interface FilterProps {
 export function Filter({ onRemove, onEdit, filter, fields, loading, type }: FilterProps) {
   const { column, logicalOp, expr, params, paramsType } = filter;
   const selectableFields = getSelectableValues(fields);
-
   const placeholder = getPlaceholder(expr);
 
   const expressions = getExpressions(type).map((expr) => ({
@@ -164,15 +163,14 @@ export function Filter({ onRemove, onEdit, filter, fields, loading, type }: Filt
         allowCustomValue={false}
       />
       {paramsType === 'date' && <FilterParametersSelect onChange={handleChangeParamsSelect} value={params} />}
-      {paramsType === 'number' ||
-        (paramsType === 'text' && (
-          <FilterParametersInput
-            placeholder={placeholder}
-            value={params}
-            type={paramsType}
-            onChange={handleChangeParamsInput}
-          />
-        ))}
+      {(paramsType === 'number' || paramsType === 'text') && (
+        <FilterParametersInput
+          placeholder={placeholder}
+          value={params}
+          type={paramsType}
+          onChange={handleChangeParamsInput}
+        />
+      )}
       <Button icon="trash-alt" onClick={onRemove} title="Remove field" fill="outline" />
     </div>
   );
