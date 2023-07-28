@@ -8,6 +8,7 @@
   "backend": true,
   "executable": "gpx_ydb",
   "logs": true,
+  "annotations": true,
   "info": {
     "description": "Ydb datasource plugin for Grafana",
     "author": {
