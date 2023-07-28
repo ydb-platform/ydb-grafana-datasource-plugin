@@ -79,11 +79,34 @@ describe('should properly add log field', () => {
   }
 });
 
+describe('should properly add log time field', () => {
+  it('should add log time as first fields if query type is "logs"', () => {
+    const builderOptions = {
+      table: 'foo',
+      fields: ['bar', 'baz'],
+      limit: 10,
+      logTimeField: { name: 'baz' },
+    };
+    const sql = 'SELECT `baz`, \n`bar` \nFROM `foo` \nLIMIT 10';
+    expect(getRawSqlFromBuilderOptions(builderOptions, 'logs')).toBe(sql);
+  });
+  it('should add log time with cast as first fields if query type is "logs"', () => {
+    const builderOptions = {
+      table: 'foo',
+      fields: ['bar', 'baz'],
+      limit: 10,
+      logTimeField: { name: 'baz', cast: 'Datetime' },
+    };
+    const sql = 'SELECT CAST(`baz` AS Datetime), \n`bar` \nFROM `foo` \nLIMIT 10';
+    expect(getRawSqlFromBuilderOptions(builderOptions, 'logs')).toBe(sql);
+  });
+});
+
 describe('should properly add logline field', () => {
   it('should add log line if query type is "logs"', () => {
     const builderOptionsWithLogline = { ...baseBuilderOptions, loglineFields: ['foo', 'bar'] };
     const sql =
-      'SELECT "foo="||CAST(`foo` AS string)||", "||"bar="||CAST(`bar` AS string) AS `logLine`, \n`bar`, \nString::AsciiToLower(`baz`) AS `level` \nFROM `foo` \nLIMIT 10';
+      'SELECT "foo="||CAST(`foo` AS String)||", "||"bar="||CAST(`bar` AS String) AS `logLine`, \n`bar`, \nString::AsciiToLower(`baz`) AS `level` \nFROM `foo` \nLIMIT 10';
     expect(getRawSqlFromBuilderOptions(builderOptionsWithLogline, 'logs')).toBe(sql);
   });
   it('should add log line if query type is "logs" and logline field is not in selected', () => {
@@ -293,7 +316,7 @@ describe('should properly generate log line', () => {
   });
   it('with fields', () => {
     const fields = ['foo', 'bar'];
-    const sql = '"foo="||CAST(`foo` AS string)||", "||"bar="||CAST(`bar` AS string) AS `logLine`';
+    const sql = '"foo="||CAST(`foo` AS String)||", "||"bar="||CAST(`bar` AS String) AS `logLine`';
     expect(prepareLogLineFields(fields)).toBe(sql);
   });
 });

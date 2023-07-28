@@ -1,5 +1,6 @@
 import { DataQuery } from '@grafana/schema';
 import { AggregationFunctionsMap, ExpressionsMap } from './constants';
+import { primitiveTypes } from './data-types';
 
 export interface OnChangeQueryAttribute<T> {
   (arg: Partial<T>): void;
@@ -41,12 +42,17 @@ export interface TableField {
   type?: string;
 }
 
+export interface LogTimeField {
+  name: string | null;
+  cast?: string | null;
+}
 export interface SqlBuilderOptionsList {
   table?: string;
   fields?: string[];
   loglineFields?: string[];
   limit?: number;
   logLevelField?: string | null;
+  logTimeField?: LogTimeField;
   rawSqlBuilder?: string;
   filters?: FilterType[];
   groupBy?: string[];
@@ -116,3 +122,5 @@ export type AggregationType = {
   alias?: string;
   params: AggregationParams;
 };
+
+export type PrimitiveDataType = (typeof primitiveTypes)[number];

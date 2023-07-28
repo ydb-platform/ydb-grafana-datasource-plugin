@@ -33,13 +33,20 @@ export const Components = {
       label: 'Log level field',
       tooltip: 'Select the field to extract log level information from',
     },
+    LogTimeField: {
+      Name: {
+        label: 'Log time field',
+        tooltip: 'Select field to extract log time information from',
+      },
+      Cast: { label: 'CAST AS', tooltip: 'Log time field should be a type of date time' },
+    },
     Filter: {
       label: 'Filters',
       tooltip: 'List of filters',
     },
     Aggregations: {
       label: 'Aggregations',
-      tooltip: 'Aggregation functions to use'
+      tooltip: 'Aggregation functions to use',
     },
     GroupBy: {
       label: 'Group by',

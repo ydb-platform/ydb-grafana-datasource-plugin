@@ -1,18 +1,33 @@
 import { AggregationFunctionsMap, dateSelectableParams } from './constants';
+import { isDataTypePrimitive } from './data-types';
 import { defaultWrapper, escapeAndWrapString } from './helpers';
-import { AggregationType, ExpressionName, FilterType, LogicalOperation, QueryFormat, SqlBuilderOptions } from './types';
+import {
+  AggregationType,
+  ExpressionName,
+  FilterType,
+  LogTimeField,
+  LogicalOperation,
+  PrimitiveDataType,
+  QueryFormat,
+  SqlBuilderOptions,
+} from './types';
 
-const logLevelAlias = 'level';
+const LogLevelAlias = 'level';
 
-function getAliasExpression(
-  fieldName: string,
-  alias: string,
-  wrapper = defaultWrapper,
-  fieldTransformer?: (field: string, wrapper: string) => string
-) {
+interface GetAliasExpressionProps {
+  fieldName: string;
+  alias?: string;
+  wrapper?: string;
+  fieldTransformer?: (field: string, wrapper: string) => string;
+}
+
+function getAliasExpression({ fieldName, alias, wrapper = defaultWrapper, fieldTransformer }: GetAliasExpressionProps) {
   let normalizedField = escapeAndWrapString(fieldName, wrapper);
   if (typeof fieldTransformer === 'function') {
     normalizedField = fieldTransformer(fieldName, wrapper);
+  }
+  if (!alias) {
+    return normalizedField;
   }
   return `${normalizedField} AS ${escapeAndWrapString(alias, wrapper)}`;
 }
@@ -124,19 +139,65 @@ export function getWhereExpression(filters: FilterType[]) {
   return filtersExpression ? ` \nWHERE \n${filtersExpression}` : '';
 }
 
-function checkAndAddLogLevelField(logLevelField: string, fields: string[]) {
-  if (!fields.includes(logLevelField)) {
-    return [...fields, logLevelField];
+interface FieldWithParams {
+  name: string;
+  alias?: string;
+  fieldTransformer?: (field: string, wrapper: string) => string;
+}
+
+interface NormalizeFieldsForLogsProps {
+  logLevelField?: string | null;
+  fields: FieldWithParams[];
+  logTimeField?: LogTimeField;
+}
+
+function normalizeFieldsForLogs({ logLevelField, fields, logTimeField }: NormalizeFieldsForLogsProps) {
+  let normalizedFields = [...fields];
+  const logTimeFieldName = logTimeField?.name;
+  if (logLevelField) {
+    const normalizedLogLevelField: FieldWithParams = {
+      name: logLevelField,
+      fieldTransformer: getFieldToLowerCaseExpression,
+      alias: logLevelField === LogLevelAlias ? '' : LogLevelAlias,
+    };
+    normalizedFields = normalizedFields.filter((f) => f.name !== logLevelField);
+    normalizedFields.push(normalizedLogLevelField);
   }
-  return fields;
+
+  if (logTimeFieldName) {
+    const isValidCastAs = Boolean(logTimeField.cast && isDataTypePrimitive(logTimeField.cast));
+    const normalizedLogTimeField: FieldWithParams = {
+      name: logTimeFieldName,
+      fieldTransformer: isValidCastAs
+        ? (name, wrapper) => prepareCastAs(name, logTimeField.cast as PrimitiveDataType, wrapper)
+        : undefined,
+    };
+    normalizedFields = normalizedFields.filter((f) => f.name !== logTimeFieldName);
+    normalizedFields.unshift(normalizedLogTimeField);
+  }
+  return normalizedFields;
+}
+
+function prepareCastAs(fieldName?: string, castAs?: PrimitiveDataType, wrapper = defaultWrapper) {
+  if (!fieldName) {
+    return '';
+  }
+  const wrappedFieldName = escapeAndWrapString(fieldName, wrapper);
+  if (!castAs) {
+    return wrappedFieldName;
+  }
+  {
+    return `CAST(${wrappedFieldName} AS ${castAs})`;
+  }
 }
 
 export function prepareLogLineFields(fields: string[]) {
-  const wrappedFields = fields.map(
-    (f) => `${escapeAndWrapString(`${f}=`, '"')}||CAST(${escapeAndWrapString(f)} AS string)`
-  );
+  const wrappedFields = fields.map((f) => `${escapeAndWrapString(`${f}=`, '"')}||${prepareCastAs(f, 'String')}`);
+  if (!wrappedFields.length) {
+    return '';
+  }
   const lintel = `||${escapeAndWrapString(', ', '"')}||`;
-  return wrappedFields.length ? `${wrappedFields.join(lintel)} AS ${escapeAndWrapString('logLine')}` : '';
+  return `${wrappedFields.join(lintel)} AS ${escapeAndWrapString('logLine')}`;
 }
 
 function getFieldToLowerCaseExpression(field: string, wrapper = defaultWrapper) {
@@ -175,15 +236,16 @@ export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, q
     table,
     groupBy = [],
     aggregations = [],
+    logTimeField,
   } = builderOptions;
   const logLineString = queryFormat === 'logs' ? prepareLogLineFields(loglineFields) : '';
+  const preparedFields: FieldWithParams[] = fields.map((f) => ({ name: f }));
   const normalizedFields =
-    queryFormat === 'logs' && logLevelField ? checkAndAddLogLevelField(logLevelField, fields) : fields;
+    queryFormat === 'logs'
+      ? normalizeFieldsForLogs({ logLevelField, fields: preparedFields, logTimeField })
+      : preparedFields;
   const wrappedSchemaFields = normalizedFields?.map((field) => {
-    if (queryFormat === 'logs' && field === logLevelField && field !== logLevelAlias) {
-      return getAliasExpression(field, logLevelAlias, defaultWrapper, getFieldToLowerCaseExpression);
-    }
-    return escapeAndWrapString(field);
+    return getAliasExpression({ fieldName: field.name, fieldTransformer: field.fieldTransformer, alias: field.alias });
   });
   const aggregatedFields = getAggregations(aggregations);
 
