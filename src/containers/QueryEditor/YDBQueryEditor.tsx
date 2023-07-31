@@ -58,7 +58,10 @@ export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasou
   };
 
   const handleChangeQueryFormat = (format: QueryFormat) => {
-    handleChangeQueryAttribute<YDBQuery>({ queryFormat: format });
+    handleChangeQueryAttribute<YDBQuery>({
+      queryFormat: format,
+      rawSql: getRawSqlFromBuilderOptions(query.builderOptions, format),
+    });
   };
 
   return (
