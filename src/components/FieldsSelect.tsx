@@ -11,6 +11,7 @@ export type FieldsSelectProps = {
   selectedFields?: string[];
   loading?: boolean;
   error?: string;
+  validationError?: string;
   onFieldsChange: (value: string[]) => void;
   selectors: { label: string; tooltip: string };
 };
@@ -21,6 +22,7 @@ export function FieldsSelect({
   fields,
   loading,
   error,
+  validationError,
   selectors: { label, tooltip },
 }: FieldsSelectProps) {
   const allFields = fields.length > 0 ? Array.from(new Set([...fields, ...selectedFields])) : [];
@@ -40,8 +42,8 @@ export function FieldsSelect({
         labelWidth={defaultLabelWidth}
         tooltip={tooltip}
         label={label}
-        error={error}
-        invalid={Boolean(error)}
+        error={error || validationError}
+        invalid={Boolean(error || validationError)}
         shrink
       >
         <Select

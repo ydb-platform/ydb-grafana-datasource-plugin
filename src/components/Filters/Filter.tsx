@@ -1,7 +1,12 @@
 import { SelectableValue } from '@grafana/data';
-import { Select, Button, RadioButtonGroup, Input } from '@grafana/ui';
+import { Select, Button, RadioButtonGroup, Input, InlineField } from '@grafana/ui';
 
-import { ExpressionsMap, dateSelectableParams, defaultInputWidth } from 'containers/QueryEditor/constants';
+import {
+  ExpressionsMap,
+  dateSelectableParams,
+  defaultInputWidth,
+  expressionsWithNoParams,
+} from 'containers/QueryEditor/constants';
 import { getSelectableValues } from 'containers/QueryEditor/helpers';
 import {
   BooleanExpressions,
@@ -35,14 +40,6 @@ function getExpressions(type: string) {
   return CommonExpressions;
 }
 
-const expressionsWithNoParams: ExpressionName[] = [
-  'null',
-  'notNull',
-  'insideDashboard',
-  'outsideDashboard',
-  'isTrue',
-  'isFalse',
-];
 const expressionsWithOnlyStringParam: ExpressionName[] = [
   'in',
   'notIn',
@@ -99,9 +96,10 @@ interface FilterProps {
   fields: readonly string[];
   loading?: boolean;
   type: string;
+  validationError?: Partial<Record<keyof FilterType, string>>;
 }
 
-export function Filter({ onRemove, onEdit, filter, fields, loading, type }: FilterProps) {
+export function Filter({ onRemove, onEdit, filter, fields, loading, type, validationError }: FilterProps) {
   const { column, logicalOp, expr, params, paramsType } = filter;
   const selectableFields = getSelectableValues(fields);
   const placeholder = getPlaceholder(expr);
@@ -132,44 +130,50 @@ export function Filter({ onRemove, onEdit, filter, fields, loading, type }: Filt
   };
 
   return (
-    <div className={styles.Common.grid5}>
+    <div className={styles.Common.inlineFieldWithAddition}>
       {logicalOp && (
-        <RadioButtonGroup
-          size="sm"
-          options={options}
-          value={logicalOp}
-          onChange={handleChangeLogicalOperation}
-          className={styles.Common.logicalOpAbsolutePosition}
-        />
+        <InlineField className={styles.Common.logicalOpAbsolutePosition}>
+          <RadioButtonGroup size="sm" options={options} value={logicalOp} onChange={handleChangeLogicalOperation} />
+        </InlineField>
       )}
-      <Select
-        onChange={handleSelectColumn}
-        options={selectableFields}
-        value={column}
-        menuPlacement={'bottom'}
-        isLoading={loading}
-        isSearchable
-        width={defaultInputWidth}
-        placeholder="Choose column"
-      />
-      <Select
-        onChange={handleSelectExpression}
-        options={expressions}
-        value={expr}
-        menuPlacement={'bottom'}
-        isSearchable
-        placeholder="Choose expression"
-        width={30}
-        allowCustomValue={false}
-      />
-      {paramsType === 'date' && <FilterParametersSelect onChange={handleChangeParamsSelect} value={params} />}
-      {(paramsType === 'number' || paramsType === 'text') && (
-        <FilterParametersInput
-          placeholder={placeholder}
-          value={params}
-          type={paramsType}
-          onChange={handleChangeParamsInput}
+      <InlineField error={validationError?.column} invalid={Boolean(validationError?.column)}>
+        <Select
+          onChange={handleSelectColumn}
+          options={selectableFields}
+          value={column}
+          menuPlacement={'bottom'}
+          isLoading={loading}
+          isSearchable
+          width={defaultInputWidth}
+          placeholder="Choose column"
         />
+      </InlineField>
+      <InlineField error={validationError?.expr} invalid={Boolean(validationError?.expr)}>
+        <Select
+          onChange={handleSelectExpression}
+          options={expressions}
+          value={expr}
+          menuPlacement={'bottom'}
+          isSearchable
+          placeholder="Choose expression"
+          width={30}
+          allowCustomValue={false}
+        />
+      </InlineField>
+      {paramsType === 'date' && (
+        <InlineField error={validationError?.params} invalid={Boolean(validationError?.params)}>
+          <FilterParametersSelect onChange={handleChangeParamsSelect} value={params} />
+        </InlineField>
+      )}
+      {(paramsType === 'number' || paramsType === 'text') && (
+        <InlineField error={validationError?.params} invalid={Boolean(validationError?.params)}>
+          <FilterParametersInput
+            placeholder={placeholder}
+            value={params}
+            type={paramsType}
+            onChange={handleChangeParamsInput}
+          />
+        </InlineField>
       )}
       <Button icon="trash-alt" onClick={onRemove} title="Remove field" fill="outline" />
     </div>

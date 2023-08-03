@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { nanoid } from 'nanoid';
 
-import { QueryFormat, TableField, TableFieldBackend } from './types';
+import { AggregationType, FilterType, QueryFormat, TableField, TableFieldBackend, YDBQuery } from './types';
+import { expressionsWithNoParams } from './constants';
 
 export function ConvertQueryFormatToVisualizationType(format: QueryFormat) {
   switch (format) {
@@ -113,4 +114,71 @@ export function useEntityArrayActions<T extends { id: string }>(
   };
 
   return { addEntity, removeEntity, editEntity };
+}
+
+export function validateQuery(query: YDBQuery) {
+  if (query.queryType === 'builder') {
+    const queryOptions = query.builderOptions ?? {};
+    const hasFields =
+      queryOptions.fields?.filter(Boolean).length || (query.queryFormat === 'logs' && queryOptions.logTimeField);
+    return {
+      table: queryOptions.table ? undefined : 'Required',
+      fields: hasFields ? undefined : 'Required',
+      aggregations: queryOptions.aggregations?.map((a) => {
+        const error: Partial<Record<keyof AggregationType, string>> = {};
+        if (!a.column) {
+          error.column = 'Required';
+        }
+        if (!a.aggregationFunction) {
+          error.aggregationFunction = 'Required';
+        }
+        return error;
+      }),
+      filters: queryOptions.filters?.map((f) => {
+        const error: Partial<Record<keyof FilterType, string>> = {};
+        if (!f.column) {
+          error.column = 'Required';
+        }
+        if (!f.expr) {
+          error.expr = 'Required';
+        }
+        if (f.expr && !expressionsWithNoParams.includes(f.expr)) {
+          error.params = !f.params && f.params !== 0 ? 'Required' : undefined;
+        }
+        return error;
+      }),
+      logTimeField: {
+        name: queryOptions.logTimeField?.name ? undefined : 'Required',
+        cast:
+          queryOptions.logTimeField?.dateTimeType === false && !queryOptions.logTimeField?.cast
+            ? 'Required'
+            : undefined,
+      },
+    };
+  }
+  return undefined;
+}
+
+export function hasValidationErrors(errors?: Partial<Record<string, unknown>>): boolean {
+  if (!errors) {
+    return false;
+  }
+
+  return (
+    Object.values(errors)
+      .map((value) => {
+        if (typeof value === 'string') {
+          return value.length > 0;
+        }
+        if (Array.isArray(value)) {
+          const valueHasErrors = value.map((el) => hasValidationErrors(el));
+          return valueHasErrors.filter(Boolean).length > 0;
+        }
+        if (value && typeof value === 'object') {
+          return hasValidationErrors(value);
+        }
+        return false;
+      })
+      .filter(Boolean).length > 0
+  );
 }

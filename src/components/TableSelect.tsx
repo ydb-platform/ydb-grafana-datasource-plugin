@@ -31,10 +31,11 @@ export type TableSelectProps = {
   table?: string;
   loading?: boolean;
   error?: string;
+  validationError?: string;
   onTableChange: (value: string) => void;
 };
 
-export function TableSelect({ onTableChange, table, tables, loading, error }: TableSelectProps) {
+export function TableSelect({ onTableChange, table, tables, loading, error, validationError }: TableSelectProps) {
   const [showSystemTables, setShowSystemTables] = useStateWithLocalStorage(SHOW_SYSTEM_TABLES, 'false');
   const database = useDatabase();
   const selectableValues = getValuesForSelect(tables, table, database, showSystemTables);
@@ -51,8 +52,8 @@ export function TableSelect({ onTableChange, table, tables, loading, error }: Ta
         labelWidth={defaultLabelWidth}
         tooltip={tooltip}
         label={label}
-        error={error}
-        invalid={Boolean(error)}
+        error={error || validationError}
+        invalid={Boolean(error || validationError)}
       >
         <Select
           onChange={handleChange}

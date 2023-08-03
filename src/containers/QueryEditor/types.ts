@@ -1,6 +1,7 @@
 import { DataQuery } from '@grafana/schema';
 import { AggregationFunctionsMap, ExpressionsMap } from './constants';
 import { primitiveTypes } from './data-types';
+import { validateQuery } from './helpers';
 
 export interface OnChangeQueryAttribute<T> {
   (arg: Partial<T>): void;
@@ -45,6 +46,7 @@ export interface TableField {
 export interface LogTimeField {
   name: string | null;
   cast?: string | null;
+  dateTimeType?: boolean;
 }
 export interface SqlBuilderOptionsList {
   table?: string;
@@ -124,3 +126,5 @@ export type AggregationType = {
 };
 
 export type PrimitiveDataType = (typeof primitiveTypes)[number];
+
+export type QueryErrors = ReturnType<typeof validateQuery>;

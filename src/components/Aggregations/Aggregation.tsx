@@ -1,5 +1,5 @@
 import { SelectableValue } from '@grafana/data';
-import { Select, Button, Input, InlineSwitch } from '@grafana/ui';
+import { Select, Button, Input, InlineSwitch, InlineField } from '@grafana/ui';
 
 import { AggregationFunctionsMap, AsteriskFieldType, defaultInputWidth } from 'containers/QueryEditor/constants';
 import { isDataTypeNumeric } from 'containers/QueryEditor/data-types';
@@ -37,9 +37,18 @@ interface AggregationProps {
   fields: readonly string[];
   loading?: boolean;
   type: string;
+  validationError?: Partial<Record<keyof AggregationType, string>>;
 }
 
-export function Aggregation({ onRemove, onEdit, aggregation, fields, loading, type }: AggregationProps) {
+export function Aggregation({
+  onRemove,
+  onEdit,
+  aggregation,
+  fields,
+  loading,
+  type,
+  validationError,
+}: AggregationProps) {
   const { column, alias, aggregationFunction, params } = aggregation;
   const selectableFields = getSelectableValues(fields);
 
@@ -61,29 +70,37 @@ export function Aggregation({ onRemove, onEdit, aggregation, fields, loading, ty
   };
 
   return (
-    <div className={styles.Common.grid5}>
-      <Select
-        onChange={handleSelectColumn}
-        options={selectableFields}
-        value={column}
-        menuPlacement={'bottom'}
-        isLoading={loading}
-        isSearchable
-        width={defaultInputWidth}
-        placeholder="Choose column"
-      />
-      <Select
-        onChange={handleSelectFunction}
-        options={functions}
-        value={aggregationFunction}
-        menuPlacement={'bottom'}
-        isSearchable
-        placeholder="Choose function"
-        width={30}
-        allowCustomValue={false}
-      />
-      <InlineSwitch label="Distinct" showLabel={true} onChange={handleChangeDistinct} value={params.distinct} />
-      <Input placeholder="alias" width={defaultInputWidth} onChange={handleChangeAlias} value={alias} />
+    <div className={styles.Common.inlineFieldWithAddition}>
+      <InlineField error={validationError?.column} invalid={Boolean(validationError?.column)}>
+        <Select
+          onChange={handleSelectColumn}
+          options={selectableFields}
+          value={column}
+          menuPlacement={'bottom'}
+          isLoading={loading}
+          isSearchable
+          width={defaultInputWidth}
+          placeholder="Choose column"
+        />
+      </InlineField>
+      <InlineField error={validationError?.aggregationFunction} invalid={Boolean(validationError?.aggregationFunction)}>
+        <Select
+          onChange={handleSelectFunction}
+          options={functions}
+          value={aggregationFunction}
+          menuPlacement={'bottom'}
+          isSearchable
+          placeholder="Choose function"
+          width={30}
+          allowCustomValue={false}
+        />
+      </InlineField>
+      <InlineField>
+        <InlineSwitch label="Distinct" showLabel={true} onChange={handleChangeDistinct} value={params.distinct} />
+      </InlineField>
+      <InlineField>
+        <Input placeholder="alias" width={defaultInputWidth} onChange={handleChangeAlias} value={alias} />
+      </InlineField>
       <Button icon="trash-alt" onClick={onRemove} title="Remove aggregation" fill="outline" />
     </div>
   );
