@@ -1,75 +1,254 @@
-import { Position, editor as monacoEditor, languages } from 'monaco-editor';
+import { CancellationToken, Position, editor as monacoEditor, languages, IRange } from 'monaco-editor';
+import { ParseResult, parseGenericSql } from 'sql-autocomplete-parsers';
 
-interface Lang {
-  id: string;
+import { DataSource } from 'datasource';
+import { wrapString } from 'containers/QueryEditor/helpers';
+
+const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
+
+const KEEP_CACHE_MILLIS = 60 * 60 * 1000;
+
+function getFieldsWithCache(datasource: DataSource) {
+  const cache = new Map<string, string[]>();
+  return async (value: string) => {
+    const existed = cache.get(value);
+    if (existed) {
+      return existed;
+    }
+    const fields = await datasource.fetchFields(value);
+    const fieldNames = fields.map((f) => f.name);
+    cache.set(value, fieldNames);
+    setTimeout(() => {
+      cache.delete(value);
+    }, KEEP_CACHE_MILLIS);
+    return fieldNames;
+  };
 }
 
-interface Model {
-  getValueInRange: Function;
-  getWordUntilPosition: Function;
-  getValue: Function;
+export function createProvideSuggestionsFunction(
+  datasource: DataSource,
+  tables: Array<{ label: string; value: string }>
+) {
+  const getFields = getFieldsWithCache(datasource);
+  return async (
+    model: monacoEditor.ITextModel,
+    cursorPosition: Position,
+    _context: languages.CompletionContext,
+    _token: CancellationToken
+  ) => {
+    const [queryBeforeCursor, queryAfterCursor] = getQueriesAroundCursor(model, cursorPosition);
+    const parseResult = parseGenericSql(queryBeforeCursor, queryAfterCursor);
+    const suggestions = await getSuggestions(model, cursorPosition, parseResult, tables, getFields);
+
+    return { suggestions };
+  };
 }
 
-export interface Range {
-  startLineNumber: number;
-  endLineNumber: number;
-  startColumn: number;
-  endColumn: number;
-}
+async function getSuggestions(
+  model: monacoEditor.ITextModel,
+  cursorPosition: Position,
+  parseResult: ParseResult,
+  tablesForSuggest: Array<{ label: string; value: string }>,
+  getFields: (value: string) => Promise<string[]>
+): Promise<languages.CompletionItem[]> {
+  const rangeToInsertSuggestion = getRangeToInsertSuggestion(model, cursorPosition);
 
-export interface SuggestionResponse {
-  suggestions: Suggestion[];
-}
-
-export interface Suggestion {
-  label: string;
-  kind: number;
-  documentation: string;
-  insertText: string;
-  range: Range;
-  detail?: string;
-}
-
-export type Fetcher = {
-  (text: string, range: Range): Promise<SuggestionResponse>;
-};
-
-export type YdbMonacoEditor = monacoEditor.IStandaloneCodeEditor;
-
-export function registerSQL(lang: string, editor: YdbMonacoEditor, fetchSuggestions: Fetcher) {
-  const registeredLang = languages.getLanguages().find((l: Lang) => l.id === lang);
-  if (registeredLang !== undefined) {
-    return editor;
+  if (shouldSuggestTables(parseResult)) {
+    return tablesForSuggest.map(({ label, value }) => ({
+      label,
+      insertText: wrapString(value),
+      kind: languages.CompletionItemKind.Value,
+      detail: 'Table',
+      range: rangeToInsertSuggestion,
+    }));
   }
 
-  languages.register({ id: lang });
+  const suggestions: languages.CompletionItem[] = [];
 
-  // just extend sql for now so we get syntax highlighting
-  languages.registerCompletionItemProvider('sql', {
-    triggerCharacters: [' ', '$', '.', ','],
-    provideCompletionItems: async (model: Model, position: Position) => {
-      const word = model.getWordUntilPosition(position);
-      const textUntilPosition = model.getValueInRange({
-        startLineNumber: 1,
-        startColumn: 1,
-        endLineNumber: position.lineNumber,
-        endColumn: position.column,
-      });
-
-      const range: Range = {
-        startLineNumber: position.lineNumber,
-        endLineNumber: position.lineNumber,
-        startColumn: word.startColumn,
-        endColumn: word.endColumn,
-      };
-
-      return fetchSuggestions(textUntilPosition, range);
-    },
+  parseResult.suggestColumnAliases?.forEach((columnAliasSuggestion) => {
+    suggestions.push({
+      label: columnAliasSuggestion.name,
+      insertText: columnAliasSuggestion.name,
+      kind: languages.CompletionItemKind.Interface,
+      detail: 'Column alias',
+      range: rangeToInsertSuggestion,
+      sortText: suggestionIndexToWeight(0),
+    });
   });
 
-  return editor;
+  if (parseResult.suggestColumns?.tables) {
+    for (const table of parseResult.suggestColumns?.tables) {
+      const tableIdentifier = table.identifierChain.map((identifier) => identifier.name).join('.');
+      const fields = await getFields(tableIdentifier);
+      fields.forEach((columnName) => {
+        let columnNameSuggestion = wrapString(columnName);
+        if (table.alias) {
+          columnNameSuggestion = `${table.alias}.${wrapString(columnName)}`;
+        }
+        suggestions.push({
+          label: columnName,
+          insertText: columnNameSuggestion,
+          kind: languages.CompletionItemKind.Field,
+          detail: 'Column',
+          range: rangeToInsertSuggestion,
+          sortText: suggestionIndexToWeight(1),
+        });
+      });
+    }
+  }
+
+  parseResult.suggestKeywords?.forEach((keywordSuggestion, index) => {
+    suggestions.push({
+      label: keywordSuggestion.value,
+      insertText: keywordSuggestion.value,
+      kind: languages.CompletionItemKind.Keyword,
+      detail: 'Keyword',
+      range: rangeToInsertSuggestion,
+      sortText: suggestionIndexToWeight(index + 2),
+    });
+  });
+
+  if (parseResult.suggestAggregateFunctions) {
+    const aggregateFunctionsSortText = getLastSortText(suggestions);
+
+    getAggregateFunctionNamesToSuggest().forEach((functionName) => {
+      suggestions.push({
+        label: functionName,
+        insertText: getFunctionInsertTextWithCursor(functionName),
+        insertTextRules: languages.CompletionItemInsertTextRule.InsertAsSnippet,
+        kind: languages.CompletionItemKind.Function,
+        detail: 'Aggregate function',
+        range: rangeToInsertSuggestion,
+        sortText: aggregateFunctionsSortText,
+      });
+    });
+  }
+
+  if (parseResult.suggestFunctions) {
+    const functionsSortText = getLastSortText(suggestions);
+
+    getFunctionNamesToSuggest().forEach((functionName) => {
+      suggestions.push({
+        label: functionName,
+        insertText: getFunctionInsertTextWithCursor(functionName),
+        insertTextRules: languages.CompletionItemInsertTextRule.InsertAsSnippet,
+        kind: languages.CompletionItemKind.Function,
+        detail: 'Function',
+        range: rangeToInsertSuggestion,
+        sortText: functionsSortText,
+      });
+    });
+  }
+
+  return suggestions;
 }
 
-export const fetchSuggestions: Fetcher = async () => {
-  return Promise.resolve({ suggestions: [] });
-};
+function getQueriesAroundCursor(model: monacoEditor.ITextModel, cursorPosition: Position): [string, string] {
+  const queryBeforeCursor = model.getValueInRange({
+    startColumn: 1,
+    startLineNumber: 1,
+    endColumn: cursorPosition.column,
+    endLineNumber: cursorPosition.lineNumber,
+  });
+
+  const { endColumn: lastColumn, endLineNumber: lastLineEndLine } = model.getFullModelRange();
+  const queryAfterCursor = model.getValueInRange({
+    startColumn: cursorPosition.column,
+    startLineNumber: cursorPosition.lineNumber,
+    endColumn: lastColumn,
+    endLineNumber: lastLineEndLine,
+  });
+
+  return [queryBeforeCursor, queryAfterCursor];
+}
+
+function shouldSuggestTables({ suggestTables }: ParseResult): boolean {
+  if (typeof suggestTables !== 'object') {
+    return false;
+  }
+  // This condition is strange, but only when parseResult.suggestTables === {} or {onlyTables: true},
+  // it actually wants us to suggest tables;
+  return suggestTables.onlyTables || Object.keys(suggestTables).length === 0;
+}
+
+function getRangeToInsertSuggestion(model: monacoEditor.ITextModel, cursorPosition: Position): IRange {
+  const { startColumn: lastWordStartColumn, endColumn: lastWordEndColumn } = model.getWordUntilPosition(cursorPosition);
+
+  return {
+    startColumn: lastWordStartColumn,
+    startLineNumber: cursorPosition.lineNumber,
+    endColumn: lastWordEndColumn,
+    endLineNumber: cursorPosition.lineNumber,
+  };
+}
+
+function suggestionIndexToWeight(index: number): string {
+  const characterInsideAlphabet = alphabet[index];
+  if (characterInsideAlphabet) {
+    return characterInsideAlphabet;
+  }
+
+  const duplicateTimes = Math.floor(index / alphabet.length);
+  const remains = index % alphabet.length;
+
+  const lastCharacter = alphabet[alphabet.length - 1];
+  if (lastCharacter === undefined) {
+    console.error('[unexpected error]: unable to get last alphabet character');
+    return '';
+  }
+
+  return lastCharacter.repeat(duplicateTimes) + alphabet[remains];
+}
+
+function getLastSortText(suggestions: languages.CompletionItem[]): string {
+  // This char is like fallback value because
+  // every item which have empty weight gets random position in suggestions list.
+  let prefix = 'a';
+
+  const lastSuggestion = suggestions[suggestions.length - 1];
+  if (lastSuggestion !== undefined) {
+    prefix = lastSuggestion.sortText + 'a';
+  }
+
+  return prefix;
+}
+
+function getAggregateFunctionNamesToSuggest(): string[] {
+  return ['COUNT()', 'SUM()', 'AVG()', 'MIN()', 'MAX(), COUNT_IF(), SUM_IF(), AVG_IF(), SOME()'];
+}
+
+function getFunctionInsertTextWithCursor(functionTemplate: string): string {
+  return `${functionTemplate.slice(0, -1)}$1)`;
+}
+
+function getFunctionNamesToSuggest(): string[] {
+  return [
+    'LENGTH()',
+    'SUBSTRING()',
+    'FIND()',
+    'RFIND()',
+    'StartsWith()',
+    'EndsWith()',
+    'EndsWith()',
+    'IF()',
+    'NANVL()',
+    'Random()',
+    'RandomNumber()',
+    'RandomUuid()',
+    'MIN_OF()',
+    'MIN_OF()',
+    'COALESCE()',
+    'String::Reverse()',
+    'String::Substring()',
+    'Math::Abs()',
+    'Math::Pi()',
+    'Math::Log()',
+    'Math::Log10()',
+    'Math::Floor()',
+    'Math::Ceil()',
+    'Math::Round()',
+    'Math::Sqrt()',
+    'Math::Sin()',
+    'Math::Cos()',
+  ];
+}
