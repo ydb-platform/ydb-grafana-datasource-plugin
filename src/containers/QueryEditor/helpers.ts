@@ -114,3 +114,7 @@ export function useEntityArrayActions<T extends { id: string }>(
 
   return { addEntity, removeEntity, editEntity };
 }
+
+export function removeDatabaseFromTableName(table: string, database: string) {
+  return table.startsWith(database) ? table.slice(database.length + 1) : table;
+}

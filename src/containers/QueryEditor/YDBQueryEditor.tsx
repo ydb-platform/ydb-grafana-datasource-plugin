@@ -10,7 +10,8 @@ import { QueryBuilderSettings } from 'components/QueryBuilderSettings';
 import { QueryBuilder } from './QueryBuilder';
 import { SqlEditor } from './SqlEditor';
 
-import { DatabaseProvider } from './DatabaseContext';
+import { DatasourceProvider } from './DatasourceContext';
+import { TablesProvider } from './TablesContext';
 import { BuilderSettingsProvider, EditorHeightProvider } from './EditorSettingsContext';
 
 import { QueryFormat, QueryType, YDBBuilderQuery, YDBQuery, YDBSQLQuery } from './types';
@@ -65,37 +66,41 @@ export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasou
   };
 
   return (
-    <EditorHeightProvider>
-      <BuilderSettingsProvider builderOptions={builderOptions}>
-        <DatabaseProvider database={datasource.database}>
-          <Form onSubmit={onRunQuery} maxWidth="none">
-            {() => (
-              <React.Fragment>
-                <div className={styles.Common.inlineFieldWithAddition}>
-                  <QueryTypeSwitcher
-                    queryType={queryType}
-                    onChange={handleChangeQueryType}
-                    shouldConfirm={rawSql !== rawSqlBuilder}
-                  />
-                  {queryType === 'sql' && <SqlEditorHeightInput />}
-                  {queryType === 'builder' && <QueryBuilderSettings />}
-                </div>
-                <QueryFormatSelect format={queryFormat} onChange={handleChangeQueryFormat} />
-                {queryType === 'builder' ? (
-                  <QueryBuilder
-                    datasource={datasource}
-                    query={query}
-                    onChange={handleChangeQueryAttribute<YDBBuilderQuery>}
-                  />
-                ) : (
-                  <SqlEditor onChange={handleChangeQueryAttribute<YDBSQLQuery>} query={query} />
-                )}
-                <Button type="submit">Run Query</Button>
-              </React.Fragment>
-            )}
-          </Form>
-        </DatabaseProvider>
-      </BuilderSettingsProvider>
-    </EditorHeightProvider>
+    <DatasourceProvider datasource={datasource}>
+      <EditorHeightProvider>
+        <BuilderSettingsProvider builderOptions={builderOptions}>
+          <TablesProvider>
+            <Form onSubmit={onRunQuery} maxWidth="none">
+              {() => (
+                <React.Fragment>
+                  <div className={styles.Common.inlineFieldWithAddition}>
+                    <QueryTypeSwitcher
+                      queryType={queryType}
+                      onChange={handleChangeQueryType}
+                      shouldConfirm={rawSql !== rawSqlBuilder}
+                    />
+                    {queryType === 'sql' && <SqlEditorHeightInput />}
+                    {queryType === 'builder' && <QueryBuilderSettings />}
+                  </div>
+                  <QueryFormatSelect format={queryFormat} onChange={handleChangeQueryFormat} />
+                  {queryType === 'builder' ? (
+                    <QueryBuilder
+                      query={query}
+                      onChange={handleChangeQueryAttribute<YDBBuilderQuery>}
+                    />
+                  ) : (
+                    <SqlEditor
+                      onChange={handleChangeQueryAttribute<YDBSQLQuery>}
+                      query={query}
+                    />
+                  )}
+                  <Button type="submit">Run Query</Button>
+                </React.Fragment>
+              )}
+            </Form>
+          </TablesProvider>
+        </BuilderSettingsProvider>
+      </EditorHeightProvider>
+    </DatasourceProvider>
   );
 }

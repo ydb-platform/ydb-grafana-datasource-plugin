@@ -25,32 +25,11 @@ import { getRawSqlFromBuilderOptions } from './prepare-query';
 import { AsteriskFieldType, UnknownFieldType } from './constants';
 import { selectors } from 'selectors';
 import { isDataTypeDateTime } from './data-types';
+import { useDatasource } from './DatasourceContext';
 
 interface QueryBuilderProps {
-  datasource: DataSource;
   query: YDBBuilderQuery;
   onChange: OnChangeQueryAttribute<YDBBuilderQuery>;
-}
-
-function useTables(datasource: DataSource) {
-  const [tablesList, setTablesList] = React.useState<string[]>([]);
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState<string>();
-  React.useEffect(() => {
-    setLoading(true);
-    setError(undefined);
-    datasource
-      .fetchTables()
-      .then((tables) => {
-        setTablesList(tables);
-      })
-      .catch(() => {
-        setError('Fetching tables failed');
-      })
-      .finally(() => setLoading(false));
-  }, [datasource]);
-
-  return [tablesList, loading, error] as const;
 }
 
 function useFields(datasource: DataSource, table?: string) {
@@ -88,9 +67,9 @@ const TableDependableFields: Record<keyof Omit<SqlBuilderOptions, 'limit' | 'raw
   logTimeField: undefined,
 };
 
-export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps) {
-  const [tables, tablesLoading, tablesError] = useTables(datasource);
+export function QueryBuilder({ query, onChange }: QueryBuilderProps) {
   const { filtersActive, aggregationsActive } = useBuilderSettings();
+  const datasource = useDatasource();
 
   const {
     rawSql,
@@ -168,13 +147,7 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
   };
   return (
     <React.Fragment>
-      <TableSelect
-        error={tablesError}
-        tables={tables}
-        table={table}
-        loading={tablesLoading}
-        onTableChange={handleTableChange}
-      />
+      <TableSelect table={table} onTableChange={handleTableChange} />
       <FieldsSelect
         {...commonFieldsProps}
         selectedFields={selectedFields}

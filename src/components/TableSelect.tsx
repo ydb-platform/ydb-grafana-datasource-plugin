@@ -4,15 +4,12 @@ import { SelectableValue } from '@grafana/data';
 import { defaultInputWidth, defaultLabelWidth } from 'containers/QueryEditor/constants';
 
 import { selectors } from 'selectors';
-import { useDatabase } from 'containers/QueryEditor/DatabaseContext';
-import { useStateWithLocalStorage } from 'containers/QueryEditor/helpers';
+import { useTables } from 'containers/QueryEditor/TablesContext';
+import { useDatabase } from 'containers/QueryEditor/DatasourceContext';
+import { removeDatabaseFromTableName, useStateWithLocalStorage } from 'containers/QueryEditor/helpers';
 import { styles } from 'styles';
 
 const SHOW_SYSTEM_TABLES = 'SHOW_SYSTEM_TABLES';
-
-function removeDatabaseFromTableName(table: string, database: string) {
-  return table.startsWith(database) ? table.slice(database.length + 1) : table;
-}
 
 function getValuesForSelect(tables: string[], table = '', database: string, showSystemTables: string) {
   let values = tables.map((t) => ({ label: removeDatabaseFromTableName(t, database), value: t }));
@@ -27,14 +24,12 @@ function getValuesForSelect(tables: string[], table = '', database: string, show
 }
 
 export type TableSelectProps = {
-  tables: string[];
   table?: string;
-  loading?: boolean;
-  error?: string;
   onTableChange: (value: string) => void;
 };
 
-export function TableSelect({ onTableChange, table, tables, loading, error }: TableSelectProps) {
+export function TableSelect({ onTableChange, table }: TableSelectProps) {
+  const { tables, loading, error } = useTables();
   const [showSystemTables, setShowSystemTables] = useStateWithLocalStorage(SHOW_SYSTEM_TABLES, 'false');
   const database = useDatabase();
   const selectableValues = getValuesForSelect(tables, table, database, showSystemTables);

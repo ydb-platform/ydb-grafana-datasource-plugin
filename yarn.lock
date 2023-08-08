@@ -8405,6 +8405,7 @@ __metadata:
     replace-in-file-webpack-plugin: ^1.0.6
     sass: 1.56.1
     sass-loader: 13.2.0
+    sql-autocomplete-parsers: ^1.17.0
     style-loader: 3.3.1
     swc-loader: ^0.2.3
     ts-node: ^10.5.0
@@ -13805,6 +13806,13 @@ __metadata:
   version: 1.0.3
   resolution: "sprintf-js@npm:1.0.3"
   checksum: 19d79aec211f09b99ec3099b5b2ae2f6e9cdefe50bc91ac4c69144b6d3928a640bb6ae5b3def70c2e85a2c3d9f5ec2719921e3a59d3ca3ef4b2fd1a4656a0df3
+  languageName: node
+  linkType: hard
+
+"sql-autocomplete-parsers@npm:^1.17.0":
+  version: 1.17.0
+  resolution: "sql-autocomplete-parsers@npm:1.17.0"
+  checksum: 299ad8b90ba23a3ffebbe82b02df0b0caeab02a3deef38ad874142e7c3212fade23a8af2c03d54d64763cf9d769da310d508c1ced5b1bc0eb5b4b556c15fef2e
   languageName: node
   linkType: hard
 
