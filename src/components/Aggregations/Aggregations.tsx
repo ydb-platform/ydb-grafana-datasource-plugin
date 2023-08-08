@@ -17,9 +17,18 @@ interface FiltersProps {
   fieldsMap: Map<string, string>;
   loading?: boolean;
   error?: string;
+  validationErrors?: Array<Partial<Record<keyof AggregationType, string>>>;
 }
 
-export function Aggregations({ aggregations = [], onChange, fields, loading, error, fieldsMap }: FiltersProps) {
+export function Aggregations({
+  aggregations = [],
+  onChange,
+  fields,
+  loading,
+  error,
+  fieldsMap,
+  validationErrors,
+}: FiltersProps) {
   const {
     addEntity: addAggregation,
     removeEntity: removeAggregation,
@@ -31,7 +40,7 @@ export function Aggregations({ aggregations = [], onChange, fields, loading, err
   return (
     <InlineField labelWidth={defaultLabelWidth} tooltip={tooltip} label={label} error={error} invalid={Boolean(error)}>
       <React.Fragment>
-        {aggregations.map((a) => (
+        {aggregations.map((a, index) => (
           <Aggregation
             key={a.id}
             aggregation={a}
@@ -40,6 +49,7 @@ export function Aggregations({ aggregations = [], onChange, fields, loading, err
             fields={aggregationFields}
             loading={loading}
             onEdit={editAggregation(a.id)}
+            validationError={validationErrors ? validationErrors[index] : undefined}
           />
         ))}
         <Button icon="plus" onClick={addAggregation}>

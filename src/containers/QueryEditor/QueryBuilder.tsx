@@ -20,17 +20,12 @@ import {
   FilterType,
   AggregationType,
   LogTimeField,
+  QueryErrors,
 } from './types';
 import { getRawSqlFromBuilderOptions } from './prepare-query';
 import { AsteriskFieldType, UnknownFieldType } from './constants';
 import { selectors } from 'selectors';
 import { isDataTypeDateTime } from './data-types';
-
-interface QueryBuilderProps {
-  datasource: DataSource;
-  query: YDBBuilderQuery;
-  onChange: OnChangeQueryAttribute<YDBBuilderQuery>;
-}
 
 function useTables(datasource: DataSource) {
   const [tablesList, setTablesList] = React.useState<string[]>([]);
@@ -88,7 +83,14 @@ const TableDependableFields: Record<keyof Omit<SqlBuilderOptions, 'limit' | 'raw
   logTimeField: undefined,
 };
 
-export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps) {
+interface QueryBuilderProps {
+  datasource: DataSource;
+  query: YDBBuilderQuery;
+  onChange: OnChangeQueryAttribute<YDBBuilderQuery>;
+  queryErrors?: QueryErrors;
+}
+
+export function QueryBuilder({ query, datasource, onChange, queryErrors }: QueryBuilderProps) {
   const [tables, tablesLoading, tablesError] = useTables(datasource);
   const { filtersActive, aggregationsActive } = useBuilderSettings();
 
@@ -170,6 +172,7 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
     <React.Fragment>
       <TableSelect
         error={tablesError}
+        validationError={queryErrors?.table}
         tables={tables}
         table={table}
         loading={tablesLoading}
@@ -177,6 +180,7 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
       />
       <FieldsSelect
         {...commonFieldsProps}
+        validationError={queryErrors?.fields}
         selectedFields={selectedFields}
         onFieldsChange={handleFieldsChange}
         selectors={selectors.components.QueryBuilder.Fields}
@@ -187,12 +191,14 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
           aggregations={aggregations}
           fieldsMap={fieldsMap}
           onChange={handleAggregationsChange}
+          validationErrors={queryErrors?.aggregations}
         />
       )}
       {queryFormat === 'logs' && (
         <React.Fragment>
           <LogTimeFieldSelect
             {...commonFieldsProps}
+            validationError={queryErrors?.logTimeField}
             onChange={handleLogTimeFieldChange}
             logTimeField={logTimeField}
             fieldsMap={fieldsMap}
@@ -211,7 +217,13 @@ export function QueryBuilder({ query, datasource, onChange }: QueryBuilderProps)
         </React.Fragment>
       )}
       {filtersActive && (
-        <Filters {...commonFieldsProps} filters={filters} onChange={handleFiltersChange} fieldsMap={fieldsMap} />
+        <Filters
+          {...commonFieldsProps}
+          filters={filters}
+          onChange={handleFiltersChange}
+          fieldsMap={fieldsMap}
+          validationErrors={queryErrors?.filters}
+        />
       )}
       {aggregationsActive && (
         <FieldsSelect

@@ -13,7 +13,8 @@ import { SqlEditor } from './SqlEditor';
 import { DatabaseProvider } from './DatabaseContext';
 import { BuilderSettingsProvider, EditorHeightProvider } from './EditorSettingsContext';
 
-import { QueryFormat, QueryType, YDBBuilderQuery, YDBQuery, YDBSQLQuery } from './types';
+import { hasValidationErrors, validateQuery } from './helpers';
+import { QueryErrors, QueryFormat, QueryType, YDBBuilderQuery, YDBQuery, YDBSQLQuery } from './types';
 import { YdbDataSourceOptions } from 'containers/ConfigEditor/types';
 import { defaultYDBBuilderQuery, defaultYDBSQLQuery } from './constants';
 import { DataSource } from 'datasource';
@@ -38,13 +39,23 @@ function normalizeQuery(query: YDBQuery) {
 }
 
 export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasource }: YDBQueryEditorProps) {
+  const [queryErrors, setQueryErrors] = React.useState<QueryErrors | undefined>(undefined);
+  const [showErrors, setShowErrors] = React.useState(false);
   const query = normalizeQuery(baseQuery);
   const { queryType, queryFormat, rawSql, builderOptions } = query;
 
   const { rawSqlBuilder } = builderOptions;
 
   const handleChangeQueryAttribute = <T,>(value: Partial<T>) => {
-    onChange({ ...query, ...value });
+    const newQuery = { ...query, ...value };
+    if (showErrors) {
+      const newErrors = validateQuery(newQuery);
+      setQueryErrors(newErrors);
+      if (!hasValidationErrors(newErrors)) {
+        setShowErrors(false);
+      }
+    }
+    onChange(newQuery);
   };
 
   const handleChangeQueryType = (type: QueryType) => {
@@ -68,7 +79,18 @@ export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasou
     <EditorHeightProvider>
       <BuilderSettingsProvider builderOptions={builderOptions}>
         <DatabaseProvider database={datasource.database}>
-          <Form onSubmit={onRunQuery} maxWidth="none">
+          <Form
+            onSubmit={() => {
+              const errors = validateQuery(query);
+              setQueryErrors(errors);
+              if (!hasValidationErrors(errors)) {
+                onRunQuery();
+              } else {
+                setShowErrors(true);
+              }
+            }}
+            maxWidth="none"
+          >
             {() => (
               <React.Fragment>
                 <div className={styles.Common.inlineFieldWithAddition}>
@@ -86,11 +108,14 @@ export function YDBQueryEditor({ query: baseQuery, onChange, onRunQuery, datasou
                     datasource={datasource}
                     query={query}
                     onChange={handleChangeQueryAttribute<YDBBuilderQuery>}
+                    queryErrors={queryErrors}
                   />
                 ) : (
                   <SqlEditor onChange={handleChangeQueryAttribute<YDBSQLQuery>} query={query} />
                 )}
-                <Button type="submit">Run Query</Button>
+                <Button type="submit" disabled={showErrors}>
+                  Run Query
+                </Button>
               </React.Fragment>
             )}
           </Form>

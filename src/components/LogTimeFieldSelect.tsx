@@ -17,30 +17,31 @@ export type LogTimeFieldSelectProps = {
   loading?: boolean;
   error?: string;
   onChange: (value: LogTimeField) => void;
+  validationError?: Partial<Record<keyof LogTimeField, string>>;
 };
 
 export function LogTimeFieldSelect({
   onChange,
-  logTimeField = { name: null, cast: null },
+  logTimeField = { name: null, cast: null, dateTimeType: undefined },
   fields,
   loading,
   error,
   fieldsMap,
+  validationError,
 }: LogTimeFieldSelectProps) {
   const selectableFields = getSelectableValues(fields);
 
   const { label, tooltip } = selectors.components.QueryBuilder.LogTimeField.Name;
 
   const handleNameChange = (e: SelectableValue<string>) => {
-    onChange({ name: e?.value ?? null, cast: undefined });
+    const newName = e?.value ?? null;
+    const logFieldType = newName ? fieldsMap.get(newName) : undefined;
+    const isLogFieldDateTime = logFieldType ? isDataTypeDateTime(logFieldType) : undefined;
+    onChange({ name: newName, cast: null, dateTimeType: isLogFieldDateTime });
   };
   const handleCastChange = (e: SelectableValue<string>) => {
     onChange({ ...logTimeField, cast: e?.value ?? null });
   };
-
-  const logFieldType = logTimeField.name ? fieldsMap.get(logTimeField.name) : undefined;
-
-  const isLogFieldDateTime = logFieldType ? isDataTypeDateTime(logFieldType) : false;
 
   return (
     <div className={styles.Common.inlineFieldWithAddition}>
@@ -48,8 +49,8 @@ export function LogTimeFieldSelect({
         labelWidth={defaultLabelWidth}
         tooltip={tooltip}
         label={label}
-        error={error}
-        invalid={Boolean(error)}
+        error={error || validationError?.name}
+        invalid={Boolean(error || validationError?.name)}
       >
         <Select
           onChange={handleNameChange}
@@ -61,8 +62,12 @@ export function LogTimeFieldSelect({
           width={defaultInputWidth}
         />
       </InlineField>
-      {logFieldType && !isLogFieldDateTime && (
-        <LogTimeFieldCast value={logTimeField?.cast} onChange={handleCastChange} />
+      {logTimeField?.dateTimeType === false && (
+        <LogTimeFieldCast
+          value={logTimeField?.cast}
+          onChange={handleCastChange}
+          validationError={validationError?.cast}
+        />
       )}
     </div>
   );
@@ -73,15 +78,22 @@ const DataTimeTypes = ['Timestamp', 'Date', 'Datetime'];
 interface LogTimeFieldCastProps {
   onChange: (e: SelectableValue<string>) => void;
   value?: string | null;
+  validationError?: string;
 }
 
-function LogTimeFieldCast({ onChange, value }: LogTimeFieldCastProps) {
+function LogTimeFieldCast({ onChange, value, validationError }: LogTimeFieldCastProps) {
   const { label, tooltip } = selectors.components.QueryBuilder.LogTimeField.Cast;
 
   const selectableValues = getSelectableValues(DataTimeTypes);
 
   return (
-    <InlineField labelWidth={defaultLabelWidth} tooltip={tooltip} label={label}>
+    <InlineField
+      labelWidth={defaultLabelWidth}
+      tooltip={tooltip}
+      label={label}
+      error={validationError}
+      invalid={Boolean(validationError)}
+    >
       <Select
         onChange={onChange}
         options={selectableValues}

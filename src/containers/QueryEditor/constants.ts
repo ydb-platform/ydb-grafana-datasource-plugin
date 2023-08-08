@@ -1,4 +1,4 @@
-import { QueryFormat, YDBBuilderQuery, YDBSQLQuery } from './types';
+import { ExpressionName, QueryFormat, YDBBuilderQuery, YDBSQLQuery } from './types';
 
 export const defaultYDBBuilderQuery: Partial<YDBBuilderQuery> = {
   queryType: 'builder',
@@ -58,6 +58,15 @@ export const ExpressionsMap = {
   isTrue: 'IS TRUE',
   isFalse: 'IS FALSE',
 } as const;
+
+export const expressionsWithNoParams: ExpressionName[] = [
+  'null',
+  'notNull',
+  'insideDashboard',
+  'outsideDashboard',
+  'isTrue',
+  'isFalse',
+];
 
 export const dateSelectableParams = {
   dashboardStart: 'DASHBOARD START TIME',

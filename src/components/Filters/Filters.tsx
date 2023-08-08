@@ -33,9 +33,10 @@ interface FiltersProps {
   fieldsMap: Map<string, string>;
   loading?: boolean;
   error?: string;
+  validationErrors?: Array<Partial<Record<keyof FilterType, string>>>;
 }
 
-export function Filters({ filters = [], onChange, fields, loading, error, fieldsMap }: FiltersProps) {
+export function Filters({ filters = [], onChange, fields, loading, error, fieldsMap, validationErrors }: FiltersProps) {
   const handleChange = (newFilters: FilterType[]) => {
     onChange(removeLogicalOperationFromFirstFilter(newFilters));
   };
@@ -49,7 +50,7 @@ export function Filters({ filters = [], onChange, fields, loading, error, fields
   return (
     <InlineField labelWidth={defaultLabelWidth} tooltip={tooltip} label={label} error={error} invalid={Boolean(error)}>
       <React.Fragment>
-        {filters.map((filter) => (
+        {filters.map((filter, index) => (
           <Filter
             key={filter.id}
             filter={filter}
@@ -58,6 +59,7 @@ export function Filters({ filters = [], onChange, fields, loading, error, fields
             fields={fields}
             loading={loading}
             onEdit={editFilter(filter.id)}
+            validationError={validationErrors ? validationErrors[index] : undefined}
           />
         ))}
         <Button icon="plus" onClick={addFilter}>
