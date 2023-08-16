@@ -174,6 +174,11 @@ describe('should properly generate single WHERE condition', () => {
       expect(getSingleWhereExpression(filter)).toBe(sql);
     });
   }
+  it('with logical op and zero parameter', () => {
+    const filter: FilterType = { id: '1', column: 'bar', paramsType: 'number', params: 0, expr: 'equals' };
+    const sql = '`bar` = 0';
+    expect(getSingleWhereExpression(filter)).toBe(sql);
+  });
   for (const expr of Object.keys(ExpressionsMap)) {
     it(`with column, logical op and expression ${expr}`, () => {
       const filter: FilterType = {
@@ -217,7 +222,7 @@ describe('should properly generate single WHERE condition', () => {
 describe('should properly generate params of the expression', () => {
   it('with empty params', () => {
     const params = '';
-    const sql = '';
+    const sql = undefined;
     expect(prepareParams({ params })).toBe(sql);
   });
   for (const expr of Object.keys(ExpressionsMap)) {
