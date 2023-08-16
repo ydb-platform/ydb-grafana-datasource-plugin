@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
   "name": "YDB",
-  "id": "ydbtech-datasource",
+  "id": "ydbtech-ydb-datasource",
   "alerting": true,
   "metrics": true,
   "backend": true,
@@ -25,7 +25,7 @@
         "url": "https://ydb.tech/"
       }
     ],
-    "screenshots": [],
+    "screenshots": [{ "name": "YDB Query Builder", "path": "img/screenshot.jpg" }],
     "version": "%VERSION%",
     "updated": "%TODAY%"
   },
