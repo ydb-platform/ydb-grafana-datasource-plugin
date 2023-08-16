@@ -1,7 +1,9 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/ydb-platform/ydb-grafana-datasource-plugin/blob/main/LICENSE)
-[![Release](https://img.shields.io/badge/dynamic/json?logo=grafana&color=F47A20&label=release&prefix=v&query=%24.items%5B%3F%28%40.slug%20%3D%3D%20%22ydbtech-datasource%22%29%5D.version&url=https%3A%2F%2Fgrafana.com%2Fapi%2Fplugins)](https://grafana.com/grafana/plugins/ydbtech-datasource)
-[![Downloads](https://img.shields.io/badge/dynamic/json?logo=grafana&color=F47A20&label=downloads&query=%24.items%5B%3F%28%40.slug%20%3D%3D%20%22ydbtech-datasource%22%29%5D.downloads&url=https%3A%2F%2Fgrafana.com%2Fapi%2Fplugins)](https://grafana.com/grafana/plugins/ydbtech-datasource)
+[![Release](https://img.shields.io/badge/dynamic/json?logo=grafana&color=F47A20&label=release&prefix=v&query=%24.items%5B%3F%28%40.slug%20%3D%3D%20%22ydbtech-datasource%22%29%5D.version&url=https%3A%2F%2Fgrafana.com%2Fapi%2Fplugins)](https://grafana.com/grafana/plugins/ydbtech-ydb-datasource)
+[![Downloads](https://img.shields.io/badge/dynamic/json?logo=grafana&color=F47A20&label=downloads&query=%24.items%5B%3F%28%40.slug%20%3D%3D%20%22ydbtech-datasource%22%29%5D.downloads&url=https%3A%2F%2Fgrafana.com%2Fapi%2Fplugins)](https://grafana.com/grafana/plugins/ydbtech-ydb-datasource)
+
 <!-- ![Code lines](https://sloc.xyz/github/ydb-platform/ydb-grafana-datasource-plugin/?category=code) -->
+
 [![Telegram](https://img.shields.io/badge/chat-on%20Telegram-2ba2d9.svg)](https://t.me/ydb_en)
 [![WebSite](https://img.shields.io/badge/website-ydb.tech-blue.svg)](https://ydb.tech)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/ydb-platform/ydb-grafana-datasource-plugin/blob/master/CONTRIBUTING.md)
@@ -44,7 +46,7 @@ Here is an example for this data source using user/password:
 apiVersion: 1
 datasources:
   - name: YDB
-    type: ydbtech-datasource
+    type: ydbtech-ydb-datasource
     jsonData:
       authKind: "UserPassword",
       endpoint: 'grpcs://endpoint',
