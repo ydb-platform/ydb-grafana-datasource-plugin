@@ -95,6 +95,9 @@ func RetrieveListTablesForRoot(config backend.DataSourceInstanceSettings) (respD
 	defer connectionCancel()
 
 	ydbDriver, err := createDriver(connectionCtx, settings)
+	if err != nil {
+		return nil, err
+	}
 	data, err := listTables(connectionCtx, ydbDriver, ydbDriver.Name())
 	if err != nil {
 		return nil, err
@@ -189,9 +192,15 @@ func (h *Ydb) Connect(config backend.DataSourceInstanceSettings, message json.Ra
 	defer connectionCancel()
 
 	ydbDriver, err := createDriver(connectionCtx, settings)
+	if err != nil { 
+		return nil, err
+	}
 
 	connector, err := ydb.Connector(ydbDriver, ydb.WithAutoDeclare(),
 		ydb.WithNumericArgs(), ydb.WithPositionalArgs(), ydb.WithDefaultQueryMode(ydb.ScanQueryMode))
+	if err != nil { 
+		return nil, err
+	}
 	db := sql.OpenDB(connector)
 
 	return db, db.PingContext(connectionCtx)
