@@ -65,9 +65,16 @@ const selectableParamsToSql: Record<keyof typeof dateSelectableParams, string> =
   dashboardEnd: '$__toTimestamp',
 };
 
+function isValidParams(params: FilterType['params'], paramsType?: FilterType['paramsType']): params is string | number {
+  if (paramsType === 'number') {
+    return params !== undefined && params !== null;
+  }
+  return Boolean(params);
+}
+
 export function prepareParams({ params, expr, paramsType }: Partial<FilterType>) {
-  if (!params || !paramsType) {
-    return '';
+  if (!isValidParams(params, paramsType) || !paramsType) {
+    return undefined;
   }
   if (typeof params === 'number') {
     return params;
@@ -109,7 +116,7 @@ export const logicalOpToSql: Record<LogicalOperation, string> = {
 };
 
 export function getSingleWhereExpression(filter: FilterType) {
-  const { logicalOp, column, expr, params } = filter;
+  const { logicalOp, column, expr } = filter;
   if (!column) {
     return '';
   }
@@ -121,8 +128,9 @@ export function getSingleWhereExpression(filter: FilterType) {
   if (expr) {
     result.push(expressionToSql[expr]);
   }
-  if (params) {
-    result.push(prepareParams(filter));
+  const preparedParams = prepareParams(filter);
+  if (preparedParams !== undefined) {
+    result.push(preparedParams);
   }
   return result.join(' ');
 }
