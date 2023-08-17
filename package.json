@@ -1,9 +1,12 @@
 {
   "name": "grafana-ydb-datasource",
-  "version": "1.0.0",
+  "version": "0.3.0",
   "description": "YDB datasource plugin for Grafana",
   "scripts": {
-    "build": "webpack -c ./webpack.config.ts --env production",
+    "build": "rm -rf dist/ && npm run build:frontend && npm run build:backend && npm run sign",
+    "build:frontend": "webpack -c ./webpack.config.ts --env production",
+    "build:backend": "PATH=$(go env GOPATH)/bin:$PATH mage",
+    "sign": "npx --yes @grafana/sign-plugin@latest",
     "dev": "webpack -w -c ./webpack.config.ts --env development",
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --passWithNoTests --maxWorkers 4",
@@ -13,7 +16,6 @@
     "e2e": "npx cypress install && npx grafana-e2e run",
     "e2e:update": "npx cypress install && npx grafana-e2e run --update-screenshots",
     "server": "docker-compose up --build",
-    "sign": "npx --yes @grafana/sign-plugin",
     "prepare": "husky install"
   },
   "author": "YDB",
