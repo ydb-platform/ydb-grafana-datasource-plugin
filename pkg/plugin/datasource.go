@@ -84,7 +84,7 @@ func listTables(ctx context.Context, db *ydb.Driver, folder string) (tables []st
 func RetrieveListTablesForRoot(config backend.DataSourceInstanceSettings) (respData []byte, err error) {
 	defer func() {
 		if err != nil {
-			log.DefaultLogger.Error("Getting table list failed", err.Error())
+			log.DefaultLogger.Error("Getting table list failed", "error", err.Error())
 		}
 	}()
 	settings, err := models.LoadSettings(config)
@@ -135,7 +135,7 @@ func listFields(ctx context.Context, db *ydb.Driver, tableName string) (fields [
 func RetrieveTableFields(config backend.DataSourceInstanceSettings, tableName string) (respData []byte, err error) {
 	defer func() {
 		if err != nil {
-			log.DefaultLogger.Error("Getting fields failed", err.Error())
+			log.DefaultLogger.Error("Getting fields failed", "error", err.Error())
 		}
 	}()
 	settings, err := models.LoadSettings(config)
@@ -181,7 +181,7 @@ func (h *Ydb) Settings(config backend.DataSourceInstanceSettings) sqlds.DriverSe
 func (h *Ydb) Connect(config backend.DataSourceInstanceSettings, message json.RawMessage) (_ *sql.DB, err error) {
 	defer func() {
 		if err != nil {
-			log.DefaultLogger.Error("Connection with database failed", err.Error())
+			log.DefaultLogger.Error("Connection with database failed", "error", err.Error())
 		}
 	}()
 	settings, err := models.LoadSettings(config)
