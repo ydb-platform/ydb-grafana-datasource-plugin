@@ -38,7 +38,7 @@ jobs:
       - name: Unit tests
         run: npm run test:ci
       - name: Build frontend
-        run: npm run build
+        run: npm run build:frontend
 
       - name: Start grafana docker
         run: npm run server -- -d
