@@ -12,7 +12,7 @@
 
 ## Version compatibility
 
-Plugin requires `v9.x` of Grafana.
+Plugin requires `v9.1` and higher of Grafana.
 
 The YDB data source plugin allows you to query and visualize YDB data from within Grafana.
 
