@@ -72,3 +72,5 @@ export const AggregationFunctionsMap = {
   avg: 'AVG',
   some: 'SOME',
 } as const;
+
+export const panelVariables = ['$__fromTimestamp', '$__toTimestamp'];
