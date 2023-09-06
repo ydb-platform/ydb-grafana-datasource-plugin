@@ -11,6 +11,7 @@ import { useDatabase, useDatasource } from './DatasourceContext';
 
 import { createProvideSuggestionsFunction } from 'lib/sqlProvider';
 import { highlightErrors, unHighlightErrors } from 'lib/highlightErrors';
+import { useVariables } from './VariablesContext';
 
 let completionProvider: IDisposable | undefined;
 
@@ -21,6 +22,7 @@ interface SqlEditorProps {
 
 export function SqlEditor({ onChange, query }: SqlEditorProps) {
   const datasource = useDatasource();
+  const variables = useVariables();
   const { tables } = useTables();
   const database = useDatabase();
   const editorHeight = useEditorHeight();
@@ -39,11 +41,11 @@ export function SqlEditor({ onChange, query }: SqlEditorProps) {
         completionProvider.dispose();
       }
       completionProvider = monaco.languages.registerCompletionItemProvider(MONACO_LANGUAGE_SQL, {
-        triggerCharacters: [' ', '\n', ''],
-        provideCompletionItems: createProvideSuggestionsFunction(datasource, tablesForSuggest),
+        triggerCharacters: [' ', '\n', '', '$'],
+        provideCompletionItems: createProvideSuggestionsFunction(datasource, tablesForSuggest, variables),
       });
     },
-    [datasource, tablesForSuggest]
+    [datasource, tablesForSuggest, variables]
   );
 
   React.useEffect(() => {

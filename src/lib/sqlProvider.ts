@@ -27,7 +27,8 @@ function getFieldsWithCache(datasource: DataSource) {
 
 export function createProvideSuggestionsFunction(
   datasource: DataSource,
-  tables: Array<{ label: string; value: string }>
+  tables: Array<{ label: string; value: string }>,
+  variables: string[]
 ) {
   const getFields = getFieldsWithCache(datasource);
   return async (
@@ -38,7 +39,7 @@ export function createProvideSuggestionsFunction(
   ) => {
     const [queryBeforeCursor, queryAfterCursor] = getQueriesAroundCursor(model, cursorPosition);
     const parseResult = parseGenericSql(queryBeforeCursor, queryAfterCursor);
-    const suggestions = await getSuggestions(model, cursorPosition, parseResult, tables, getFields);
+    const suggestions = await getSuggestions(model, cursorPosition, parseResult, tables, variables, getFields);
 
     return { suggestions };
   };
@@ -49,6 +50,7 @@ async function getSuggestions(
   cursorPosition: Position,
   parseResult: ParseResult,
   tablesForSuggest: Array<{ label: string; value: string }>,
+  variablesForSuggest: string[],
   getFields: (value: string) => Promise<string[]>
 ): Promise<languages.CompletionItem[]> {
   const rangeToInsertSuggestion = getRangeToInsertSuggestion(model, cursorPosition);
@@ -124,6 +126,19 @@ async function getSuggestions(
     });
   }
 
+  // @ts-ignore is not typed properly in sql-autocomplete-parsers
+  if (parseResult.suggestValues) {
+    variablesForSuggest?.forEach((variable) => {
+      suggestions.push({
+        label: variable,
+        insertText: variable,
+        kind: languages.CompletionItemKind.Variable,
+        detail: 'Variable',
+        range: rangeToInsertSuggestion,
+      });
+    });
+  }
+
   if (parseResult.suggestFunctions) {
     const functionsSortText = getLastSortText(suggestions);
 
@@ -173,9 +188,12 @@ function shouldSuggestTables({ suggestTables }: ParseResult): boolean {
 
 function getRangeToInsertSuggestion(model: monacoEditor.ITextModel, cursorPosition: Position): IRange {
   const { startColumn: lastWordStartColumn, endColumn: lastWordEndColumn } = model.getWordUntilPosition(cursorPosition);
+  // https://github.com/microsoft/monaco-editor/discussions/3639#discussioncomment-5190373 if user already typed "$" sign, it should not be duplicated
+  const dollarBeforeLastWordStart =
+    model.getLineContent(cursorPosition.lineNumber)[lastWordStartColumn - 2] === '$' ? 1 : 0;
 
   return {
-    startColumn: lastWordStartColumn,
+    startColumn: lastWordStartColumn - dollarBeforeLastWordStart,
     startLineNumber: cursorPosition.lineNumber,
     endColumn: lastWordEndColumn,
     endLineNumber: cursorPosition.lineNumber,
@@ -218,11 +236,17 @@ function getAggregateFunctionNamesToSuggest(): string[] {
 }
 
 function getFunctionInsertTextWithCursor(functionTemplate: string): string {
-  return `${functionTemplate.slice(0, -1)}$1)`;
+  let normalizedFunctionTemplate = functionTemplate;
+  if (functionTemplate.startsWith('$')) {
+    normalizedFunctionTemplate = `\\${functionTemplate}`;
+  }
+  return `${normalizedFunctionTemplate.slice(0, -1)}$1)`;
 }
 
 function getFunctionNamesToSuggest(): string[] {
   return [
+    '$__timeFilter()',
+    '$__varFallback()',
     'LENGTH()',
     'SUBSTRING()',
     'FIND()',
