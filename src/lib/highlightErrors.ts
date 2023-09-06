@@ -1,4 +1,5 @@
 import { MarkerSeverity, editor as monacoEditor } from 'monaco-editor';
+import { monacoTypes } from '@grafana/ui';
 import { SyntaxError, cursorSymbol, parseGenericSql } from 'sql-autocomplete-parsers';
 
 // If our finished query is "SELECT * FROM|" and we try to parse it, parser thinks that we still haven't finished writing it and doesn't show some errors.
@@ -14,17 +15,18 @@ export function parserErrorLocationIndexToMonacoIndex(parserLocationIndex: numbe
 
 const owner = 'ydbtech';
 
-export function highlightErrors(editor: typeof monacoEditor): void {
-  const model = editor.getEditors()[0]?.getModel();
+export function highlightErrors(editor: monacoEditor.IStandaloneCodeEditor, monaco: typeof monacoTypes): void {
+  const model = editor.getModel();
   if (!model) {
     console.error('unable to retrieve model when highlighting errors');
     return;
   }
+  const monacoEditor = monaco.editor;
 
   const parseResult = parseGenericSql(prepareFinishedQueryForParsing(model.getValue()), '');
 
   if (!parseResult.errors) {
-    unHighlightErrors(editor);
+    unHighlightErrors(monacoEditor);
     return;
   }
 
@@ -39,7 +41,7 @@ export function highlightErrors(editor: typeof monacoEditor): void {
       endColumn: parserErrorLocationIndexToMonacoIndex(error.loc.last_column),
     })
   );
-  editor.setModelMarkers(model, owner, markers);
+  monacoEditor.setModelMarkers(model, owner, markers);
 }
 
 export function unHighlightErrors(editor: typeof monacoEditor): void {

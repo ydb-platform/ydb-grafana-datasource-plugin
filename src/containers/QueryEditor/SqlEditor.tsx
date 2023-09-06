@@ -25,6 +25,7 @@ export function SqlEditor({ onChange, query }: SqlEditorProps) {
   const database = useDatabase();
   const editorHeight = useEditorHeight();
   const monacoRef = React.useRef<typeof monacoTypes | null>(null);
+  const editorRef = React.useRef<monacoEditor.IStandaloneCodeEditor | null>(null);
   const errorsHighlightingTimeoutIdRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const tablesForSuggest = React.useMemo(
@@ -51,22 +52,27 @@ export function SqlEditor({ onChange, query }: SqlEditorProps) {
     }
     registerCompletionProvider(monacoRef.current);
   }, [registerCompletionProvider]);
-
   const onQueryTextChange = (text: string) => {
-    const editor = monacoRef.current?.editor;
+    const editor = editorRef.current;
+    const monaco = monacoRef.current;
     onChange({ rawSql: text });
-    if (!editor) {
+    if (!editor || !monaco) {
       return;
     }
-    unHighlightErrors(editor);
+    unHighlightErrors(monaco.editor);
     if (errorsHighlightingTimeoutIdRef.current) {
       clearTimeout(errorsHighlightingTimeoutIdRef.current);
     }
-    errorsHighlightingTimeoutIdRef.current = setTimeout(() => highlightErrors(editor), 500);
+    errorsHighlightingTimeoutIdRef.current = setTimeout(() => highlightErrors(editor, monaco), 500);
   };
 
-  const handleMount = (_editor: monacoEditor.IStandaloneCodeEditor, monaco: typeof monacoTypes) => {
+  const handleMount = (editor: monacoEditor.IStandaloneCodeEditor, monaco: typeof monacoTypes) => {
     monacoRef.current = monaco;
+    editorRef.current = editor;
+    const editorModel = editor.getModel();
+    editorModel?.onDidChangeContent(() => {
+      onQueryTextChange(editor.getValue());
+    });
   };
 
   const { rawSql } = query;
@@ -79,7 +85,6 @@ export function SqlEditor({ onChange, query }: SqlEditorProps) {
         value={rawSql}
         showMiniMap={false}
         showLineNumbers={true}
-        onChange={onQueryTextChange}
         onEditorDidMount={handleMount}
         monacoOptions={{ wordWrap: 'on' }}
         onBeforeEditorMount={registerCompletionProvider}
