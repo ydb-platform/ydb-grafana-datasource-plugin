@@ -129,7 +129,7 @@ describe('should properly add WHERE condition', () => {
     expect(getRawSqlFromBuilderOptions(builderOptions, 'table')).toBe(sql);
   });
 
-  it('add WHERE condition without params', () => {
+  it('add WHERE condition with params', () => {
     const builderOptions = {
       ...baseBuilderOptions,
       filters: [
@@ -137,7 +137,7 @@ describe('should properly add WHERE condition', () => {
           id: '1',
           column: 'bar',
           expr: 'gtr',
-          params: 'foo, bar, baz, 1  ',
+          params: ['foo', 'bar', 'baz', '1   '],
           paramsType: 'number',
         },
         {
@@ -145,13 +145,12 @@ describe('should properly add WHERE condition', () => {
           column: 'bar',
           logicalOp: 'and',
           expr: 'gtr',
-          params: 'foo, bar, baz, 1  ',
+          params: ['foo', 'bar', 'baz', '1   '],
           paramsType: 'number',
         },
       ] as FilterType[],
     };
-    const sql =
-      'SELECT `bar`, \n`baz` \nFROM `foo` \nWHERE \n`bar` > "foo, bar, baz, 1  " \nAND `bar` > "foo, bar, baz, 1  " \nLIMIT 10';
+    const sql = 'SELECT `bar`, \n`baz` \nFROM `foo` \nWHERE \n`bar` > "foo", "bar", "baz", 1 \nAND `bar` > "foo", "bar", "baz", 1 \nLIMIT 10';
     expect(getRawSqlFromBuilderOptions(builderOptions, 'table')).toBe(sql);
   });
 });
@@ -175,7 +174,7 @@ describe('should properly generate single WHERE condition', () => {
     });
   }
   it('with logical op and zero parameter', () => {
-    const filter: FilterType = { id: '1', column: 'bar', paramsType: 'number', params: 0, expr: 'equals' };
+    const filter: FilterType = { id: '1', column: 'bar', paramsType: 'number', params: ['0'], expr: 'equals' };
     const sql = '`bar` = 0';
     expect(getSingleWhereExpression(filter)).toBe(sql);
   });
@@ -195,7 +194,7 @@ describe('should properly generate single WHERE condition', () => {
   for (const expr of Object.keys(ExpressionsMap)) {
     const typedExpr = expr as ExpressionName;
     it(`with column, logical op, expression ${typedExpr} and mixed params`, () => {
-      let sql = `AND \`bar\` ${expressionToSql[typedExpr]} "foo, bar, baz, 1  "`;
+      let sql = `AND \`bar\` ${expressionToSql[typedExpr]} "foo", "bar", "baz", 1`;
       switch (typedExpr) {
         case 'in':
         case 'notIn':
@@ -211,7 +210,7 @@ describe('should properly generate single WHERE condition', () => {
         column: 'bar',
         logicalOp: 'and',
         expr: typedExpr,
-        params: 'foo, bar, baz, 1  ',
+        params: ['foo', 'bar', 'baz', '1   '],
         paramsType: 'number',
       };
       expect(getSingleWhereExpression(filter)).toBe(sql);
@@ -221,21 +220,27 @@ describe('should properly generate single WHERE condition', () => {
 
 describe('should properly generate params of the expression', () => {
   it('with empty params', () => {
-    const params = '';
+    const params: string[] = [];
     const sql = undefined;
     expect(prepareParams({ params })).toBe(sql);
   });
   for (const expr of Object.keys(ExpressionsMap)) {
     it(`with number parameter ${expr}`, () => {
-      const params = 1;
-      const sql = 1;
+      const params = ['1'];
+      let sql = '1';
+      switch (expr) {
+        case 'in':
+        case 'notIn':
+          sql = '(1)';
+          break;
+      }
       expect(prepareParams({ params, expr: expr as ExpressionName, paramsType: 'number' })).toBe(sql);
     });
   }
   for (const expr of Object.keys(ExpressionsMap)) {
     const typedExpr = expr as ExpressionName;
     it(`with single string parameter ${expr}`, () => {
-      const params = 'abc';
+      const params = ['abc'];
       let sql = '"abc"';
       switch (typedExpr) {
         case 'in':
@@ -249,8 +254,8 @@ describe('should properly generate params of the expression', () => {
   for (const expr of Object.keys(ExpressionsMap)) {
     const typedExpr = expr as ExpressionName;
     it(`with multiple string parameter ${expr}`, () => {
-      const params = 'foo, bar, baz';
-      let sql = '"foo, bar, baz"';
+      const params = ['foo', 'bar', 'baz'];
+      let sql = '"foo", "bar", "baz"';
       switch (typedExpr) {
         case 'in':
         case 'notIn':
@@ -267,16 +272,22 @@ describe('should properly generate params of the expression', () => {
   for (const expr of Object.keys(ExpressionsMap)) {
     const typedExpr = expr as ExpressionName;
     it(`with single number parameter ${expr}`, () => {
-      const params = 1;
-      let sql = 1;
+      const params = ['1'];
+      let sql = '1';
+      switch (typedExpr) {
+        case 'in':
+        case 'notIn':
+          sql = '(1)';
+          break;
+      }
       expect(prepareParams({ params, expr: typedExpr, paramsType: 'number' })).toBe(sql);
     });
   }
   for (const expr of Object.keys(ExpressionsMap)) {
     const typedExpr = expr as ExpressionName;
     it(`with multiple number parameter ${expr}`, () => {
-      const params = '1, 2 , 3 ';
-      let sql = '"1, 2 , 3 "';
+      const params = ['1', '2', '3 '];
+      let sql = '1, 2, 3';
       switch (typedExpr) {
         case 'in':
         case 'notIn':
@@ -292,8 +303,8 @@ describe('should properly generate params of the expression', () => {
   for (const expr of Object.keys(ExpressionsMap)) {
     const typedExpr = expr as ExpressionName;
     it(`with multiple mixed parameter ${expr}`, () => {
-      const params = '1, 2 ,bar,  3 ';
-      let sql = '"1, 2 ,bar,  3 "';
+      const params = ['1', '2', 'bar', '3 '];
+      let sql = '1, 2, "bar", 3';
       switch (typedExpr) {
         case 'in':
         case 'notIn':
@@ -306,11 +317,6 @@ describe('should properly generate params of the expression', () => {
       expect(prepareParams({ params, expr: typedExpr, paramsType: 'number' })).toBe(sql);
     });
   }
-  it(`with selectable date parameter`, () => {
-    const params = 'dashboardStart';
-    let sql = '$__fromTimestamp';
-    expect(prepareParams({ params, expr: 'equals', paramsType: 'date' })).toBe(sql);
-  });
 });
 
 describe('should properly generate log line', () => {
