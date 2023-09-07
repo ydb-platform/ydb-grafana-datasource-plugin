@@ -8,6 +8,7 @@ import { FilterType } from 'containers/QueryEditor/types';
 import { selectors } from 'selectors';
 import { UnknownFieldType, defaultLabelWidth } from 'containers/QueryEditor/constants';
 import { useEntityArrayActions } from 'containers/QueryEditor/helpers';
+import { useVariables } from 'containers/QueryEditor/VariablesContext';
 
 function removeLogicalOperationFromFirstFilter(filters: FilterType[]) {
   if (!filters.length) {
@@ -46,6 +47,8 @@ export function Filters({ filters = [], onChange, fields, loading, error, fields
     editEntity: editFilter,
   } = useEntityArrayActions(filters, handleChange, NEW_FILTER);
   const { label, tooltip } = selectors.components.QueryBuilder.Filter;
+  const variables = useVariables();
+
   return (
     <InlineField labelWidth={defaultLabelWidth} tooltip={tooltip} label={label} error={error} invalid={Boolean(error)}>
       <React.Fragment>
@@ -58,6 +61,7 @@ export function Filters({ filters = [], onChange, fields, loading, error, fields
             fields={fields}
             loading={loading}
             onEdit={editFilter(filter.id)}
+            variables={variables}
           />
         ))}
         <Button icon="plus" onClick={addFilter}>

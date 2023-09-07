@@ -148,54 +148,58 @@ export function QueryBuilder({ query, onChange }: QueryBuilderProps) {
   return (
     <React.Fragment>
       <TableSelect table={table} onTableChange={handleTableChange} />
-      <FieldsSelect
-        {...commonFieldsProps}
-        selectedFields={selectedFields}
-        onFieldsChange={handleFieldsChange}
-        selectors={selectors.components.QueryBuilder.Fields}
-      />
-      {aggregationsActive && (
-        <Aggregations
-          {...commonFieldsProps}
-          aggregations={aggregations}
-          fieldsMap={fieldsMap}
-          onChange={handleAggregationsChange}
-        />
-      )}
-      {queryFormat === 'logs' && (
+      {table && (
         <React.Fragment>
-          <LogTimeFieldSelect
-            {...commonFieldsProps}
-            onChange={handleLogTimeFieldChange}
-            logTimeField={logTimeField}
-            fieldsMap={fieldsMap}
-          />
-          <LogLevelFieldSelect
-            {...commonFieldsProps}
-            onChange={handleLogLevelFieldChange}
-            logLevelField={logLevelField}
-          />
           <FieldsSelect
             {...commonFieldsProps}
-            selectedFields={loglineFields}
-            onFieldsChange={handleLoglineFieldsChange}
-            selectors={selectors.components.QueryBuilder.LogLineFields}
+            selectedFields={selectedFields}
+            onFieldsChange={handleFieldsChange}
+            selectors={selectors.components.QueryBuilder.Fields}
           />
+          {aggregationsActive && (
+            <Aggregations
+              {...commonFieldsProps}
+              aggregations={aggregations}
+              fieldsMap={fieldsMap}
+              onChange={handleAggregationsChange}
+            />
+          )}
+          {queryFormat === 'logs' && (
+            <React.Fragment>
+              <LogTimeFieldSelect
+                {...commonFieldsProps}
+                onChange={handleLogTimeFieldChange}
+                logTimeField={logTimeField}
+                fieldsMap={fieldsMap}
+              />
+              <LogLevelFieldSelect
+                {...commonFieldsProps}
+                onChange={handleLogLevelFieldChange}
+                logLevelField={logLevelField}
+              />
+              <FieldsSelect
+                {...commonFieldsProps}
+                selectedFields={loglineFields}
+                onFieldsChange={handleLoglineFieldsChange}
+                selectors={selectors.components.QueryBuilder.LogLineFields}
+              />
+            </React.Fragment>
+          )}
+          {filtersActive && (
+            <Filters {...commonFieldsProps} filters={filters} onChange={handleFiltersChange} fieldsMap={fieldsMap} />
+          )}
+          {aggregationsActive && (
+            <FieldsSelect
+              {...commonFieldsProps}
+              selectedFields={groupBy}
+              onFieldsChange={handleGroupByChange}
+              selectors={selectors.components.QueryBuilder.GroupBy}
+            />
+          )}
+          <Limit limit={limit} onChange={handleLimitChange} />
+          <SqlPreview rawSql={rawSql} />
         </React.Fragment>
       )}
-      {filtersActive && (
-        <Filters {...commonFieldsProps} filters={filters} onChange={handleFiltersChange} fieldsMap={fieldsMap} />
-      )}
-      {aggregationsActive && (
-        <FieldsSelect
-          {...commonFieldsProps}
-          selectedFields={groupBy}
-          onFieldsChange={handleGroupByChange}
-          selectors={selectors.components.QueryBuilder.GroupBy}
-        />
-      )}
-      <Limit limit={limit} onChange={handleLimitChange} />
-      <SqlPreview rawSql={rawSql} />
     </React.Fragment>
   );
 }

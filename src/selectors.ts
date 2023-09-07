@@ -43,6 +43,7 @@ export const Components = {
     Filter: {
       label: 'Filters',
       tooltip: 'List of filters',
+      paramsPlaceholder: 'Select available parameters or add yours',
     },
     Aggregations: {
       label: 'Aggregations',

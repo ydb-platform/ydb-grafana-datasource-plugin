@@ -56,6 +56,7 @@ export function FieldsSelect({
           isSearchable
           isMulti
           closeMenuOnSelect={false}
+          className={styles.Common.fieldsSelect}
         />
       </InlineField>
       <Button fill="outline" onClick={handleSelectAllFields} disabled={fields.length === 0}>

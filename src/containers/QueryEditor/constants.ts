@@ -1,4 +1,4 @@
-import { QueryFormat, YDBBuilderQuery, YDBSQLQuery } from './types';
+import { ExpressionName, QueryFormat, YDBBuilderQuery, YDBSQLQuery } from './types';
 
 export const defaultYDBBuilderQuery: Partial<YDBBuilderQuery> = {
   queryType: 'builder',
@@ -59,11 +59,6 @@ export const ExpressionsMap = {
   isFalse: 'IS FALSE',
 } as const;
 
-export const dateSelectableParams = {
-  dashboardStart: 'DASHBOARD START TIME',
-  dashboardEnd: 'DASHBOARD END TIME',
-} as const;
-
 export const AggregationFunctionsMap = {
   count: 'COUNT',
   min: 'MIN',
@@ -72,5 +67,7 @@ export const AggregationFunctionsMap = {
   avg: 'AVG',
   some: 'SOME',
 } as const;
+
+export const expressionWithMultipleParams: ExpressionName[] = ['in', 'notIn', 'between', 'notBetween'];
 
 export const panelVariables = ['$__fromTimestamp', '$__toTimestamp'];
