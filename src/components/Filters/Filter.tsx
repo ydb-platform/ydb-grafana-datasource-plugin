@@ -1,7 +1,7 @@
 import { SelectableValue } from '@grafana/data';
-import { Select, Button, RadioButtonGroup, Input } from '@grafana/ui';
+import { Select, Button, RadioButtonGroup } from '@grafana/ui';
 
-import { ExpressionsMap, dateSelectableParams, defaultInputWidth } from 'containers/QueryEditor/constants';
+import { ExpressionsMap, defaultInputWidth, expressionWithMultipleParams } from 'containers/QueryEditor/constants';
 import { getSelectableValues } from 'containers/QueryEditor/helpers';
 import {
   BooleanExpressions,
@@ -16,6 +16,7 @@ import {
 import { isDataTypeBool, isDataTypeDateTime, isDataTypeString } from 'containers/QueryEditor/data-types';
 
 import { styles } from 'styles';
+import { selectors } from 'selectors';
 
 const options: Array<SelectableValue<LogicalOperation>> = [
   { label: LogicalOperationNames['and'], value: 'and' },
@@ -43,52 +44,20 @@ const expressionsWithNoParams: ExpressionName[] = [
   'isTrue',
   'isFalse',
 ];
-const expressionsWithOnlyStringParam: ExpressionName[] = [
-  'in',
-  'notIn',
-  'between',
-  'notBetween',
-  'like',
-  'notLike',
-  'regexp',
-];
-const expressionsWithSelectionForDates: ExpressionName[] = [
-  'equals',
-  'harshEquals',
-  'notEquals',
-  'lessOrGtr',
-  'gtr',
-  'gtrOrEquals',
-  'less',
-  'lessOrEquals',
-];
 
 function getParamsType(type: string, expr?: ExpressionName | null) {
   if (!expr || expressionsWithNoParams.includes(expr)) {
     return null;
   }
-  if (isDataTypeDateTime(type) && expressionsWithSelectionForDates.includes(expr)) {
-    return 'date';
-  }
-  if (isDataTypeString(type) || isDataTypeDateTime(type) || expressionsWithOnlyStringParam.includes(expr)) {
+  if (isDataTypeString(type) || isDataTypeDateTime(type)) {
     return 'text';
   }
   return 'number';
 }
 
-function getPlaceholder(expr?: ExpressionName | null) {
-  if (expr === 'between' || expr === 'notBetween') {
-    return 'Enter two values separated by comma';
-  }
-  if (expr === 'in' || expr === 'notIn') {
-    return 'Enter values separated by comma';
-  }
-  return '';
-}
-
 const ColumnDependableFields: Record<keyof Omit<FilterType, 'column' | 'id' | 'logicalOp'>, any> = {
   expr: null,
-  params: null,
+  params: undefined,
   paramsType: null,
 };
 
@@ -99,12 +68,12 @@ interface FilterProps {
   fields: readonly string[];
   loading?: boolean;
   type: string;
+  variables: string[];
 }
 
-export function Filter({ onRemove, onEdit, filter, fields, loading, type }: FilterProps) {
-  const { column, logicalOp, expr, params, paramsType } = filter;
+export function Filter({ onRemove, onEdit, filter, fields, loading, type, variables }: FilterProps) {
+  const { column, logicalOp, expr, params = [], paramsType } = filter;
   const selectableFields = getSelectableValues(fields);
-  const placeholder = getPlaceholder(expr);
 
   const expressions = getExpressions(type).map((expr) => ({
     label: ExpressionsMap[expr],
@@ -120,16 +89,17 @@ export function Filter({ onRemove, onEdit, filter, fields, loading, type }: Filt
   const handleChangeLogicalOperation = (value: string) => {
     onEdit({ logicalOp: value as LogicalOperation });
   };
-  const handleChangeParamsInput = (e: React.FormEvent<HTMLInputElement>) => {
-    if (paramsType === 'number') {
-      onEdit({ params: e.currentTarget.valueAsNumber });
-    } else {
-      onEdit({ params: e.currentTarget.value });
-    }
+
+  const getSelectableParams = () => {
+    const allParams = Array.from(new Set([...variables, ...params]));
+    let selectableValues: Array<SelectableValue<string>> = allParams.map((value) => ({
+      label: value,
+      value: value,
+    }));
+    return selectableValues;
   };
-  const handleChangeParamsSelect = (e: SelectableValue<string>) => {
-    onEdit({ params: e?.value ?? null });
-  };
+
+  const isMultiParams = expressionWithMultipleParams.some((el) => el === expr);
 
   return (
     <div className={styles.Common.grid5}>
@@ -162,68 +132,55 @@ export function Filter({ onRemove, onEdit, filter, fields, loading, type }: Filt
         width={30}
         allowCustomValue={false}
       />
-      {paramsType === 'date' && <FilterParametersSelect onChange={handleChangeParamsSelect} value={params} />}
-      {(paramsType === 'number' || paramsType === 'text') && (
-        <FilterParametersInput
-          placeholder={placeholder}
-          value={params}
-          type={paramsType}
-          onChange={handleChangeParamsInput}
-        />
+      {paramsType && (
+        <ParametersSelect onEdit={onEdit} options={getSelectableParams()} value={params} isMulti={isMultiParams} />
       )}
       <Button icon="trash-alt" onClick={onRemove} title="Remove field" fill="outline" />
     </div>
   );
 }
 
-function getSelectableDateValues(selectedValue?: string | null) {
-  const selectableValues: Array<SelectableValue<string>> = Object.entries(dateSelectableParams).map(([key, value]) => ({
-    label: value,
-    value: key,
-  }));
-  if (selectedValue && !Object.keys(dateSelectableParams).includes(selectedValue)) {
-    selectableValues.push({ label: selectedValue, value: selectedValue });
+interface ParametersSelectProps {
+  onEdit: (value: Partial<FilterType>) => void;
+  options: Array<SelectableValue<string>>;
+  value: string[];
+  isMulti?: boolean;
+}
+
+function ParametersSelect({ onEdit, options, value, isMulti }: ParametersSelectProps) {
+  const { paramsPlaceholder } = selectors.components.QueryBuilder.Filter;
+  const handleChangeMultiParamsSelect = (e: Array<SelectableValue<string>>) => {
+    onEdit({ params: e.map((el) => el.value ?? '').filter(Boolean) });
+  };
+  const handleChangeSingleParamsSelect = (e: SelectableValue<string>) => {
+    onEdit({ params: e?.value ? [e.value] : [] });
+  };
+  if (isMulti) {
+    return (
+      <Select
+        // bug in grafana types. isMulti option is not taken into account
+        onChange={handleChangeMultiParamsSelect as any}
+        options={options}
+        value={value}
+        menuPlacement={'bottom'}
+        isClearable
+        allowCustomValue
+        isMulti
+        width={defaultInputWidth}
+        placeholder={paramsPlaceholder}
+      />
+    );
   }
-  return selectableValues;
-}
-
-interface FilterParametersSelectProps {
-  value?: string | number | null;
-  onChange: (e: SelectableValue<string>) => void;
-}
-
-function FilterParametersSelect({ onChange, value }: FilterParametersSelectProps) {
-  const normalizedValue = typeof value === 'number' ? String(value) : value;
-  const selectableDateParams = getSelectableDateValues(normalizedValue);
   return (
     <Select
-      onChange={onChange}
-      options={selectableDateParams}
-      value={normalizedValue}
+      onChange={handleChangeSingleParamsSelect}
+      options={options}
+      value={value[0]}
       menuPlacement={'bottom'}
       isClearable
       allowCustomValue
       width={defaultInputWidth}
-    />
-  );
-}
-
-interface FilterParametersInputProps {
-  placeholder?: string;
-  value?: string | number | null;
-  type: 'text' | 'number';
-  onChange: (e: React.FormEvent<HTMLInputElement>) => void;
-}
-
-function FilterParametersInput({ placeholder = '', type, onChange, value }: FilterParametersInputProps) {
-  const normalizedValue = value === null ? undefined : value;
-  return (
-    <Input
-      placeholder={placeholder}
-      type={type}
-      width={defaultInputWidth}
-      onChange={onChange}
-      value={normalizedValue}
+      placeholder={paramsPlaceholder}
     />
   );
 }

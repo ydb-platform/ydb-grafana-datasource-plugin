@@ -6,7 +6,7 @@ export const styles = {
       display: grid;
       grid-template-columns: repeat(5, min-content);
       grid-gap: 4px;
-      align-items: center;
+      align-items: flex-start;
       margin-bottom: 4px;
     `,
     logicalOpAbsolutePosition: css`
@@ -25,6 +25,15 @@ export const styles = {
       display: flex;
       align-items: center;
       gap: 4px;
+    `,
+    fieldsSelect: css`
+      min-width: 320px;
+    `,
+    rawSqlWrapper: css`
+      display: flex;
+      align-items: center;
+      padding: 1px 9px;
+      min-height: 32px;
     `,
   },
 };

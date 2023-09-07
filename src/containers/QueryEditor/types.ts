@@ -77,8 +77,8 @@ export type FilterType = {
   logicalOp?: LogicalOperation;
   column?: string;
   expr?: ExpressionName | null;
-  params?: string | number | null;
-  paramsType: 'number' | 'text' | 'date' | null;
+  params?: string[];
+  paramsType: 'number' | 'text' | null;
 };
 
 export type ExpressionName = keyof typeof ExpressionsMap;

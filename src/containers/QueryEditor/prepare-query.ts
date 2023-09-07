@@ -1,4 +1,4 @@
-import { AggregationFunctionsMap, dateSelectableParams } from './constants';
+import { AggregationFunctionsMap, expressionWithMultipleParams, panelVariables } from './constants';
 import { isDataTypePrimitive } from './data-types';
 import { defaultWrapper, escapeAndWrapString } from './helpers';
 import {
@@ -32,58 +32,48 @@ function getAliasExpression({ fieldName, alias, wrapper = defaultWrapper, fieldT
   return `${normalizedField} AS ${escapeAndWrapString(alias, wrapper)}`;
 }
 
-const expressionWithCommaSeparatedParams: ExpressionName[] = ['in', 'notIn', 'between', 'notBetween'];
+const variableRe = /^\${\S+}$/g;
 
-function splitParams(params: string, paramsType: FilterType['paramsType']) {
-  return params.split(',').map((p) => {
-    const normalizedParam = p.trim();
-    if (paramsType === 'number') {
-      const paramToNumber = Number(p);
-      if (!isNaN(paramToNumber)) {
-        return paramToNumber;
-      }
-    }
-    return escapeAndWrapString(normalizedParam, '"');
-  });
+function isVariable(param: string) {
+  return panelVariables.includes(param) || param.match(variableRe);
 }
 
-function prepareSplittedParams(params: string, expr: ExpressionName, paramsType: FilterType['paramsType']) {
-  const splittedParams = splitParams(params, paramsType);
+function normalizeSingleParameter(param: string, paramsType: FilterType['paramsType']) {
+  const normalizedParam = param.trim();
+  if (paramsType === 'number') {
+    const paramToNumber = Number(param);
+    if (!isNaN(paramToNumber)) {
+      return paramToNumber;
+    }
+  }
+  if (isVariable(normalizedParam)) {
+    return normalizedParam;
+  }
+  return escapeAndWrapString(normalizedParam, '"');
+}
+
+function prepareMultipleParams(params: string[], expr: ExpressionName, paramsType: FilterType['paramsType']) {
+  const normalizedParams = params.map((p) => normalizeSingleParameter(p, paramsType));
   switch (expr) {
     case 'in':
     case 'notIn':
-      return `(${splittedParams.join(', ')})`;
+      return `(${normalizedParams.join(', ')})`;
     case 'between':
     case 'notBetween':
-      return splittedParams.join(' AND ');
+      return normalizedParams.join(' AND ');
   }
-  return splittedParams.join(', ');
-}
-
-const selectableParamsToSql: Record<keyof typeof dateSelectableParams, string> = {
-  dashboardStart: '$__fromTimestamp',
-  dashboardEnd: '$__toTimestamp',
-};
-
-function isValidParams(params: FilterType['params'], paramsType?: FilterType['paramsType']): params is string | number {
-  if (paramsType === 'number') {
-    return params !== undefined && params !== null;
-  }
-  return Boolean(params);
+  return normalizedParams.join(', ');
 }
 
 export function prepareParams({ params, expr, paramsType }: Partial<FilterType>) {
-  if (!isValidParams(params, paramsType) || !paramsType) {
+  if (!paramsType || !params) {
     return undefined;
   }
-  if (typeof params === 'number') {
-    return params;
-  } else if (params in selectableParamsToSql) {
-    return selectableParamsToSql[params as keyof typeof selectableParamsToSql];
-  } else if (expr && expressionWithCommaSeparatedParams.includes(expr)) {
-    return prepareSplittedParams(params, expr, paramsType);
+  if (expr && expressionWithMultipleParams.includes(expr)) {
+    return prepareMultipleParams(params, expr, paramsType);
   }
-  return escapeAndWrapString(params, '"');
+  const preparedParams = params.map((p) => normalizeSingleParameter(p, paramsType));
+  return preparedParams.join(', ');
 }
 
 export const expressionToSql: Record<ExpressionName, string> = {
