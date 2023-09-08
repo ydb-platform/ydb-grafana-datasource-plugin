@@ -35,6 +35,11 @@ export const GrafanaFormClassName = 'gf-form';
 export const UnknownFieldType = 'unknown';
 export const AsteriskFieldType = 'asterisk';
 
+export const SortDirectionsMap = {
+  ASC: 'ASC',
+  DESC: 'DESC',
+};
+
 export const ExpressionsMap = {
   like: 'LIKE',
   notLike: 'NOT LIKE',
