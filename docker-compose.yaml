@@ -7,8 +7,23 @@ services:
       context: ./.config
       args:
         grafana_version: ${GRAFANA_VERSION:-9.3.8}
-    ports:
-      - 3000:3000/tcp
     volumes:
       - ./dist:/var/lib/grafana/plugins/grafana-ydb-datasource
       - ./provisioning:/etc/grafana/provisioning
+    network_mode: 'host'
+  ydb:
+    container_name: ydb
+    hostname: localhost
+    ports:
+      - '2135:2135'
+      - '8765:8765'
+      - '2136:2136'
+    volumes:
+      - $PWD/ydb_certs:/ydb_certs
+      - $PWD/ydb_data:/ydb_data
+    environment:
+      - YDB_DEFAULT_LOG_LEVEL=NOTICE
+      - GRPC_TLS_PORT=2135
+      - GRPC_PORT=2136
+      - MON_PORT=8765
+    image: 'cr.yandex/yc/yandex-docker-local-ydb:latest'
