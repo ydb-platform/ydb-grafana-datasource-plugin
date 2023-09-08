@@ -35,3 +35,7 @@ e2e-results/
 .idea
 
 .eslintcache
+
+# YDB
+**/ydb_certs
+**ydb_data
