@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { nanoid } from 'nanoid';
 import { DataSource } from 'datasource';
 
 import { TableSelect } from 'components/TableSelect';
@@ -9,6 +10,7 @@ import { LogLevelFieldSelect } from 'components/LogLevelFieldSelect';
 import { Filters } from 'components/Filters/Filters';
 import { Aggregations } from 'components/Aggregations/Aggregations';
 import { LogTimeFieldSelect } from 'components/LogTimeFieldSelect';
+import { OrderBys } from 'components/OrderBy/OrderBys';
 
 import { useBuilderSettings } from './EditorSettingsContext';
 
@@ -20,6 +22,7 @@ import {
   FilterType,
   AggregationType,
   LogTimeField,
+  OrderByType,
 } from './types';
 import { getRawSqlFromBuilderOptions } from './prepare-query';
 import { AsteriskFieldType, UnknownFieldType } from './constants';
@@ -65,6 +68,7 @@ const TableDependableFields: Record<keyof Omit<SqlBuilderOptions, 'limit' | 'raw
   groupBy: undefined,
   aggregations: undefined,
   logTimeField: undefined,
+  orderBy: undefined,
 };
 
 export function QueryBuilder({ query, onChange }: QueryBuilderProps) {
@@ -84,6 +88,7 @@ export function QueryBuilder({ query, onChange }: QueryBuilderProps) {
       groupBy,
       aggregations,
       logTimeField,
+      orderBy = [],
     },
   } = query;
 
@@ -123,10 +128,20 @@ export function QueryBuilder({ query, onChange }: QueryBuilderProps) {
     handleChangeBuilderOption({ logLevelField: value });
   };
   const handleLogTimeFieldChange = (value: LogTimeField) => {
-    handleChangeBuilderOption({ logTimeField: value });
+    //remove previous logTimeField name from orderBy
+    const newOrderBy = orderBy.filter((el) => el.column !== logTimeField?.name);
+    const logTimeFieldInOrderBy = orderBy?.some((el) => el.column === value.name);
+    //add new logTimeField name to orderBy
+    if (!logTimeFieldInOrderBy && value.name) {
+      newOrderBy.push({ column: value.name, sortDirection: 'ASC', id: nanoid() });
+    }
+    handleChangeBuilderOption({ logTimeField: value, orderBy: newOrderBy });
   };
   const handleFiltersChange = (value: FilterType[]) => {
     handleChangeBuilderOption({ filters: value });
+  };
+  const handleOrderByChange = (value: OrderByType[]) => {
+    handleChangeBuilderOption({ orderBy: value });
   };
   const handleAggregationsChange = (value: AggregationType[]) => {
     handleChangeBuilderOption({ aggregations: value });
@@ -196,6 +211,7 @@ export function QueryBuilder({ query, onChange }: QueryBuilderProps) {
               selectors={selectors.components.QueryBuilder.GroupBy}
             />
           )}
+          <OrderBys {...commonFieldsProps} orderBy={orderBy} onChange={handleOrderByChange} />
           <Limit limit={limit} onChange={handleLimitChange} />
           <SqlPreview rawSql={rawSql} />
         </React.Fragment>

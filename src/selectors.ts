@@ -45,6 +45,10 @@ export const Components = {
       tooltip: 'List of filters',
       paramsPlaceholder: 'Select available parameters or add yours',
     },
+    OrderBy: {
+      label: 'Order by',
+      tooltip: 'Order by fields',
+    },
     Aggregations: {
       label: 'Aggregations',
       tooltip: 'Aggregation functions to use',

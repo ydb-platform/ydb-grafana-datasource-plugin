@@ -1,5 +1,5 @@
 import { DataQuery } from '@grafana/schema';
-import { AggregationFunctionsMap, ExpressionsMap } from './constants';
+import { AggregationFunctionsMap, ExpressionsMap, SortDirectionsMap } from './constants';
 import { primitiveTypes } from './data-types';
 
 export interface OnChangeQueryAttribute<T> {
@@ -57,6 +57,7 @@ export interface SqlBuilderOptionsList {
   filters?: FilterType[];
   groupBy?: string[];
   aggregations?: AggregationType[];
+  orderBy?: OrderByType[];
 }
 
 export type SqlBuilderOptions = SqlBuilderOptionsList;
@@ -79,6 +80,15 @@ export type FilterType = {
   expr?: ExpressionName | null;
   params?: string[];
   paramsType: 'number' | 'text' | null;
+};
+
+export type SortDirectionName = keyof typeof SortDirectionsMap;
+export type SortDirectionValue = (typeof SortDirectionsMap)[keyof typeof SortDirectionsMap];
+
+export type OrderByType = {
+  id: string;
+  column?: string;
+  sortDirection?: SortDirectionName | null;
 };
 
 export type ExpressionName = keyof typeof ExpressionsMap;

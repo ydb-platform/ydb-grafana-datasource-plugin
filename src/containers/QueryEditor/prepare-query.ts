@@ -7,6 +7,7 @@ import {
   FilterType,
   LogTimeField,
   LogicalOperation,
+  OrderByType,
   PrimitiveDataType,
   QueryFormat,
   SqlBuilderOptions,
@@ -224,6 +225,22 @@ export function getAggregations(aggregations: AggregationType[]) {
   return aggregations.map(getSingleAggregation).filter(Boolean);
 }
 
+export function getSingleOrderBy(orderBy: OrderByType) {
+  const { column, sortDirection } = orderBy;
+  if (!column) {
+    return;
+  }
+  return `${escapeAndWrapString(column)} ${sortDirection}`;
+}
+
+export function getOrderByCondition(orderBy: OrderByType[]) {
+  const preparedFields = orderBy.map(getSingleOrderBy).filter(Boolean);
+  if (preparedFields.length === 0) {
+    return '';
+  }
+  return `\n ORDER BY ${preparedFields.join(', ')}`;
+}
+
 export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, queryFormat: QueryFormat) {
   const {
     logLevelField,
@@ -235,13 +252,14 @@ export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, q
     groupBy = [],
     aggregations = [],
     logTimeField,
+    orderBy = [],
   } = builderOptions;
-  const logLineString = queryFormat === 'logs' ? prepareLogLineFields(loglineFields) : '';
+  const isLogs = queryFormat === 'logs';
+  const logLineString = isLogs ? prepareLogLineFields(loglineFields) : '';
   const preparedFields: FieldWithParams[] = fields.map((f) => ({ name: f }));
-  const normalizedFields =
-    queryFormat === 'logs'
-      ? normalizeFieldsForLogs({ logLevelField, fields: preparedFields, logTimeField })
-      : preparedFields;
+  const normalizedFields = isLogs
+    ? normalizeFieldsForLogs({ logLevelField, fields: preparedFields, logTimeField })
+    : preparedFields;
   const wrappedSchemaFields = normalizedFields?.map((field) => {
     return getAliasExpression({ fieldName: field.name, fieldTransformer: field.fieldTransformer, alias: field.alias });
   });
@@ -251,7 +269,8 @@ export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, q
   const groupByCondition = getGroupBy(groupBy);
   const limitCondition = limit ? ` \nLIMIT ${limit}` : '';
   const whereCondition = getWhereExpression(filters);
+  const orderByCondition = getOrderByCondition(orderBy);
   return `SELECT${fieldsString ? ` ${fieldsString}` : ''} \nFROM${
     table ? ` ${escapeAndWrapString(table)}` : ''
-  }${whereCondition}${groupByCondition}${limitCondition}`;
+  }${whereCondition}${groupByCondition}${orderByCondition}${limitCondition}`;
 }
