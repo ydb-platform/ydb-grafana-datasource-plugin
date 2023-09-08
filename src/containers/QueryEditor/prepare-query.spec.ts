@@ -8,8 +8,9 @@ import {
   prepareLogLineFields,
   getGroupBy,
   getSingleAggregation,
+  getOrderByCondition,
 } from './prepare-query';
-import { AggregationType, ExpressionName, FilterType, LogicalOperations, QueryFormat } from './types';
+import { AggregationType, ExpressionName, FilterType, LogicalOperations, OrderByType, QueryFormat } from './types';
 
 const baseBuilderOptions = {
   table: 'foo',
@@ -150,7 +151,8 @@ describe('should properly add WHERE condition', () => {
         },
       ] as FilterType[],
     };
-    const sql = 'SELECT `bar`, \n`baz` \nFROM `foo` \nWHERE \n`bar` > "foo", "bar", "baz", 1 \nAND `bar` > "foo", "bar", "baz", 1 \nLIMIT 10';
+    const sql =
+      'SELECT `bar`, \n`baz` \nFROM `foo` \nWHERE \n`bar` > "foo", "bar", "baz", 1 \nAND `bar` > "foo", "bar", "baz", 1 \nLIMIT 10';
     expect(getRawSqlFromBuilderOptions(builderOptions, 'table')).toBe(sql);
   });
 });
@@ -341,6 +343,27 @@ describe('should properly generate groupBy', () => {
     const fields = ['foo', 'bar'];
     const sql = '\n GROUP BY `foo`, `bar`';
     expect(getGroupBy(fields)).toBe(sql);
+  });
+});
+
+describe('should properly generate orderBy', () => {
+  it('with empty params', () => {
+    const orderBy: OrderByType[] = [];
+    const sql = '';
+    expect(getOrderByCondition(orderBy)).toBe(sql);
+  });
+  it('without column', () => {
+    const orderBy: OrderByType[] = [{ column: '', sortDirection: 'ASC', id: '1' }];
+    const sql = '';
+    expect(getOrderByCondition(orderBy)).toBe(sql);
+  });
+  it('with params', () => {
+    const orderBy: OrderByType[] = [
+      { column: 'foo', sortDirection: 'ASC', id: '1' },
+      { column: 'bar', sortDirection: 'DESC', id: '2' },
+    ];
+    const sql = '\n ORDER BY `foo` ASC, `bar` DESC';
+    expect(getOrderByCondition(orderBy)).toBe(sql);
   });
 });
 
