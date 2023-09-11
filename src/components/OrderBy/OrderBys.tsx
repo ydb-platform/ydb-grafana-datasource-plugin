@@ -44,7 +44,7 @@ export function OrderBys({ orderBy = [], onChange, fields, loading, error }: Ord
             onEdit={editOrderBy(orderBy.id)}
           />
         ))}
-        <Button icon="plus" onClick={addOrderBy}>
+        <Button icon="plus" onClick={addOrderBy} variant="secondary" fill="outline">
           Add order by
         </Button>
       </React.Fragment>

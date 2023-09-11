@@ -64,7 +64,7 @@ export function Filters({ filters = [], onChange, fields, loading, error, fields
             variables={variables}
           />
         ))}
-        <Button icon="plus" onClick={addFilter}>
+        <Button icon="plus" onClick={addFilter} variant="secondary" fill='outline'>
           Add filter
         </Button>
       </React.Fragment>

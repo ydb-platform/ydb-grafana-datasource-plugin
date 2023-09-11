@@ -59,7 +59,7 @@ export function FieldsSelect({
           className={styles.Common.fieldsSelect}
         />
       </InlineField>
-      <Button fill="outline" onClick={handleSelectAllFields} disabled={fields.length === 0}>
+      <Button variant="secondary" fill="solid" onClick={handleSelectAllFields} disabled={fields.length === 0}>
         All fields
       </Button>
     </div>

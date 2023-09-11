@@ -42,7 +42,7 @@ export function Aggregations({ aggregations = [], onChange, fields, loading, err
             onEdit={editAggregation(a.id)}
           />
         ))}
-        <Button icon="plus" onClick={addAggregation}>
+        <Button icon="plus" onClick={addAggregation} variant="secondary" fill="outline">
           Add aggregation
         </Button>
       </React.Fragment>
