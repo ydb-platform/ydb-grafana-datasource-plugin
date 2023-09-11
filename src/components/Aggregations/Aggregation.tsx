@@ -84,7 +84,7 @@ export function Aggregation({ onRemove, onEdit, aggregation, fields, loading, ty
       />
       <InlineSwitch label="Distinct" showLabel={true} onChange={handleChangeDistinct} value={params.distinct} />
       <Input placeholder="alias" width={defaultInputWidth} onChange={handleChangeAlias} value={alias} />
-      <Button icon="trash-alt" onClick={onRemove} title="Remove aggregation" fill="outline" />
+      <Button icon="trash-alt" onClick={onRemove} title="Remove aggregation" fill="outline" variant="secondary" />
     </div>
   );
 }

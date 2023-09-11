@@ -135,7 +135,7 @@ export function Filter({ onRemove, onEdit, filter, fields, loading, type, variab
       {paramsType && (
         <ParametersSelect onEdit={onEdit} options={getSelectableParams()} value={params} isMulti={isMultiParams} />
       )}
-      <Button icon="trash-alt" onClick={onRemove} title="Remove field" fill="outline" />
+      <Button icon="trash-alt" onClick={onRemove} title="Remove field" fill="outline" variant="secondary" />
     </div>
   );
 }

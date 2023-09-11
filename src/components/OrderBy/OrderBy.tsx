@@ -52,7 +52,7 @@ export function OrderBy({ onRemove, onEdit, orderBy: orderBy, fields, loading }:
         width={30}
         allowCustomValue={false}
       />
-      <Button icon="trash-alt" onClick={onRemove} title="Remove field" fill="outline" />
+      <Button icon="trash-alt" onClick={onRemove} title="Remove field" fill="outline" variant="secondary" />
     </div>
   );
 }
