@@ -51,14 +51,18 @@ export class DataSource extends DataSourceWithBackend<YDBQuery, YdbDataSourceOpt
     const localTimezoneInfo = getTimeZoneInfo(getTimeZone(), Date.now());
     return localTimezoneInfo?.ianaName;
   }
-  private runQuery(request: Partial<YDBQuery>, options?: any): Promise<DataFrame> {
+  private runQuery(request: Partial<YDBQuery>, options?: any): Promise<DataFrame | { error: string }> {
     return new Promise((resolve) => {
       const req = {
         targets: [{ ...request, refId: nanoid() }],
         range: options ? options.range : undefined,
       } as DataQueryRequest<YDBQuery>;
       this.query(req).subscribe((res: DataQueryResponse) => {
-        resolve(res.data[0] || { fields: [] });
+        if (res.state === 'Error') {
+          resolve({ error: res.error?.message || 'Something went wrong' });
+        } else {
+          resolve(res.data[0] || { fields: [] });
+        }
       });
     });
   }
@@ -91,6 +95,9 @@ export class DataSource extends DataSourceWithBackend<YDBQuery, YdbDataSourceOpt
       return [];
     }
     const frame = await this.runQuery(ydbQuery, options);
+    if ('error' in frame) {
+      throw new Error(frame.error);
+    }
     if (frame.fields?.length === 0) {
       return [];
     }
