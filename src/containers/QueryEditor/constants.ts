@@ -1,11 +1,13 @@
 import { ExpressionName, QueryFormat, YDBBuilderQuery, YDBSQLQuery } from './types';
 
+export const LIMIT = '100'
+
 export const defaultYDBBuilderQuery: Partial<YDBBuilderQuery> = {
   queryType: 'builder',
   rawSql: '',
   builderOptions: {
     fields: [],
-    limit: '100',
+    limit: LIMIT,
   },
   queryFormat: 'table',
 };
