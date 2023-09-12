@@ -15,7 +15,7 @@ import { AggregationType, ExpressionName, FilterType, LogicalOperations, OrderBy
 const baseBuilderOptions = {
   table: 'foo',
   fields: ['bar', 'baz'],
-  limit: 10,
+  limit: '10',
   logLevelField: 'baz',
 };
 
@@ -23,13 +23,6 @@ describe('should add basic parameters', () => {
   it('should not fail without parameters', () => {
     const builderOptions = {};
     const sql = 'SELECT \nFROM';
-    expect(getRawSqlFromBuilderOptions(builderOptions, 'logs')).toBe(sql);
-  });
-  it('add limit', () => {
-    const builderOptions = {
-      limit: 10,
-    };
-    const sql = 'SELECT \nFROM \nLIMIT 10';
     expect(getRawSqlFromBuilderOptions(builderOptions, 'logs')).toBe(sql);
   });
   it('add table', () => {
@@ -85,7 +78,7 @@ describe('should properly add log time field', () => {
     const builderOptions = {
       table: 'foo',
       fields: ['bar', 'baz'],
-      limit: 10,
+      limit: '10',
       logTimeField: { name: 'baz' },
     };
     const sql = 'SELECT `baz`, \n`bar` \nFROM `foo` \nLIMIT 10';
@@ -95,7 +88,7 @@ describe('should properly add log time field', () => {
     const builderOptions = {
       table: 'foo',
       fields: ['bar', 'baz'],
-      limit: 10,
+      limit: '10',
       logTimeField: { name: 'baz', cast: 'Datetime' },
     };
     const sql = 'SELECT CAST(`baz` AS Datetime), \n`bar` \nFROM `foo` \nLIMIT 10';
@@ -364,6 +357,29 @@ describe('should properly generate orderBy', () => {
     ];
     const sql = '\n ORDER BY `foo` ASC, `bar` DESC';
     expect(getOrderByCondition(orderBy)).toBe(sql);
+  });
+});
+describe('should properly add limit', () => {
+  it('add number limit', () => {
+    const builderOptions = {
+      limit: '10',
+    };
+    const sql = 'SELECT \nFROM \nLIMIT 10';
+    expect(getRawSqlFromBuilderOptions(builderOptions, 'logs')).toBe(sql);
+  });
+  it('add invalid limit', () => {
+    const builderOptions = {
+      limit: 'any',
+    };
+    const sql = 'SELECT \nFROM';
+    expect(getRawSqlFromBuilderOptions(builderOptions, 'logs')).toBe(sql);
+  });
+  it('add variable limit', () => {
+    const builderOptions = {
+      limit: '${var:sql}',
+    };
+    const sql = 'SELECT \nFROM \nLIMIT ${var:sql}';
+    expect(getRawSqlFromBuilderOptions(builderOptions, 'logs')).toBe(sql);
   });
 });
 

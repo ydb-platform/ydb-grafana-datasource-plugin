@@ -121,7 +121,7 @@ export function QueryBuilder({ query, onChange }: QueryBuilderProps) {
   const handleGroupByChange = (value: string[]) => {
     handleChangeBuilderOption({ groupBy: value });
   };
-  const handleLimitChange = (value: number) => {
+  const handleLimitChange = (value: string) => {
     handleChangeBuilderOption({ limit: value });
   };
   const handleLogLevelFieldChange = (value: string | null) => {

@@ -35,7 +35,10 @@ function getAliasExpression({ fieldName, alias, wrapper = defaultWrapper, fieldT
 
 const variableRe = /^\${\S+}$/g;
 
-function isVariable(param: string) {
+function isVariable(param?: string) {
+  if (!param) {
+    return false;
+  }
   return panelVariables.includes(param) || param.match(variableRe);
 }
 
@@ -241,6 +244,11 @@ export function getOrderByCondition(orderBy: OrderByType[]) {
   return `\n ORDER BY ${preparedFields.join(', ')}`;
 }
 
+export function prepareLimit(limit?: string) {
+  const isValidLimit = isVariable(limit) || !isNaN(Number(limit));
+  return isValidLimit ? ` \nLIMIT ${limit}` : '';
+}
+
 export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, queryFormat: QueryFormat) {
   const {
     logLevelField,
@@ -267,7 +275,7 @@ export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, q
 
   const fieldsString = [logLineString, ...wrappedSchemaFields, ...aggregatedFields].filter(Boolean).join(', \n');
   const groupByCondition = getGroupBy(groupBy);
-  const limitCondition = limit ? ` \nLIMIT ${limit}` : '';
+  const limitCondition = prepareLimit(limit);
   const whereCondition = getWhereExpression(filters);
   const orderByCondition = getOrderByCondition(orderBy);
   return `SELECT${fieldsString ? ` ${fieldsString}` : ''} \nFROM${

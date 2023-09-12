@@ -1,22 +1,20 @@
-import { InlineField, Input } from '@grafana/ui';
+import { InlineField } from '@grafana/ui';
 import { selectors } from 'selectors';
-import { defaultLabelWidth, defaultNumberInputWidth } from 'containers/QueryEditor/constants';
+import { defaultLabelWidth } from 'containers/QueryEditor/constants';
+import { SelectWithVariables } from './SelectWithVariables';
 
 interface LimitProps {
-  limit?: number;
-  onChange: (limit: number) => void;
+  limit?: string;
+  onChange: (limit: string) => void;
 }
-export function Limit({ limit, onChange }: LimitProps) {
+export function Limit({ limit = '', onChange }: LimitProps) {
   const { label, tooltip } = selectors.components.QueryBuilder.Limit;
+  const handleLimitChange = (value: string[]) => {
+    onChange(value[0]);
+  };
   return (
     <InlineField labelWidth={defaultLabelWidth} tooltip={tooltip} label={label}>
-      <Input
-        width={defaultNumberInputWidth}
-        value={limit}
-        type="number"
-        min={1}
-        onChange={(e) => onChange(e.currentTarget.valueAsNumber)}
-      />
+      <SelectWithVariables value={[limit]} onChange={handleLimitChange} />
     </InlineField>
   );
 }
