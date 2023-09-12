@@ -43,7 +43,7 @@ export const Components = {
     Filter: {
       label: 'Filters',
       tooltip: 'List of filters',
-      paramsPlaceholder: 'Select available parameters or add yours',
+      paramsPlaceholder: 'Select available or add yours',
     },
     OrderBy: {
       label: 'Order by',
