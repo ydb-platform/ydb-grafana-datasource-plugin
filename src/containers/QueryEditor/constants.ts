@@ -5,7 +5,7 @@ export const defaultYDBBuilderQuery: Partial<YDBBuilderQuery> = {
   rawSql: '',
   builderOptions: {
     fields: [],
-    limit: 100,
+    limit: '100',
   },
   queryFormat: 'table',
 };
