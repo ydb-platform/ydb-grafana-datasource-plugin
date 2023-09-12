@@ -1,6 +1,6 @@
 import { InlineField } from '@grafana/ui';
 import { selectors } from 'selectors';
-import { defaultLabelWidth } from 'containers/QueryEditor/constants';
+import { LIMIT, defaultLabelWidth } from 'containers/QueryEditor/constants';
 import { SelectWithVariables } from './SelectWithVariables';
 
 interface LimitProps {
@@ -14,7 +14,7 @@ export function Limit({ limit = '', onChange }: LimitProps) {
   };
   return (
     <InlineField labelWidth={defaultLabelWidth} tooltip={tooltip} label={label}>
-      <SelectWithVariables value={[limit]} onChange={handleLimitChange} />
+      <SelectWithVariables value={[limit]} onChange={handleLimitChange} additionalOptions={[LIMIT]} />
     </InlineField>
   );
 }
