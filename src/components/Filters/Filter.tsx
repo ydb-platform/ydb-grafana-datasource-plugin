@@ -1,6 +1,8 @@
 import { SelectableValue } from '@grafana/data';
 import { Select, Button, RadioButtonGroup } from '@grafana/ui';
 
+import { SelectWithVariables } from 'components/SelectWithVariables';
+
 import { ExpressionsMap, defaultInputWidth, expressionWithMultipleParams } from 'containers/QueryEditor/constants';
 import { getSelectableValues } from 'containers/QueryEditor/helpers';
 import {
@@ -68,10 +70,9 @@ interface FilterProps {
   fields: readonly string[];
   loading?: boolean;
   type: string;
-  variables: string[];
 }
 
-export function Filter({ onRemove, onEdit, filter, fields, loading, type, variables }: FilterProps) {
+export function Filter({ onRemove, onEdit, filter, fields, loading, type }: FilterProps) {
   const { column, logicalOp, expr, params = [], paramsType } = filter;
   const selectableFields = getSelectableValues(fields);
 
@@ -89,16 +90,9 @@ export function Filter({ onRemove, onEdit, filter, fields, loading, type, variab
   const handleChangeLogicalOperation = (value: string) => {
     onEdit({ logicalOp: value as LogicalOperation });
   };
-
-  const getSelectableParams = () => {
-    const allParams = Array.from(new Set([...variables, ...params]));
-    let selectableValues: Array<SelectableValue<string>> = allParams.map((value) => ({
-      label: value,
-      value: value,
-    }));
-    return selectableValues;
+  const handleParamsChange = (value: string[]) => {
+    onEdit({ params: value });
   };
-
   const isMultiParams = expressionWithMultipleParams.some((el) => el === expr);
 
   return (
@@ -133,54 +127,14 @@ export function Filter({ onRemove, onEdit, filter, fields, loading, type, variab
         allowCustomValue={false}
       />
       {paramsType && (
-        <ParametersSelect onEdit={onEdit} options={getSelectableParams()} value={params} isMulti={isMultiParams} />
+        <SelectWithVariables
+          onChange={handleParamsChange}
+          value={params}
+          isMulti={isMultiParams}
+          placeholder={selectors.components.QueryBuilder.Filter.paramsPlaceholder}
+        />
       )}
       <Button icon="trash-alt" onClick={onRemove} title="Remove field" fill="outline" variant="secondary" />
     </div>
-  );
-}
-
-interface ParametersSelectProps {
-  onEdit: (value: Partial<FilterType>) => void;
-  options: Array<SelectableValue<string>>;
-  value: string[];
-  isMulti?: boolean;
-}
-
-function ParametersSelect({ onEdit, options, value, isMulti }: ParametersSelectProps) {
-  const { paramsPlaceholder } = selectors.components.QueryBuilder.Filter;
-  const handleChangeMultiParamsSelect = (e: Array<SelectableValue<string>>) => {
-    onEdit({ params: e.map((el) => el.value ?? '').filter(Boolean) });
-  };
-  const handleChangeSingleParamsSelect = (e: SelectableValue<string>) => {
-    onEdit({ params: e?.value ? [e.value] : [] });
-  };
-  if (isMulti) {
-    return (
-      <Select
-        // bug in grafana types. isMulti option is not taken into account
-        onChange={handleChangeMultiParamsSelect as any}
-        options={options}
-        value={value}
-        menuPlacement={'bottom'}
-        isClearable
-        allowCustomValue
-        isMulti
-        width={defaultInputWidth}
-        placeholder={paramsPlaceholder}
-      />
-    );
-  }
-  return (
-    <Select
-      onChange={handleChangeSingleParamsSelect}
-      options={options}
-      value={value[0]}
-      menuPlacement={'bottom'}
-      isClearable
-      allowCustomValue
-      width={defaultInputWidth}
-      placeholder={paramsPlaceholder}
-    />
   );
 }
