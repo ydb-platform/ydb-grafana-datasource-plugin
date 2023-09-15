@@ -1,6 +1,6 @@
 import { ExpressionName, QueryFormat, YDBBuilderQuery, YDBSQLQuery } from './types';
 
-export const LIMIT = '100'
+export const LIMIT = '100';
 
 export const defaultYDBBuilderQuery: Partial<YDBBuilderQuery> = {
   queryType: 'builder',
@@ -76,5 +76,13 @@ export const AggregationFunctionsMap = {
 } as const;
 
 export const expressionWithMultipleParams: ExpressionName[] = ['in', 'notIn', 'between', 'notBetween'];
+export const expressionWithoutParams: ExpressionName[] = [
+  'null',
+  'notNull',
+  'insideDashboard',
+  'outsideDashboard',
+  'isTrue',
+  'isFalse',
+];
 
 export const panelVariables = ['$__fromTimestamp', '$__toTimestamp'];

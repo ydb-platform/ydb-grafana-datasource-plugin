@@ -1,6 +1,6 @@
-import { AggregationFunctionsMap, expressionWithMultipleParams, panelVariables } from './constants';
+import { AggregationFunctionsMap, expressionWithMultipleParams, expressionWithoutParams } from './constants';
 import { isDataTypePrimitive } from './data-types';
-import { defaultWrapper, escapeAndWrapString } from './helpers';
+import { defaultWrapper, escapeAndWrapString, isFilterFallbackAvailable, isVariable } from './helpers';
 import {
   AggregationType,
   ExpressionName,
@@ -33,21 +33,11 @@ function getAliasExpression({ fieldName, alias, wrapper = defaultWrapper, fieldT
   return `${normalizedField} AS ${escapeAndWrapString(alias, wrapper)}`;
 }
 
-const variableRe = /^\${\S+}$/g;
-
-function isVariable(param?: string) {
-  if (!param) {
-    return false;
-  }
-  return panelVariables.includes(param) || param.match(variableRe);
-}
-
 function normalizeSingleParameter(param: string, paramsType: FilterType['paramsType']) {
   const normalizedParam = param.trim();
   if (paramsType === 'number') {
-    const paramToNumber = Number(param);
-    if (!isNaN(paramToNumber)) {
-      return paramToNumber;
+    if (!isNaN(Number(normalizedParam))) {
+      return normalizedParam;
     }
   }
   if (isVariable(normalizedParam)) {
@@ -76,8 +66,7 @@ export function prepareParams({ params, expr, paramsType }: Partial<FilterType>)
   if (expr && expressionWithMultipleParams.includes(expr)) {
     return prepareMultipleParams(params, expr, paramsType);
   }
-  const preparedParams = params.map((p) => normalizeSingleParameter(p, paramsType));
-  return preparedParams.join(', ');
+  return normalizeSingleParameter(params[0], paramsType);
 }
 
 export const expressionToSql: Record<ExpressionName, string> = {
@@ -109,23 +98,36 @@ export const logicalOpToSql: Record<LogicalOperation, string> = {
   or: 'OR',
 };
 
+function prepareIfStatement(condition: string, thenDo: string, elseDo: string) {
+  return `IF(${condition}, ${thenDo}, ${elseDo})`;
+}
+
 export function getSingleWhereExpression(filter: FilterType) {
-  const { logicalOp, column, expr } = filter;
-  if (!column) {
+  const { logicalOp, column, expr, skipEmpty, params } = filter;
+  if (!column || !expr) {
     return '';
   }
   const result = [];
   if (logicalOp) {
     result.push(logicalOpToSql[logicalOp]);
   }
-  result.push(escapeAndWrapString(column));
-  if (expr) {
-    result.push(expressionToSql[expr]);
+  const where = [];
+  where.push(escapeAndWrapString(column));
+  where.push(expressionToSql[expr]);
+  if (expressionWithoutParams.includes(expr)) {
+    return [...result, ...where].join(' ');
   }
   const preparedParams = prepareParams(filter);
   if (preparedParams !== undefined) {
-    result.push(preparedParams);
+    where.push(preparedParams);
   }
+  const singleWhereString = where.join(' ');
+  if (skipEmpty && params?.length && isFilterFallbackAvailable({ expr, params })) {
+    result.push(prepareIfStatement(`${params[0]} == ""`, 'true', singleWhereString));
+  } else {
+    result.push(singleWhereString);
+  }
+
   return result.join(' ');
 }
 
@@ -245,8 +247,13 @@ export function getOrderByCondition(orderBy: OrderByType[]) {
 }
 
 export function prepareLimit(limit?: string) {
-  const isValidLimit = isVariable(limit) || !isNaN(Number(limit));
-  return isValidLimit ? ` \nLIMIT ${limit}` : '';
+  if (!limit) {
+    return '';
+  }
+  const limitIsVariable = isVariable(limit);
+  const isValidLimit = limitIsVariable || !isNaN(Number(limit));
+  const limitValue = limitIsVariable ? `CAST(${limit} AS Uint16)` : limit;
+  return isValidLimit ? ` \nLIMIT ${limitValue}` : '';
 }
 
 export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, queryFormat: QueryFormat) {

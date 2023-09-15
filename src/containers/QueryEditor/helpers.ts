@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { nanoid } from 'nanoid';
 
-import { QueryFormat, TableField, TableFieldBackend } from './types';
+import { ExpressionName, QueryFormat, TableField, TableFieldBackend } from './types';
+import { expressionWithMultipleParams, expressionWithoutParams, panelVariables } from './constants';
 
 export function ConvertQueryFormatToVisualizationType(format: QueryFormat) {
   switch (format) {
@@ -36,7 +37,7 @@ export function escapeAndWrapString(st = '', wrapper = defaultWrapper) {
   } else if (wrapper === '"') {
     escapedString = escapeString(escapeDoubleQuotesRe, st);
   }
-  return escapedString && wrapString(escapedString, wrapper);
+  return wrapString(escapedString, wrapper);
 }
 
 export function normalizeFields(fields: TableFieldBackend[]): TableField[] {
@@ -117,4 +118,28 @@ export function useEntityArrayActions<T extends { id: string }>(
 
 export function removeDatabaseFromTableName(table: string, database: string) {
   return table.startsWith(database) ? table.slice(database.length + 1) : table;
+}
+
+export function isDashboardVariable(param: string) {
+  return param.startsWith('${') && param.endsWith('}');
+}
+
+function isPanelVariable(param: string) {
+  return panelVariables.includes(param);
+}
+
+export function isVariable(param: string) {
+  return isDashboardVariable(param) || isPanelVariable(param);
+}
+
+export function isFilterFallbackAvailable({ expr, params }: { expr: ExpressionName; params: string[] }) {
+  if (expressionWithoutParams.includes(expr)) {
+    return false;
+  }
+  const isMultiParamsFilter = expressionWithMultipleParams.includes(expr);
+  const shouldCheckIsVariableParam = (isMultiParamsFilter && params.length === 1) || !isMultiParamsFilter;
+  if (!shouldCheckIsVariableParam) {
+    return false;
+  }
+  return isDashboardVariable(params[0]);
 }
