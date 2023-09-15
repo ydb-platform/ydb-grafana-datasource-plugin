@@ -3,7 +3,6 @@ import {
   expressionToSql,
   getRawSqlFromBuilderOptions,
   getSingleWhereExpression,
-  logicalOpToSql,
   prepareParams,
   prepareLogLineFields,
   getGroupBy,
@@ -144,8 +143,7 @@ describe('should properly add WHERE condition', () => {
         },
       ] as FilterType[],
     };
-    const sql =
-      'SELECT `bar`, \n`baz` \nFROM `foo` \nWHERE \n`bar` > "foo", "bar", "baz", 1 \nAND `bar` > "foo", "bar", "baz", 1 \nLIMIT 10';
+    const sql = 'SELECT `bar`, \n`baz` \nFROM `foo` \nWHERE \n`bar` > "foo" \nAND `bar` > "foo" \nLIMIT 10';
     expect(getRawSqlFromBuilderOptions(builderOptions, 'table')).toBe(sql);
   });
 });
@@ -158,13 +156,13 @@ describe('should properly generate single WHERE condition', () => {
   });
   it('with only column', () => {
     const filter: FilterType = { id: '1', column: 'bar', paramsType: null };
-    const sql = '`bar`';
+    const sql = '';
     expect(getSingleWhereExpression(filter)).toBe(sql);
   });
   for (const op of LogicalOperations) {
     it(`with column and logical op ${op}`, () => {
       const filter: FilterType = { id: '1', column: 'bar', logicalOp: op, paramsType: null };
-      const sql = `${logicalOpToSql[op]} \`bar\``;
+      const sql = '';
       expect(getSingleWhereExpression(filter)).toBe(sql);
     });
   }
@@ -188,8 +186,8 @@ describe('should properly generate single WHERE condition', () => {
   }
   for (const expr of Object.keys(ExpressionsMap)) {
     const typedExpr = expr as ExpressionName;
-    it(`with column, logical op, expression ${typedExpr} and mixed params`, () => {
-      let sql = `AND \`bar\` ${expressionToSql[typedExpr]} "foo", "bar", "baz", 1`;
+    it(`with column, logical op, expression ${typedExpr} and mixed params without skipEmpty`, () => {
+      let sql = `AND \`bar\` ${expressionToSql[typedExpr]} "foo"`;
       switch (typedExpr) {
         case 'in':
         case 'notIn':
@@ -199,6 +197,14 @@ describe('should properly generate single WHERE condition', () => {
         case 'notBetween':
           sql = `AND \`bar\` ${expressionToSql[typedExpr]} "foo" AND "bar" AND "baz" AND 1`;
           break;
+        case 'isFalse':
+        case 'isTrue':
+        case 'insideDashboard':
+        case 'outsideDashboard':
+        case 'null':
+        case 'notNull':
+          sql = `AND \`bar\` ${expressionToSql[typedExpr]}`;
+          break;
       }
       const filter: FilterType = {
         id: '1',
@@ -207,6 +213,37 @@ describe('should properly generate single WHERE condition', () => {
         expr: typedExpr,
         params: ['foo', 'bar', 'baz', '1   '],
         paramsType: 'number',
+      };
+      expect(getSingleWhereExpression(filter)).toBe(sql);
+    });
+    it(`with column, logical op, expression ${typedExpr} and mixed params with skipEmpty`, () => {
+      let sql = `AND IF(\${myVar} == "", true, \`bar\` ${expressionToSql[typedExpr]} \${myVar})`;
+      switch (typedExpr) {
+        case 'in':
+        case 'notIn':
+          sql = `AND IF(\${myVar} == "", true, \`bar\` ${expressionToSql[typedExpr]} (\${myVar}))`;
+          break;
+        case 'between':
+        case 'notBetween':
+          sql = `AND IF(\${myVar} == "", true, \`bar\` ${expressionToSql[typedExpr]} \${myVar})`;
+          break;
+        case 'isFalse':
+        case 'isTrue':
+        case 'insideDashboard':
+        case 'outsideDashboard':
+        case 'null':
+        case 'notNull':
+          sql = `AND \`bar\` ${expressionToSql[typedExpr]}`;
+          break;
+      }
+      const filter: FilterType = {
+        id: '1',
+        column: 'bar',
+        logicalOp: 'and',
+        expr: typedExpr,
+        params: ['${myVar}'],
+        paramsType: 'number',
+        skipEmpty: true,
       };
       expect(getSingleWhereExpression(filter)).toBe(sql);
     });
@@ -248,9 +285,23 @@ describe('should properly generate params of the expression', () => {
   }
   for (const expr of Object.keys(ExpressionsMap)) {
     const typedExpr = expr as ExpressionName;
+    it(`with single variable parameter ${expr}`, () => {
+      const params = ['${myVar}'];
+      let sql = '${myVar}';
+      switch (typedExpr) {
+        case 'in':
+        case 'notIn':
+          sql = '(${myVar})';
+          break;
+      }
+      expect(prepareParams({ params, expr: typedExpr, paramsType: 'text' })).toBe(sql);
+    });
+  }
+  for (const expr of Object.keys(ExpressionsMap)) {
+    const typedExpr = expr as ExpressionName;
     it(`with multiple string parameter ${expr}`, () => {
       const params = ['foo', 'bar', 'baz'];
-      let sql = '"foo", "bar", "baz"';
+      let sql = '"foo"';
       switch (typedExpr) {
         case 'in':
         case 'notIn':
@@ -282,7 +333,7 @@ describe('should properly generate params of the expression', () => {
     const typedExpr = expr as ExpressionName;
     it(`with multiple number parameter ${expr}`, () => {
       const params = ['1', '2', '3 '];
-      let sql = '1, 2, 3';
+      let sql = '1';
       switch (typedExpr) {
         case 'in':
         case 'notIn':
@@ -298,16 +349,16 @@ describe('should properly generate params of the expression', () => {
   for (const expr of Object.keys(ExpressionsMap)) {
     const typedExpr = expr as ExpressionName;
     it(`with multiple mixed parameter ${expr}`, () => {
-      const params = ['1', '2', 'bar', '3 '];
-      let sql = '1, 2, "bar", 3';
+      const params = ['1', '2', 'bar', '3 ', '${myVar}'];
+      let sql = '1';
       switch (typedExpr) {
         case 'in':
         case 'notIn':
-          sql = '(1, 2, "bar", 3)';
+          sql = '(1, 2, "bar", 3, ${myVar})';
           break;
         case 'between':
         case 'notBetween':
-          sql = '1 AND 2 AND "bar" AND 3';
+          sql = '1 AND 2 AND "bar" AND 3 AND ${myVar}';
       }
       expect(prepareParams({ params, expr: typedExpr, paramsType: 'number' })).toBe(sql);
     });
@@ -378,7 +429,7 @@ describe('should properly add limit', () => {
     const builderOptions = {
       limit: '${var:sql}',
     };
-    const sql = 'SELECT \nFROM \nLIMIT ${var:sql}';
+    const sql = 'SELECT \nFROM \nLIMIT CAST(${var:sql} AS Uint16)';
     expect(getRawSqlFromBuilderOptions(builderOptions, 'logs')).toBe(sql);
   });
 });

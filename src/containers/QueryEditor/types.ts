@@ -80,6 +80,7 @@ export type FilterType = {
   expr?: ExpressionName | null;
   params?: string[];
   paramsType: 'number' | 'text' | null;
+  skipEmpty?: boolean;
 };
 
 export type SortDirectionName = keyof typeof SortDirectionsMap;

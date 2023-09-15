@@ -1,10 +1,10 @@
 import { SelectableValue } from '@grafana/data';
-import { Select, Button, RadioButtonGroup } from '@grafana/ui';
+import { Select, Button, RadioButtonGroup, InlineSwitch } from '@grafana/ui';
 
 import { SelectWithVariables } from 'components/SelectWithVariables';
 
 import { ExpressionsMap, defaultInputWidth, expressionWithMultipleParams } from 'containers/QueryEditor/constants';
-import { getSelectableValues } from 'containers/QueryEditor/helpers';
+import { getSelectableValues, isFilterFallbackAvailable } from 'containers/QueryEditor/helpers';
 import {
   BooleanExpressions,
   CommonExpressions,
@@ -61,6 +61,7 @@ const ColumnDependableFields: Record<keyof Omit<FilterType, 'column' | 'id' | 'l
   expr: null,
   params: undefined,
   paramsType: null,
+  skipEmpty: true,
 };
 
 interface FilterProps {
@@ -73,7 +74,7 @@ interface FilterProps {
 }
 
 export function Filter({ onRemove, onEdit, filter, fields, loading, type }: FilterProps) {
-  const { column, logicalOp, expr, params = [], paramsType } = filter;
+  const { column, logicalOp, expr, params = [], paramsType, skipEmpty } = filter;
   const selectableFields = getSelectableValues(fields);
 
   const expressions = getExpressions(type).map((expr) => ({
@@ -92,6 +93,9 @@ export function Filter({ onRemove, onEdit, filter, fields, loading, type }: Filt
   };
   const handleParamsChange = (value: string[]) => {
     onEdit({ params: value });
+  };
+  const handleSkipEmptyChange = (e: React.FormEvent<HTMLInputElement>) => {
+    onEdit({ skipEmpty: e.currentTarget.checked });
   };
   const isMultiParams = expressionWithMultipleParams.some((el) => el === expr);
 
@@ -132,6 +136,14 @@ export function Filter({ onRemove, onEdit, filter, fields, loading, type }: Filt
           value={params}
           isMulti={isMultiParams}
           placeholder={selectors.components.QueryBuilder.Filter.paramsPlaceholder}
+        />
+      )}
+      {expr && params?.length && isFilterFallbackAvailable({ expr, params }) && (
+        <InlineSwitch
+          label={selectors.components.QueryBuilder.Filter.EmptyCondition.label}
+          showLabel={true}
+          value={skipEmpty}
+          onChange={handleSkipEmptyChange}
         />
       )}
       <Button icon="trash-alt" onClick={onRemove} title="Remove field" fill="outline" variant="secondary" />

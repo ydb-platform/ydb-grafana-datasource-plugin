@@ -44,6 +44,9 @@ export const Components = {
       label: 'Filters',
       tooltip: 'List of filters',
       paramsPlaceholder: 'Select available or add yours',
+      EmptyCondition: {
+        label: 'Skip filter if condition is empty',
+      },
     },
     OrderBy: {
       label: 'Order by',

@@ -24,6 +24,7 @@ const NEW_FILTER: Omit<FilterType, 'id'> = {
   expr: null,
   logicalOp: 'and',
   paramsType: null,
+  skipEmpty: true,
 };
 
 interface FiltersProps {
