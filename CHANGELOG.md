@@ -1,5 +1,7 @@
 # Changelog
 
-## 1.0.0 (Unreleased)
+## 0.4.0
 
-Initial release.
+- Add ORDER BY to Query Builder
+- Different Improvements and bug fixes
+- Minimum required Grafana version increased to v9.2
