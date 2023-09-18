@@ -1,9 +1,8 @@
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { useVariables } from 'containers/QueryEditor/VariablesContext';
-
 import { defaultInputWidth } from 'containers/QueryEditor/constants';
+import { useVariables } from 'containers/QueryEditor/helpers';
 
 interface SelectWithVariablesProps {
   onChange: (value: string[]) => void;
@@ -11,6 +10,7 @@ interface SelectWithVariablesProps {
   value: string[];
   isMulti?: boolean;
   placeholder?: string;
+  variablesOptions?: { usePanelVars?: boolean; format?: string; wrapper?: string };
 }
 
 export function SelectWithVariables({
@@ -19,8 +19,9 @@ export function SelectWithVariables({
   value,
   isMulti,
   placeholder,
+  variablesOptions = {},
 }: SelectWithVariablesProps) {
-  const variables = useVariables();
+  const variables = useVariables(variablesOptions);
   const getSelectableParams = () => {
     const allParams = Array.from(new Set([...variables, ...value, ...additionalOptions]));
     let selectableValues: Array<SelectableValue<string>> = allParams.map((value) => ({
