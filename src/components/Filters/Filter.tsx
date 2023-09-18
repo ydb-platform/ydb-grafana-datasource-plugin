@@ -25,6 +25,16 @@ const options: Array<SelectableValue<LogicalOperation>> = [
   { label: LogicalOperationNames['or'], value: 'or' },
 ];
 
+function getVariablesOptions(expr?: ExpressionName | null) {
+  switch (expr) {
+    case 'like':
+    case 'notLike':
+      return { usePanelVars: false, format: 'text', wrapper: '%' };
+    default:
+      return {};
+  }
+}
+
 function getExpressions(type: string) {
   if (isDataTypeString(type)) {
     return StringExpressions;
@@ -132,13 +142,14 @@ export function Filter({ onRemove, onEdit, filter, fields, loading, type }: Filt
       />
       {paramsType && (
         <SelectWithVariables
+          variablesOptions={getVariablesOptions(expr)}
           onChange={handleParamsChange}
           value={params}
           isMulti={isMultiParams}
           placeholder={selectors.components.QueryBuilder.Filter.paramsPlaceholder}
         />
       )}
-      {expr && params?.length && isFilterFallbackAvailable({ expr, params }) && (
+      {expr && params?.length > 0 && isFilterFallbackAvailable({ expr, params }) && (
         <InlineSwitch
           label={selectors.components.QueryBuilder.Filter.EmptyCondition.label}
           showLabel={true}
