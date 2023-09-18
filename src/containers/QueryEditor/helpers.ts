@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 
 import { ExpressionName, QueryFormat, TableField, TableFieldBackend } from './types';
 import { expressionWithMultipleParams, expressionWithoutParams, panelVariables } from './constants';
+import { getTemplateSrv } from '@grafana/runtime';
 
 export function ConvertQueryFormatToVisualizationType(format: QueryFormat) {
   switch (format) {
@@ -142,4 +143,30 @@ export function isFilterFallbackAvailable({ expr, params }: { expr: ExpressionNa
     return false;
   }
   return isDashboardVariable(params[0]);
+}
+
+interface UseVariablesProps {
+  usePanelVars?: boolean;
+  format?: string;
+  wrapper?: string;
+}
+
+export function useVariables(props?: UseVariablesProps) {
+  const { usePanelVars = true, format, wrapper = '' } = props ?? {};
+  const dashboardVars = React.useMemo(() => {
+    return getTemplateSrv().getVariables();
+  }, []);
+  const result = React.useMemo(() => {
+    const formattedDashboardVars = dashboardVars.map((el) => {
+      const variableFormat = format ? `:${format}` : '';
+      const normalizedVariable = `\${${el.id}${variableFormat}}`;
+      return wrapString(normalizedVariable, wrapper);
+    });
+    if (usePanelVars) {
+      return panelVariables.concat(formattedDashboardVars);
+    }
+    return formattedDashboardVars;
+  }, [dashboardVars, usePanelVars, format, wrapper]);
+
+  return result;
 }

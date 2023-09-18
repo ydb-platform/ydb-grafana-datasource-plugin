@@ -6,12 +6,11 @@ import { OnChangeQueryAttribute, YDBSQLQuery } from './types';
 import { MONACO_LANGUAGE_SQL } from './constants';
 import { useEditorHeight } from './EditorSettingsContext';
 import { useTables } from './TablesContext';
-import { removeDatabaseFromTableName } from './helpers';
+import { removeDatabaseFromTableName, useVariables } from './helpers';
 import { useDatabase, useDatasource } from './DatasourceContext';
 
 import { createProvideSuggestionsFunction } from 'lib/sqlProvider';
 import { highlightErrors, unHighlightErrors } from 'lib/highlightErrors';
-import { useVariables } from './VariablesContext';
 
 let completionProvider: IDisposable | undefined;
 
