@@ -182,21 +182,32 @@ function normalizeFieldsForLogs({ logLevelField, fields, logTimeField }: Normali
   return normalizedFields;
 }
 
-function prepareCastAs(fieldName?: string, castAs?: PrimitiveDataType, wrapper = defaultWrapper) {
-  if (!fieldName) {
+function prepareCastAs(subject?: string, castAs?: PrimitiveDataType, wrapper?: string) {
+  if (!subject) {
     return '';
   }
-  const wrappedFieldName = escapeAndWrapString(fieldName, wrapper);
+
+  const preparedSubject = wrapper ? escapeAndWrapString(subject, wrapper) : subject;
   if (!castAs) {
-    return wrappedFieldName;
+    return preparedSubject;
   }
   {
-    return `CAST(${wrappedFieldName} AS ${castAs})`;
+    return `CAST(${preparedSubject} AS ${castAs})`;
   }
 }
 
-export function prepareLogLineFields(fields: string[]) {
-  const wrappedFields = fields.map((f) => `${escapeAndWrapString(`${f}=`, '"')}||${prepareCastAs(f, 'String')}`);
+export function prepareLogLineFields(fields: string[], logTimeField?: LogTimeField) {
+  const wrappedFields = fields.map((f) => {
+    let preparedField = f;
+    let wrapper = defaultWrapper;
+
+    if (f === logTimeField?.name && logTimeField.cast) {
+      preparedField = prepareCastAs(logTimeField.name, logTimeField.cast as PrimitiveDataType, defaultWrapper);
+      wrapper = '';
+    }
+    const cast = prepareCastAs(preparedField, 'String', wrapper);
+    return `${escapeAndWrapString(`${f}=`, '"')}||${cast}`;
+  });
   if (!wrappedFields.length) {
     return '';
   }
@@ -270,7 +281,7 @@ export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, q
     orderBy = [],
   } = builderOptions;
   const isLogs = queryFormat === 'logs';
-  const logLineString = isLogs ? prepareLogLineFields(loglineFields) : '';
+  const logLineString = isLogs ? prepareLogLineFields(loglineFields, logTimeField) : '';
   const preparedFields: FieldWithParams[] = fields.map((f) => ({ name: f }));
   const normalizedFields = isLogs
     ? normalizeFieldsForLogs({ logLevelField, fields: preparedFields, logTimeField })

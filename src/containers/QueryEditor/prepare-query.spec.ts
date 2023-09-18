@@ -376,12 +376,19 @@ describe('should properly generate log line', () => {
     const sql = '"foo="||CAST(`foo` AS String)||", "||"bar="||CAST(`bar` AS String) AS `logLine`';
     expect(prepareLogLineFields(fields)).toBe(sql);
   });
+  it('with fields and logTimeField', () => {
+    const fields = ['foo', 'bar', 'fido'];
+    const logTimeField = { name: 'fido', cast: 'Timestamp' };
+    const sql =
+      '"foo="||CAST(`foo` AS String)||", "||"bar="||CAST(`bar` AS String)||", "||"fido="||CAST(CAST(`fido` AS Timestamp) AS String) AS `logLine`';
+    expect(prepareLogLineFields(fields, logTimeField)).toBe(sql);
+  });
 });
 describe('should properly generate groupBy', () => {
   it('with empty params', () => {
     const fields: string[] = [];
     const sql = '';
-    expect(prepareLogLineFields(fields)).toBe(sql);
+    expect(getGroupBy(fields)).toBe(sql);
   });
   it('with fields', () => {
     const fields = ['foo', 'bar'];
