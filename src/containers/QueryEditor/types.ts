@@ -50,7 +50,7 @@ export interface SqlBuilderOptionsList {
   table?: string;
   fields?: string[];
   loglineFields?: string[];
-  limit?: string;
+  limit?: string | number;
   logLevelField?: string | null;
   logTimeField?: LogTimeField;
   rawSqlBuilder?: string;
