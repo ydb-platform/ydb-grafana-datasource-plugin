@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.1
+- Support number `limit` to achieve backwards compatibility
+
 ## 0.4.0
 
 - Add ORDER BY to Query Builder
