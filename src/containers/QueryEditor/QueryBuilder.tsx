@@ -212,7 +212,7 @@ export function QueryBuilder({ query, onChange }: QueryBuilderProps) {
             />
           )}
           <OrderBys {...commonFieldsProps} orderBy={orderBy} onChange={handleOrderByChange} />
-          <Limit limit={limit} onChange={handleLimitChange} />
+          <Limit limit={String(limit)} onChange={handleLimitChange} />
           <SqlPreview rawSql={rawSql} />
         </React.Fragment>
       )}

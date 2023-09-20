@@ -293,7 +293,7 @@ export function getRawSqlFromBuilderOptions(builderOptions: SqlBuilderOptions, q
 
   const fieldsString = [logLineString, ...wrappedSchemaFields, ...aggregatedFields].filter(Boolean).join(', \n');
   const groupByCondition = getGroupBy(groupBy);
-  const limitCondition = prepareLimit(limit);
+  const limitCondition = prepareLimit(String(limit));
   const whereCondition = getWhereExpression(filters);
   const orderByCondition = getOrderByCondition(orderBy);
   return `SELECT${fieldsString ? ` ${fieldsString}` : ''} \nFROM${
