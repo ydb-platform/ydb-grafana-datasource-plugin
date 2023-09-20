@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -21,7 +22,7 @@ func main() {
 	}
 }
 
-func newDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func newDatasource(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	ds := sqlds.NewDatasource(&plugin.Ydb{})
 	ds.CustomRoutes = map[string]func(http.ResponseWriter, *http.Request){
 		"/listTables": func(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +56,7 @@ func newDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 					return err
 				}
 				return nil
-   			}(w); err != nil {
+			}(w); err != nil {
 				w.WriteHeader(500)
 				jsonErr, _ := json.Marshal(err.Error())
 				w.Write(jsonErr)
