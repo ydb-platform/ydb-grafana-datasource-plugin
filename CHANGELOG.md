@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.2
+- Update `github.com/grafana/grafana-plugin-sdk-go`
+
 ## 0.4.1
 - Support number `limit` to achieve backwards compatibility
 
