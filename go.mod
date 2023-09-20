@@ -3,7 +3,7 @@ module github.com/ydb/grafana-ydb-datasource
 go 1.19
 
 require (
-	github.com/grafana/grafana-plugin-sdk-go v0.171.0
+	github.com/grafana/grafana-plugin-sdk-go v0.178.0
 	github.com/grafana/sqlds/v2 v2.5.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/stretchr/testify v1.8.3
@@ -107,5 +107,3 @@ require (
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/grafana/grafana-plugin-sdk-go => github.com/ydb-platform/grafana-plugin-sdk-go v0.0.0-20230914093406-386ce851494e
