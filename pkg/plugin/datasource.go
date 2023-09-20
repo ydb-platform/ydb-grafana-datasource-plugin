@@ -81,33 +81,36 @@ func listTables(ctx context.Context, db *ydb.Driver, folder string) (tables []st
 	return tables, nil
 }
 
-func RetrieveListTablesForRoot(config backend.DataSourceInstanceSettings) (respData []byte, err error) {
+func RetrieveListTablesForRoot(ctx context.Context, config backend.DataSourceInstanceSettings) (respData []byte, err error) {
 	defer func() {
 		if err != nil {
 			log.DefaultLogger.Error("Getting table list failed", "error", err.Error())
 		}
 	}()
+
 	settings, err := models.LoadSettings(config)
 	if err != nil {
 		return nil, err
 	}
-	connectionCtx, connectionCancel := context.WithTimeout(context.Background(), settings.TimeoutDuration)
-	defer connectionCancel()
 
-	ydbDriver, err := createDriver(connectionCtx, settings)
+	ctx, cancel := context.WithTimeout(ctx, settings.TimeoutDuration)
+	defer cancel()
+
+	ydbDriver, err := createDriver(ctx, settings)
 	if err != nil {
 		return nil, err
 	}
-	data, err := listTables(connectionCtx, ydbDriver, ydbDriver.Name())
+	data, err := listTables(ctx, ydbDriver, ydbDriver.Name())
 	if err != nil {
 		return nil, err
 	}
+	
 	return json.Marshal(data)
 }
 
 type TableField struct {
 	Name string
-	Type string 
+	Type string
 }
 
 func listFields(ctx context.Context, db *ydb.Driver, tableName string) (fields []TableField, _ error) {
@@ -117,7 +120,7 @@ func listFields(ctx context.Context, db *ydb.Driver, tableName string) (fields [
 			if err != nil {
 				return
 			}
-			for _, c := range desc.Columns {			
+			for _, c := range desc.Columns {
 				var field TableField
 				field.Name = c.Name
 				field.Type = c.Type.Yql()
@@ -132,26 +135,31 @@ func listFields(ctx context.Context, db *ydb.Driver, tableName string) (fields [
 	return fields, nil
 }
 
-func RetrieveTableFields(config backend.DataSourceInstanceSettings, tableName string) (respData []byte, err error) {
+func RetrieveTableFields(ctx context.Context, config backend.DataSourceInstanceSettings, tableName string) (respData []byte, err error) {
 	defer func() {
 		if err != nil {
 			log.DefaultLogger.Error("Getting fields failed", "error", err.Error())
 		}
 	}()
+
 	settings, err := models.LoadSettings(config)
 	if err != nil {
 		return nil, err
 	}
-	connectionCtx, connectionCancel := context.WithTimeout(context.Background(), settings.TimeoutDuration)
-	defer connectionCancel()
-	ydbDriver, err := createDriver(connectionCtx, settings)
+
+	ctx, cancel := context.WithTimeout(ctx, settings.TimeoutDuration)
+	defer cancel()
+
+	ydbDriver, err := createDriver(ctx, settings)
 	if err != nil {
 		return nil, err
 	}
-	fields, err := listFields(connectionCtx, ydbDriver, tableName)
+
+	fields, err := listFields(ctx, ydbDriver, tableName)
 	if err != nil {
 		return nil, err
 	}
+
 	return json.Marshal(fields)
 }
 
@@ -192,13 +200,13 @@ func (h *Ydb) Connect(config backend.DataSourceInstanceSettings, message json.Ra
 	defer connectionCancel()
 
 	ydbDriver, err := createDriver(connectionCtx, settings)
-	if err != nil { 
+	if err != nil {
 		return nil, err
 	}
 
 	connector, err := ydb.Connector(ydbDriver, ydb.WithAutoDeclare(),
 		ydb.WithNumericArgs(), ydb.WithPositionalArgs(), ydb.WithDefaultQueryMode(ydb.ScanQueryMode))
-	if err != nil { 
+	if err != nil {
 		return nil, err
 	}
 	db := sql.OpenDB(connector)
@@ -214,9 +222,9 @@ func (h *Ydb) Converters() []sqlutil.Converter {
 // Macros returns list of macro functions convert the macros of raw query
 func (h *Ydb) Macros() sqlds.Macros {
 	return map[string]sqlds.MacroFunc{
-		"fromTimestamp":      macros.FromTimestampFilter,
-		"toTimestamp":        macros.ToTimestampFilter,
-		"timeFilter":    	  macros.TimestampFilter,
-		"varFallback":    	  macros.VariableFallback,
+		"fromTimestamp": macros.FromTimestampFilter,
+		"toTimestamp":   macros.ToTimestampFilter,
+		"timeFilter":    macros.TimestampFilter,
+		"varFallback":   macros.VariableFallback,
 	}
 }
