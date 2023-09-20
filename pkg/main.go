@@ -26,7 +26,7 @@ func newDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 	ds.CustomRoutes = map[string]func(http.ResponseWriter, *http.Request){
 		"/listTables": func(w http.ResponseWriter, r *http.Request) {
 			if err := func(w http.ResponseWriter) error {
-				tablesString, err := plugin.RetrieveListTablesForRoot(settings)
+				tablesString, err := plugin.RetrieveListTablesForRoot(r.Context(), settings)
 				if err != nil {
 					return err
 				}
@@ -46,7 +46,7 @@ func newDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 			if err := func(w http.ResponseWriter) error {
 				query := r.URL.Query()
 				table := query.Get("table")
-				fieldsString, err := plugin.RetrieveTableFields(settings, table)
+				fieldsString, err := plugin.RetrieveTableFields(r.Context(), settings, table)
 				if err != nil {
 					return err
 				}
