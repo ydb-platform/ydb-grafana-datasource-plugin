@@ -116,6 +116,9 @@ export class DataSource extends DataSourceWithBackend<YDBQuery, YdbDataSourceOpt
   //this method is used  when no options for variable provided
   private format(value: unknown) {
     const normalizedValue = ([] as unknown[]).concat(value);
+    if (normalizedValue.length === 0) {
+      return '""';
+    }
     return normalizedValue
       .map((el) => {
         if (typeof el === 'string') {

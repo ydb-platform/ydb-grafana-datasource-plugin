@@ -1,6 +1,6 @@
 import { AggregationFunctionsMap, expressionWithMultipleParams, expressionWithoutParams } from './constants';
 import { isDataTypePrimitive } from './data-types';
-import { defaultWrapper, escapeAndWrapString, isFilterFallbackAvailable, isVariable } from './helpers';
+import { defaultWrapper, escapeAndWrapString, isFilterFallbackAvailable, isVariable, wrapString } from './helpers';
 import {
   AggregationType,
   ExpressionName,
@@ -102,6 +102,10 @@ function prepareIfStatement(condition: string, thenDo: string, elseDo: string) {
   return `IF(${condition}, ${thenDo}, ${elseDo})`;
 }
 
+function setVariableMod(variable: string, modificator: string) {
+  return `${variable.slice(0, -1)}:${modificator}}`;
+}
+
 export function getSingleWhereExpression(filter: FilterType) {
   const { logicalOp, column, expr, skipEmpty, params } = filter;
   if (!column || !expr) {
@@ -123,7 +127,9 @@ export function getSingleWhereExpression(filter: FilterType) {
   }
   const singleWhereString = where.join(' ');
   if (skipEmpty && params?.length && isFilterFallbackAvailable({ expr, params })) {
-    result.push(prepareIfStatement(`${params[0]} == ""`, 'true', singleWhereString));
+    result.push(
+      prepareIfStatement(`${wrapString(setVariableMod(params[0], 'text'), '"')} == ""`, 'true', singleWhereString)
+    );
   } else {
     result.push(singleWhereString);
   }
