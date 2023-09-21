@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	if err := datasource.Manage("grafana-ydb-datasource", newDatasource, datasource.ManageOpts{}); err != nil {
+	if err := datasource.Manage("ydbtech-ydb-datasource", newDatasource, datasource.ManageOpts{}); err != nil {
 		log.DefaultLogger.Error(err.Error())
 		os.Exit(1)
 	}
