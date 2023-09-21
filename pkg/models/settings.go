@@ -12,7 +12,7 @@ import (
 
 type AuthKind string
 
-const defaultAuthKind AuthKind = `Anonymous`
+const defaultAuthKind AuthKind = `ServiceAccountKey`
 
 // Settings - data loaded from grafana settings database
 type Settings struct {
