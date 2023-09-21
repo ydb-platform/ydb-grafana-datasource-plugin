@@ -217,15 +217,15 @@ describe('should properly generate single WHERE condition', () => {
       expect(getSingleWhereExpression(filter)).toBe(sql);
     });
     it(`with column, logical op, expression ${typedExpr} and mixed params with skipEmpty`, () => {
-      let sql = `AND IF(\${myVar} == "", true, \`bar\` ${expressionToSql[typedExpr]} \${myVar})`;
+      let sql = `AND IF(\"\${myVar:text}\" == "", true, \`bar\` ${expressionToSql[typedExpr]} \${myVar})`;
       switch (typedExpr) {
         case 'in':
         case 'notIn':
-          sql = `AND IF(\${myVar} == "", true, \`bar\` ${expressionToSql[typedExpr]} (\${myVar}))`;
+          sql = `AND IF(\"\${myVar:text}\" == "", true, \`bar\` ${expressionToSql[typedExpr]} (\${myVar}))`;
           break;
         case 'between':
         case 'notBetween':
-          sql = `AND IF(\${myVar} == "", true, \`bar\` ${expressionToSql[typedExpr]} \${myVar})`;
+          sql = `AND IF(\"\${myVar:text}\" == "", true, \`bar\` ${expressionToSql[typedExpr]} \${myVar})`;
           break;
         case 'isFalse':
         case 'isTrue':
