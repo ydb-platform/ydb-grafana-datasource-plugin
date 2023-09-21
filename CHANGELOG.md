@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.3
+- Default auth type should be identical for frontend and backend
+- Bug with filters when variable is multi-value
+
 ## 0.4.2
 - Update `github.com/grafana/grafana-plugin-sdk-go`
 
