@@ -2,8 +2,6 @@ module github.com/ydb/grafana-ydb-datasource
 
 go 1.21
 
-toolchain go1.23.6
-
 require (
 	github.com/grafana/grafana-plugin-sdk-go v0.178.0
 	github.com/grafana/sqlds/v2 v2.5.0
