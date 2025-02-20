@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.4
+- Update `github.com/ydb-platform/ydb-go-sdk/v3`
+- Switch `database/sql` driver for YDB for use query-service
+
 ## 0.4.3
 - Default auth type should be identical for frontend and backend
 - Bug with filters when variable is multi-value

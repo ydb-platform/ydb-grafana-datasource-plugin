@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/sqlds/v2"
-	"github.com/ydb-platform/ydb-go-sdk/v3"
+	ydb "github.com/ydb-platform/ydb-go-sdk/v3"
 	"github.com/ydb-platform/ydb-go-sdk/v3/scheme"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/options"
@@ -104,7 +104,7 @@ func RetrieveListTablesForRoot(ctx context.Context, config backend.DataSourceIns
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return json.Marshal(data)
 }
 
@@ -205,7 +205,8 @@ func (h *Ydb) Connect(config backend.DataSourceInstanceSettings, message json.Ra
 	}
 
 	connector, err := ydb.Connector(ydbDriver, ydb.WithAutoDeclare(),
-		ydb.WithNumericArgs(), ydb.WithPositionalArgs(), ydb.WithDefaultQueryMode(ydb.ScanQueryMode))
+		ydb.WithNumericArgs(), ydb.WithPositionalArgs(), ydb.WithQueryService(true),
+	)
 	if err != nil {
 		return nil, err
 	}
