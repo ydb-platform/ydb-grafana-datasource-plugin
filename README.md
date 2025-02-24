@@ -1,5 +1,4 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/ydb-platform/ydb-grafana-datasource-plugin/blob/main/LICENSE)
-
 [![Telegram](https://img.shields.io/badge/chat-on%20Telegram-2ba2d9.svg)](https://t.me/ydb_en)
 [![WebSite](https://img.shields.io/badge/website-ydb.tech-blue.svg)](https://ydb.tech)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/ydb-platform/ydb-grafana-datasource-plugin/blob/master/CONTRIBUTING.md)
@@ -109,7 +108,6 @@ Table visualizations will always be available for any valid YDB query that retur
 To use the Logs panel, your query must return a `Date`, `Datetime`, or `Timestamp` value and a `String` value. You can select logs visualizations using the visualization options.
 
 Only the first text field will be represented as a log line by default. This behavior can be customized using the query builder.
-
 
 ### Macros
 
