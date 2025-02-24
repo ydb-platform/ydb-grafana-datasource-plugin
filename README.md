@@ -1,8 +1,4 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/ydb-platform/ydb-grafana-datasource-plugin/blob/main/LICENSE)
-[![Release](https://img.shields.io/badge/dynamic/json?logo=grafana&color=F47A20&label=release&prefix=v&query=%24.items%5B%3F%28%40.slug%20%3D%3D%20%22ydbtech-ydb-datasource%22%29%5D.version&url=https%3A%2F%2Fgrafana.com%2Fapi%2Fplugins)](https://grafana.com/grafana/plugins/ydbtech-ydb-datasource)
-[![Downloads](https://img.shields.io/badge/dynamic/json?logo=grafana&color=F47A20&label=downloads&query=%24.items%5B%3F%28%40.slug%20%3D%3D%20%22ydbtech-ydb-datasource%22%29%5D.downloads&url=https%3A%2F%2Fgrafana.com%2Fapi%2Fplugins)](https://grafana.com/grafana/plugins/ydbtech-ydb-datasource)
-
-<!-- ![Code lines](https://sloc.xyz/github/ydb-platform/ydb-grafana-datasource-plugin/?category=code) -->
 
 [![Telegram](https://img.shields.io/badge/chat-on%20Telegram-2ba2d9.svg)](https://t.me/ydb_en)
 [![WebSite](https://img.shields.io/badge/website-ydb.tech-blue.svg)](https://ydb.tech)
@@ -10,37 +6,39 @@
 
 # YDB data source for Grafana
 
-## Version compatibility
-
-Plugin requires `v9.2` and higher of Grafana.
-
-The YDB data source plugin allows you to query and visualize YDB data from within Grafana.
+The [YDB data source plugin](https://grafana.com/grafana/plugins/ydbtech-ydb-datasource/) allows you to use [Grafana](https://grafana.com) to query and visualize data from YDB.
 
 ## Installation
 
-For detailed instructions on how to install the plugin on Grafana Cloud or locally, please checkout the [Plugin installation docs](https://grafana.com/docs/grafana/latest/plugins/installation/).
+Prerequisites: the plugin requires Grafana v9.2 or higher.
+
+Follow the Grafana's [plugin installation docs](https://grafana.com/docs/grafana/latest/plugins/installation/) to install a plugin named `ydb-grafana-datasource-plugin`.
 
 ## Configuration
 
-### YDB user for the data source
+### YDB user for the data sourcnote warning
 
-Set up an YDB user account with readonly permission [(more about permissions)](https://ydb.tech/ru/docs/cluster/access) and access to databases and tables you want to query. Please note that Grafana does not validate that queries are safe. Queries can contain any SQL statement including modification instructions.
+Set up an YDB user account with **read-only** permissions [(more about permissions)](https://ydb.tech/docs/ru/security/authorization#right) and access to databases and tables you want to query.
+
+Please note that Grafana does not validate that queries are safe. Queries can contain any SQL statements, including data modification instructions.
 
 ### Data transfer protocol support
 
-The plugin supports `GRPCS` and `GRPC` transport protocols. Please note that you need to provide TLS/SSL certificate when using `grpcs`.
+The plugin supports [gRPC and gRPCS](https://grpc.io/) transport protocols.
 
-### Manual configuration
+### Configuration via UI
 
 Once the plugin is installed on your Grafana instance, follow [these instructions](https://grafana.com/docs/grafana/latest/datasources/add-a-data-source/) to add a new YDB data source, and enter configuration options.
 
-### With a configuration file
+### Configuration with provisioning system
 
-It is possible to configure data sources using configuration files with Grafana’s provisioning system. To read about how it works, including all the settings that you can set for this data source, refer to [Provisioning Grafana data sources](https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources).
+Alternatively, Grafana's provisioning system allows you to configure data sources using configuration files. To read about how it works, including all the settings you can set for this data source, refer to the [Provisioning Grafana data sources](https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources) documentation.
 
-Plugin supports different authentication types [authentication types](https://ydb.tech/ru/docs/reference/ydb-sdk/auth).
+### Authentication
 
-Here is an example for this data source using user/password:
+The Grafana plugin supports the following [authentication methods](https://ydb.tech/docs/reference/ydb-sdk/auth): Anonymous, Access Token, Metadata, Service Account Key and Static Credentials.
+
+Below is an example config for authenticating a YDB data source using username and password:
 
 ```yaml
 apiVersion: 1
@@ -48,85 +46,96 @@ datasources:
   - name: YDB
     type: ydbtech-ydb-datasource
     jsonData:
-      authKind: "UserPassword",
-      endpoint: 'grpcs://endpoint',
-      dbLocation: 'location',
-      user: 'username',
+      authKind: '<password>'
+      endpoint: 'grpcs://<hostname>:2135'
+      dbLocation: '<location_to_db>'
+      user: '<username>'
     secureJsonData:
-      password: 'userpassword',
-      certificate: 'certificate',
+      password: '<userpassword>'
+      certificate: |
+        <full content of *.pem file>
 ```
 
 Here are fields that are supported in connection configuration:
 
-```typescript
-    jsonData:
-      authKind: "Anonymous" | "ServiceAccountKey" | "AccessToken" | "UserPassword" | "MetaData";
-      endpoint: string;
-      dbLocation: string;
-      user?: string;
-    secureJsonData:
-      serviceAccAuthAccessKey?: string;
-      accessToken?: string;
-      password?: string;
-      certificate?: string;
-```
+| Name                    | Description                                                                                                                                                                             |                                         Type                                          |
+| :---------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-----------------------------------------------------------------------------------: |
+| authKind                | Authentication type                                                                                                                                                                     | `"Anonymous"`, `"ServiceAccountKey"`, `"AccessToken"`, `"UserPassword"`, `"MetaData"` |
+| endpoint                | Database endpoint                                                                                                                                                                       |                                       `string`                                        |
+| dbLocation              | Database location                                                                                                                                                                       |                                       `string`                                        |
+| user                    | User name                                                                                                                                                                               |                                       `string`                                        |
+| serviceAccAuthAccessKey | Service account access key                                                                                                                                                              |                                  `string` (secured)                                   |
+| accessToken             | Access token                                                                                                                                                                            |                                  `string` (secured)                                   |
+| password                | User password                                                                                                                                                                           |                                  `string` (secured)                                   |
+| certificate             | If self-signed certificates are used on your YDB cluster nodes, specify the [Certificate Authority](https://en.wikipedia.org/wiki/Certificate_authority) certificate used to issue them |                                  `string` (secured)                                   |
 
 ## Building queries
 
-[YQL dialect](https://ydb.tech/ru/docs/yql/reference/) is used to query YDB.
-Queries can contain macros which simplify syntax and allow for dynamic parts.
-The query editor allows you to get data in different representation: time series, table or logs.
+YDB is queried with a SQL dialect named [YQL](https://ydb.tech/docs/yql/reference).
+The query editor allows to get data in different representations: time series, table, or logs.
 
 ### Time series
 
-Time series visualization options are selectable after adding to your query one field with `Date`, `Datetime` or `Timestamp` type and at least one field with `number` type. You can select time series visualizations using the visualization options. Grafana interprets timestamp rows without explicit time zone as UTC. Any other column is treated as a value column.
+Time series visualization options are selectable if the query returns at least one field with `Date`, `Datetime`, or `Timestamp` type (for now, working with time is supported only in UTC timezone) and at least one field with `Int64`, `Int32`, `Int16`, `Int8`, `Uint64`, `Uint32`, `Uint16`, `Uint8`, `Double` or `Float` type. Then, you can select time series visualization options. Any other column is treated as a value column.
 
 #### Multi-line time series
 
-To create multi-line time series, the query must return at least 3 fields in the following order:
+To create a multi-line time series, the query must return at least 3 fields:
 
-- field 1: time field
-- field 2: value to group by
-- field 3+: the metric values
+- field with `Date`, `Datetime` or `Timestamp` type (for now, working with time is supported only in UTC timezone)
+- metric - field with `Int64`, `Int32`, `Int16`, `Int8`, `Uint64`, `Uint32`, `Uint16`, `Uint8`, `Double` or `Float` type
+- either metric or field with `String` or `Utf8` type - the value for splitting metrics into separate series.
 
 For example:
 
-```sql
-SELECT `timestamp`, `requestTime`, AVG(`responseStatus`) AS `avgRespStatus`
+```yql
+SELECT
+    `timestamp`,
+    `responseStatus`
+    AVG(`requestTime`) AS `avgReqTime`
 FROM `/database/endpoint/my-logs`
-GROUP BY `requestTime`, `timestamp`
+GROUP BY `responseStatus`, `timestamp`
 ORDER BY `timestamp`
 ```
 
-### Tables
+For this kind of queries, using [column-oriented tables](https://ydb.tech/docs/concepts/datamodel/table#column-tables) will likely be beneficial in terms of performance.
 
-Table visualizations will always be available for any valid YDB query.
+### Tables { #tables }
+
+Table visualizations will always be available for any valid YDB query that returns exactly one result set.
 
 ### Visualizing logs with the Logs Panel
 
-To use the Logs panel your query must return a time and string values. You can select logs visualizations using the visualization options.
+To use the Logs panel, your query must return a `Date`, `Datetime`, or `Timestamp` value and a `String` value. You can select logs visualizations using the visualization options.
 
-By default only the first text field will be represented as log line, but this can be customized using query builder.
+Only the first text field will be represented as a log line by default. This behavior can be customized using the query builder.
+
 
 ### Macros
 
-To simplify syntax and to allow for dynamic parts, like date range filters, the query can contain macros.
+The query can contain macros, which simplify syntax and allow for dynamic parts, like date range filters.
+There are two kinds of macros - [Grafana-level](#macros) and YDB-level. The plugin will parse query text and, before sending it to YDB, substitute variables and Grafana-level macros with particular values. After that YDB-level macroses will be treated by YDB server-side.
 
 Here is an example of a query with a macro that will use Grafana's time filter:
 
-```sql
+```yql
 SELECT `timeCol`
 FROM `/database/endpoint/my-logs`
 WHERE $__timeFilter(`timeCol`)
 ```
 
-| Macro                                        | Description                                                                                                                      | Output example                                                                                  |
-| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| _$\_\_timeFilter(columnName)_                | Replaced by a conditional that filters the data (using the provided column) based on the time range of the panel in microseconds | `foo >= CAST(1636717526371000 AS TIMESTAMP) AND foo <=  CAST(1668253526371000 AS TIMESTAMP)' )` |
-| _$\_\_fromTimestamp_                         | Replaced by the starting time of the range of the panel casted to Timestamp                                                      | `CAST(1636717526371000 AS TIMESTAMP)`                                                           |
-| _$\_\_toTimestamp_                           | Replaced by the ending time of the range of the panel casted to Timestamp                                                        | `CAST(1636717526371000 AS TIMESTAMP)`                                                           |
-| _$\_\_varFallback(condition, \$templateVar)_ | Replaced by the first parameter when the template variable in the second parameter is not provided.                              | `condition` or `templateVarValue`                                                               |
+```yql
+SELECT `timeCol`
+FROM `/database/endpoint/my-logs`
+WHERE $__timeFilter(`timeCol` + Interval("PT24H"))
+```
+
+| Macro                                     | Description                                                                                                                                    | Output example                                                                                  |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `$__timeFilter(expr)`                     | Replaced by a conditional that filters the data (using the provided column or expression) based on the time range of the panel in microseconds | `foo >= CAST(1636717526371000 AS Timestamp) AND foo <=  CAST(1668253526371000 AS Timestamp)' )` |
+| `$__fromTimestamp`                        | Replaced by the starting time of the range of the panel cast to Timestamp                                                                      | `CAST(1636717526371000 AS Timestamp)`                                                           |
+| `$__toTimestamp`                          | Replaced by the ending time of the range of the panel cast to Timestamp                                                                        | `CAST(1636717526371000 AS Timestamp)`                                                           |
+| `$__varFallback(condition, $templateVar)` | Replaced by the first parameter when the template variable in the second parameter is not provided.                                            | `$__varFallback('foo', $bar)` `foo` if variable `bar` is not provided, or `$bar`'s value        |
 
 ### Templates and variables
 
