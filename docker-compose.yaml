@@ -2,13 +2,13 @@ version: '3.0'
 
 services:
   grafana:
-    container_name: 'grafana-ydb-datasource'
+    container_name: 'ydbtech-ydb-datasource'
     build:
       context: ./.config
       args:
         grafana_version: ${GRAFANA_VERSION:-9.3.8}
     volumes:
-      - ./dist:/var/lib/grafana/plugins/grafana-ydb-datasource
+      - ./dist:/var/lib/grafana/plugins/ydbtech-ydb-datasource
       - ./provisioning:/etc/grafana/provisioning
     network_mode: 'host'
   ydb:
