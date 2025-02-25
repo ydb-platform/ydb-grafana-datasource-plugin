@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.4
+## 0.5.0
 - Update `github.com/ydb-platform/ydb-go-sdk/v3`
 - Switch `database/sql` driver for YDB for use query-service
 
