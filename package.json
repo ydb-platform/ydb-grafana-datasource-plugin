@@ -1,6 +1,6 @@
 {
   "name": "grafana-ydb-datasource",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "YDB datasource plugin for Grafana",
   "scripts": {
     "build": "rm -rf dist/ && rm -rf ydbtech-ydb-datasource/ && npm run build:frontend && npm run build:backend && chmod 0755 dist/* && npm run sign",
