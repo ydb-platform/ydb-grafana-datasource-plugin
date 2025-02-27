@@ -3,7 +3,7 @@
   "version": "0.5.2",
   "description": "YDB datasource plugin for Grafana",
   "scripts": {
-    "build": "rm -rf dist/ && rm -rf ydbtech-ydb-datasource/ && npm run build:frontend && npm run build:backend && npm run sign",
+    "build": "build:frontend",
     "build:frontend": "webpack -c ./webpack.config.ts --env production",
     "build:backend": "mage",
     "sign": "npx --yes @grafana/sign-plugin@latest",
