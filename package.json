@@ -5,7 +5,7 @@
   "scripts": {
     "build": "rm -rf dist/ && rm -rf ydbtech-ydb-datasource/ && npm run build:frontend && npm run build:backend && chmod 0755 dist/* && npm run sign",
     "build:frontend": "webpack -c ./webpack.config.ts --env production",
-    "build:backend": "PATH=$(go env GOPATH)/bin:$PATH mage",
+    "build:backend": "mage",
     "sign": "npx --yes @grafana/sign-plugin@latest",
     "dev": "webpack -w -c ./webpack.config.ts --env development",
     "test": "jest --watch --onlyChanged",
