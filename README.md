@@ -45,7 +45,7 @@ datasources:
   - name: YDB
     type: ydbtech-ydb-datasource
     jsonData:
-      authKind: '<password>'
+      authKind: 'UserPassword'
       endpoint: 'grpcs://<hostname>:2135'
       dbLocation: '<location_to_db>'
       user: '<username>'
